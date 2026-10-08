@@ -5,37 +5,24 @@ using UnityEngine.Rendering.Universal;
 
 namespace Photosynthesis
 {
-    /// Botanical Investigation Chamber: imported dome + tropical vegetation (placed by the editor builder),
-    /// procedural platform, floor pattern, research displays, sun, sky and atmosphere. Owns the Scene 2 formation.
+    /// Botanical Investigation Chamber: the imported glass-roofed lab (placed by the editor builder, door at −Z), the hero
+    /// plant's soil bed inside its centre planter, sun, sky and atmosphere. Owns the Scene 2 formation.
     /// Built once (Awake, or lazily by any public call). Every public method is idempotent and snaps cleanly, so any
     /// beat can cold-start through Story.Prepare (ResetVisuals → SetVisible → SetFormed).
-    /// Layout constants are public so the editor builder plants vegetation into the procedural beds and pots.
     public partial class Chamber : MonoBehaviour
     {
         [Header("Assigned by the editor builder")]
         public Transform dome;
-        public Transform vegetation;
         public Light sun;
         public Volume volume;
-        [Tooltip("Dome renderers (flat, sector-split) swept in during the formation. Collected by the editor builder.")]
+        [Tooltip("Environment renderers (flat, roof sector-split) swept in during the formation. Collected by the editor builder.")]
         public Renderer[] domePieces;
 
-        // ------------------------------------------------------------------ layout (shared with ChamberBuilder)
-        public const float PlatformRadius = 3.25f, PlatformHeight = 0.35f;
-        /// Walkway / establishing-camera direction (degrees in XZ, 0 = +X, −90 = −Z).
-        public const float Entrance = -90f;
-        public const float EdgeBedIn = 3.75f, EdgeBedOut = 4.55f, EdgeBedGap = 38f, EdgeBedSoil = 0.17f;
-        public const float PerimeterIn = 9.5f, PerimeterOut = 12.45f, PerimeterGap = 20f, PerimeterSoil = 0.16f;
-        public const float PotRadius = 0.8f, PotSoil = 0.5f, BannerRadius = 10.7f;
-        /// Round planters (deg, radius).
-        public static readonly Vector2[] Pots = { new(-12f, 7.0f), new(192f, 7.0f), new(62f, 6.5f), new(118f, 6.5f), new(90f, 7.7f) };
-        /// Research stations (deg, radius) — they face the entrance so their holograms read from the establishing shot.
-        public static readonly Vector2[] Stations = { new(-47f, 6.6f), new(-133f, 6.6f), new(14f, 7.4f), new(166f, 7.4f) };
-        /// Tall banner displays (deg) at BannerRadius, facing the platform.
-        public static readonly float[] Banners = { 32f, 148f, -26f, -154f };
+        // ------------------------------------------------------------------ layout (the environment model's centre planter)
+        /// Soil surface the hero plant stands in: inside the planter rim (inner wall r ≈ 2.9, top RimTop out to r ≈ 3.3).
+        public const float PlatformHeight = 0.55f, RimTop = 0.592f;
 
         public static Vector3 Polar(float deg, float r, float y = 0f) { float a = deg * Mathf.Deg2Rad; return new Vector3(Mathf.Cos(a) * r, y, Mathf.Sin(a) * r); }
-        public static bool InEntrance(float deg, float halfWidth) => Mathf.Abs(Mathf.DeltaAngle(deg, Entrance)) < halfWidth;
 
         // ------------------------------------------------------------------ anchor
         Transform anchor;
@@ -106,7 +93,7 @@ namespace Photosynthesis
             if (formed) RenderProbe();
         }
 
-        /// Scene 2: golden particles slow → platform → vegetation → glass architecture → sunlight → displays → hero plant.
+        /// Scene 2: golden particles slow → planter ring ignites → the lab assembles → sunlight → skylight → hero plant.
         public IEnumerator Form(HeroPlant plant)
         {
             EnsureBuilt();
@@ -135,7 +122,7 @@ namespace Photosynthesis
         static readonly (float t, Sfx sfx, float vol, float pitch)[] FormCues =
         {
             (2.2f, Sfx.Materialize, 0.7f, 0.749f),   // bells gather under the title (2.5 s); the bloom (2.14 s into the clip at this pitch) lands on the ring-ignition flash at ~4.3 s
-            (6.1f, Sfx.Whoosh,      0.45f, 0.8f),    // vegetation (6.0 s) and glass bands (6.4 s) sweep in as the title leaves
+            (6.1f, Sfx.Whoosh,      0.45f, 0.8f),    // the lab's pieces (from 6.4 s) sweep in as the title leaves
             (7.9f, Sfx.EnergyBuild, 0.35f, 0.75f),   // sunrise swell (8.4–10.8 s); peaks ~11.0 s and cuts at ~11.23 s, onto the plant Sparkle at FormEnd 11.2 s
         };
 
@@ -328,81 +315,42 @@ namespace Photosynthesis
         // ================================================================== formation timeline (pure function of t)
         static float Bump(float t, float centre, float width) { float x = 1f - Mathf.Abs(t - centre) / (width * 0.5f); return x <= 0f ? 0f : x * x * (3f - 2f * x); }
 
-        /// Floor inlay rings: formation level × mood (the "no light" beat must not be lit by the floor).
+        /// Planter ring: formation level × mood (the "no light" beat must not be lit by the floor).
         void ApplyRings()
         {
             float mood = Mathf.Lerp(1f, 0.45f, dark);
             for (int s = 0; s < ringStages.Length; s++) foreach (var g in ringStages[s]) g.Set(ringK[s] * mood);
         }
-        static float Flicker(float u, int seed) =>
-            u <= 0f ? 0f : u >= 1f ? 1f : (ChamberArt.Hash01(Mathf.FloorToInt(u * 22f) + seed * 97) < 0.3f + u * 0.65f ? 1f : 0.12f) * Mathf.Lerp(0.55f, 1f, u);
-
         /// t < 0: nothing formed (darkness) · t ≥ FormEnd: fully formed. Everything in between is the Scene 2 sequence.
         void EvaluateForm(float t)
         {
             // pre-dawn ambient while the architecture assembles, then the sun
             dayLight = 0.22f * Fx.Eval(Mathf.InverseLerp(6.0f, 8.4f, t), Ease.InOut) + 0.78f * Fx.Eval(Mathf.InverseLerp(8.4f, 10.8f, t), Ease.InOut);
 
-            // 1 · platform rings ignite (cyan → gold → outer cyan), each with an over-bright flash
+            // 1 · the planter ring ignites with an over-bright flash
             for (int s = 0; s < ringStages.Length; s++)
             {
                 float t0 = 4.0f + s * 0.35f;
                 ringK[s] = Fx.Eval(Mathf.InverseLerp(t0, t0 + 0.5f, t), Ease.Out) + Bump(t, t0 + 0.25f, 0.8f) * 2.2f;
             }
             ApplyRings();
-            // 2 · floor pattern draws on from the platform outward
-            for (int i = 0; i < engrave.Length; i++)
-            {
-                float t0 = 4.8f + i * 0.16f;
-                engrave[i].Set(Fx.Eval(Mathf.InverseLerp(t0, t0 + 0.4f, t), Ease.Out) + Bump(t, t0 + 0.25f, 0.6f) * 2.6f);
-            }
-            // 3 · vegetation grows in (inner rings first, back before front)
-            for (int i = 0; i < veg.Length; i++)
-            {
-                float u = Mathf.InverseLerp(veg[i].delay, veg[i].delay + 1.3f, t);
-                var tr = veg[i].t; bool on = u > 0f;
-                if (!tr) continue;
-                if (tr.gameObject.activeSelf != on) tr.gameObject.SetActive(on);
-                if (on) tr.localScale = veg[i].scale * Fx.Eval(u, Ease.Back);
-            }
-            // 4 · glass architecture assembles band by band, sweeping from the back around both sides
+            // 2 · the lab assembles piece by piece, low before high, sweeping from the back around both sides
             for (int i = 0; i < pieces.Length; i++)
             {
                 ref var p = ref pieces[i];
                 if (!p.r) continue;
                 float u = Mathf.InverseLerp(p.delay, p.delay + 0.75f, t); bool on = u > 0f;
-                if (p.r.enabled != on) { p.r.enabled = on; if (on && t < FormEnd) EmitSparks(p.center, 7); }
+                // GameObject, not renderer.enabled: CullNearCamera owns that (it would show an unformed piece when the lens leaves it)
+                if (p.t.gameObject.activeSelf != on) { p.t.gameObject.SetActive(on); if (on && t < FormEnd) EmitSparks(p.center, 7); }
                 if (!on) continue;
-                // rise + scale-pop about the piece's bounds centre (FBX pivots sit at the dome origin)
+                // rise + scale-pop about the piece's bounds centre (FBX pivots sit at the model origin)
                 float e = Fx.Eval(u, Ease.Out), s = 1f - p.pop * (1f - Fx.Eval(u, Ease.Back));
                 p.t.position = p.center + p.off * s - Vector3.up * (1.5f * (1f - e));
                 p.t.localScale = p.scale * s;
             }
-            // 5 · vines unroll from the ribs, suspended leaves drift in
-            for (int i = 0; i < vines.Length; i++)
-            {
-                float u = Mathf.InverseLerp(8.2f + i * 0.12f, 9.8f + i * 0.12f, t);
-                if (vines[i].gameObject.activeSelf != u > 0f) vines[i].gameObject.SetActive(u > 0f);
-                vines[i].localScale = Vector3.one * Mathf.Max(0.001f, Fx.Eval(u, Ease.Out));   // sprout from the rib cluster
-            }
-            for (int i = 0; i < floaters.Length; i++)
-            {
-                float u = Mathf.InverseLerp(8.6f + i * 0.15f, 9.8f + i * 0.15f, t);
-                if (floaters[i].gameObject.activeSelf != u > 0f) floaters[i].gameObject.SetActive(u > 0f);
-                floaters[i].localScale = Vector3.one * Fx.Eval(u, Ease.Back);
-            }
-            float sk = Fx.Eval(Mathf.InverseLerp(9.8f, 10.4f, t), Ease.Out);   // crown skylight, once the lamp ring around it has risen into place (no overshoot: it sits inside the ring)
+            float sk = Fx.Eval(Mathf.InverseLerp(9.8f, 10.4f, t), Ease.Out);   // crown skylight, once the roof above it has risen into place
             if (skylight.gameObject.activeSelf != sk > 0f) { skylight.gameObject.SetActive(sk > 0f); if (sk > 0f && t < FormEnd) EmitSparks(skylight.position, 14); }
             skylight.localScale = Vector3.one * Mathf.Max(0.001f, sk);
-            // 6 · research displays flicker on, banners glow up
-            for (int s = 0; s < stationGlows.Length; s++)
-            {
-                float k = Flicker(Mathf.InverseLerp(9.3f + s * 0.28f, 10.2f + s * 0.28f, t), s);
-                stationLevel[s] = k;
-                foreach (var g in stationGlows[s]) g.Set(k);
-                if (stationDyn[s].gameObject.activeSelf != k > 0f) stationDyn[s].gameObject.SetActive(k > 0f);
-            }
-            for (int b = 0; b < bannerGlows.Length; b++) bannerGlows[b].Set(Flicker(Mathf.InverseLerp(9.7f + b * 0.2f, 10.6f + b * 0.2f, t), b + 7));
             // formation light: warm glow from the swirl, flash at ignition, hands over to the sun
             float f = t < 0f ? 0f : Mathf.Clamp01(t / 1.2f) * (1f - Mathf.InverseLerp(8.6f, 10.8f, t)) * 7f + Bump(t, 4.3f, 1.2f) * 9f;
             formLight.intensity = f; formLight.enabled = f > 0.01f;
@@ -424,7 +372,7 @@ namespace Photosynthesis
                 swR0[i] = Mathf.Lerp(0.5f, 7.5f, Mathf.Sqrt((float)rnd.NextDouble())); swH0[i] = R(0.1f, 4.8f);
                 swTh[i] = R(0f, Mathf.PI * 2f); swOm[i] = R(1.1f, 2.7f) * (1.4f / Mathf.Sqrt(swR0[i] + 0.4f) + 0.3f);
                 swDel[i] = R(0f, 0.7f); swPh[i] = R(0f, 6.28f); swSize[i] = R(0.025f, 0.085f);
-                swRT[i] = mote ? R(1.3f, 6f) : R(2.62f, 3.5f); swHT[i] = mote ? R(0.8f, 3.8f) : PlatformHeight + R(0.0f, 0.06f);
+                swRT[i] = mote ? R(1.3f, 6f) : R(2.95f, 3.3f); swHT[i] = mote ? R(0.8f, 3.8f) : RimTop + R(0.0f, 0.05f);   // grains settle on the planter rim, where the ring ignites
                 swR[i] = swR0[i]; swH[i] = swH0[i];
             }
             swirl = SwirlMode.Gather;
@@ -478,34 +426,6 @@ namespace Photosynthesis
         {
             float dt = Time.deltaTime, time = Time.time;
             if (swirl != SwirlMode.Off) UpdateSwirl(dt);
-
-            for (int i = 0; i < vines.Length; i++)
-                if (vines[i].gameObject.activeSelf)
-                    vines[i].localRotation = Quaternion.Euler(Mathf.Sin(time * 0.45f + i) * 1.4f, 0f, Mathf.Sin(time * 0.33f + i * 1.7f) * 1.4f);
-            for (int i = 0; i < floaters.Length; i++)
-            {
-                if (!floaters[i].gameObject.activeSelf) continue;
-                float ph = i * 1.37f;
-                floaters[i].localPosition = floaterPos[i] + Vector3.up * (Mathf.Sin(time * 0.5f + ph) * 0.12f);
-                floaters[i].localRotation = Quaternion.Euler(Mathf.Sin(time * 0.6f + ph) * 4f, floaterYaw[i] + time * 5f, Mathf.Sin(time * 0.45f + ph) * 5f);
-            }
-            // bed plants rock gently from the soil (ChamberBuilder pivots each wrapper at its base), in time with the vines
-            float va = Hud.ReduceMotion ? 0f : 1.1f;   // degrees: about 8 cm at a 4.3 m palm tip, about 1.6 cm at an edge fern
-            for (int i = 0; i < veg.Length; i++)
-            {
-                var v = veg[i];
-                if (!v.t || !v.t.gameObject.activeSelf) continue;   // not yet grown in during formation / SetFormed(false)
-                float ph = i * 1.37f;
-                v.t.localRotation = v.rot * Quaternion.Euler(Mathf.Sin(time * 0.42f * v.sway + ph) * va, 0f, Mathf.Sin(time * 0.31f * v.sway + ph * 1.7f) * va);
-            }
-            for (int i = 0; i < spinners.Length; i++) spinners[i].localRotation = Quaternion.Euler(0f, time * 32f + i * 90f, 0f);
-            for (int i = 0; i < scans.Length; i++)
-            {
-                var p = scans[i].t.localPosition; p.y = Mathf.Lerp(scans[i].y0, scans[i].y1, Mathf.PingPong(time * 0.35f + i * 0.4f, 1f));
-                scans[i].t.localPosition = p;
-            }
-            for (int s = 0; s < stationGlows.Length; s++)
-                if (stationLevel[s] >= 1f) { float k = 0.9f + 0.1f * Mathf.Sin(time * 2.3f + s * 1.9f); for (int g = 2; g < stationGlows[s].Length; g++) stationGlows[s][g].Set(k); }
             if (beamRig.activeSelf && beamSteady)
             {
                 float k = 1f + 0.06f * Mathf.Sin(time * 6.1f) + 0.04f * Mathf.Sin(time * 13.7f);
@@ -526,18 +446,17 @@ namespace Photosynthesis
             CullNearCamera(camT.position);
         }
 
-        /// Hide vegetation / vines / banners the orbiting camera is inside of (instead of filling the lens with leaves).
-        /// ponytail: hard pop, not a dithered fade — the glTF plant materials are opaque alpha-clip and we never switch keywords.
+        /// Hide hanging ivy / foliage / hologram screens the orbiting camera is inside of (instead of filling the lens with leaves).
+        /// ponytail: hard pop, not a dithered fade — the foliage materials are opaque alpha-clip and we never switch keywords.
         void CullNearCamera(Vector3 c)
         {
             for (int i = 0; i < occ.Length; i++)
             {
                 ref var o = ref occ[i];
-                float dx = c.x - o.c.x, dz = c.z - o.c.y;
-                bool hide = dx * dx + dz * dz < o.rad2 && c.y > o.y0 && c.y < o.y1;
+                bool hide = o.b.SqrDistance(c) < OccMargin * OccMargin;
                 if (hide == o.hidden) continue;
                 o.hidden = hide;
-                foreach (var r in o.r) if (r) r.enabled = !hide;
+                if (o.r) o.r.enabled = !hide;
             }
         }
     }

@@ -2,8 +2,9 @@
 
 | Asset | Source | Licence | Use |
 |---|---|---|---|
-| `Art/Dome/DomeInterior.fbx` | `D:\AI unity project\models\photosyn\dome interior env [1].fbx` (local library) | supplied by client | Botanical Investigation Chamber shell |
-| `Art/Vegetation/TropicalPlants.glb` | local library · Sketchfab "Tropical Plants Pack M02P" by MozzarellaARC | **CC-BY 4.0** — credit required | palms, bananas, monsteras, ferns |
+| `Art/Environment/Chamber.fbx` + `Textures/` (+ derived `Materials/`, `RoofPieces.asset`) | the user's `C:\Users\ADMIN\Documents\Received Files\Ai Photoshynthesis1.fbx` (2026-10-08) via `Tools/Chamber/build_env.py` (soil cut from the centre planter, floor split, microscopes decimated, textures capped at 2048/1024 px) | supplied by the user, with the textures packed in it (they include third-party sets, e.g. Poly Haven "vintage wooden drawer 01", CC0; the rest are as licensed to the user — not verified here) | Botanical Investigation Chamber: the lab around the hero plant |
+| `Art/Dome/DomeInterior.fbx`, `Art/Dome/DomePieces.asset` | `D:\AI unity project\models\photosyn\dome interior env [1].fbx` (local library) | supplied by client | **no longer used** (replaced by the environment above, 2026-10-08); kept in the repo |
+| `Art/Vegetation/TropicalPlants.glb` | local library · Sketchfab "Tropical Plants Pack M02P" by MozzarellaARC | **CC-BY 4.0** — credit required if used | **no longer used** (the new environment brings its own plants); kept in the repo |
 | `Resources/Models/LeafInside.fbx` | client ZIP `G7_Photosynthesis_VR1.zip` → `Assets/ActivityFolder/Photosynthesis_Leaf_inside.fbx` | supplied by client | Scene 3 prologue: the hidden world inside the leaf (`LeafInteriorWorld`, re-materialled) |
 | `Art/G7/*.fbx` | client ZIP (same) | supplied by client | library copy of every usable module model, inventoried below; not referenced by the scene, so not in builds |
 | `Resources/Fonts/Inter-*.ttf` | shipped with Unity 6000.3 editor (rsms/Inter) | SIL OFL 1.1 | UI typography |
@@ -17,7 +18,7 @@
 Not used (licence/weight): `potato_plants_collection.glb` (CC-BY-**NC** 4.0 — non-commercial, unsuitable for client demos),
 `plants_ready.glb` (CC-BY 4.0, 238k tris) and `potted_house_plants.glb` (CC-BY 4.0, 737k tris) — available if a heavier set dressing is wanted.
 
-Credit line for builds/credits: "Tropical Plants Pack M02P by MozzarellaARC (sketchfab.com/mozzarellaARC), CC BY 4.0".
+Credit line, only if the tropical plants come back into the scene: "Tropical Plants Pack M02P by MozzarellaARC (sketchfab.com/mozzarellaARC), CC BY 4.0".
 
 ## Client ZIP — `C:\Users\ADMIN\Documents\Received Files\G7_Photosynthesis_VR1.zip` (inventory, 2026-10-07)
 

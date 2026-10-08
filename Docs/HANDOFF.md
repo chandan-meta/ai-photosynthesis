@@ -1,11 +1,49 @@
-# Handoff — Photosynthesis module, 2026-10-08 (evening update)
+# Handoff — Photosynthesis module, 2026-10-08 (night update)
 
-Read this first. Section 0 is the latest work; sections 1–8 (morning) still hold.
+Read this first. Sections 0a and 0b are the latest work; sections 1–8 (morning) still hold, except where 0a says otherwise.
 Project: `D:\AI unity project\AI PHOTOSYNTHESIS` (Unity 6000.3.0f1, URP 17.3, UI Toolkit, Input System).
-Git: local repository, `main` = the module (baseline `daf9bf5`, `85e0b0a` review passes, then the Dr. Curio scarf commit).
-Branch `feature/tripo-curio` parks the rejected character replacement (below). **No remote yet** (section 7).
+Git: local repository, `main` = the module (baseline `daf9bf5`, `85e0b0a` review passes, `ea251e4` the Dr. Curio scarf, then the
+new chamber environment). Branch `feature/tripo-curio` parks the rejected character replacement (0b). **No remote yet** (section 7).
 
-## 0. Dr. Curio: the classic robot, now with the user's green scarf (2026-10-08, evening)
+## 0a. New chamber environment: the user's lab model (2026-10-08, night)
+
+**Request.** "Change the environment dome model with this (`Ai Photoshynthesis1.fbx`), keep the centre plant as it is, change the rest of
+the environment." Done: the old glass dome, the tropical vegetation and all procedural decor (floor + engraving, beds, pots, research
+stations, banners, vines, suspended leaves) are gone; the user's glass-roofed lab replaces them. The hero plant, its soil, the cyan ring
+(now on the planter rim), the skylight, the sun beam, the formation swirl, the underground cross-section and the outside scenery stay.
+
+**Pipeline.** `blender -b --factory-startup -P Tools/Chamber/build_env.py` (source FBX only read) → `Art/Environment/Chamber.fbx` +
+`Textures/` (53 maps, 2048 px architecture / 1024 px props). It cuts the soil out of the model's centre planter (faces centred inside
+r 2.85 above 0.3 m; the rim and its inner wall stay), splits the floor into `Floor Inner` (r 2.9 to 6.4, fades for the roots x-ray; open under the soil like the old platform) and
+`Floor Outer` with the same planar UVs, and decimates the five microscopes (19k → 4k triangles each); 193 meshes, 255k triangles.
+Build Scene (`ChamberBuilder`) does the rest: importer settings (normal maps by file name, no colliders, axis conversion baked: door at
+−Z), derived materials in `Art/Environment/Materials` (cutout double-sided foliage, glass, glowing hologram screens, warm lamps), the
+roof split into 24 sectors (`RoofPieces.asset`), and 208 pieces handed to the Scene 2 formation. Details: `ARCHITECTURE.md` ▸ Chamber
+environment.
+
+**Gameplay changes that follow from the model.** `Chamber.PlatformHeight` 0.35 → 0.55 (the soil sits inside the planter rim; every
+scripted shot is plant-relative, so it moved with it). Skylight y 10.5 → 11.9 (its stack stays under the roof crown hub). Story camera bound
+(12, 10.3, 12) → (9.4, 11.4, 9.4): the posts' inner corners stand at r ≈ 9.0 and the building ends at r ≈ 10.4 (open sides, so the
+outside ground now starts at r 10.2). Establish pose z −10.2 → −8.4 (it was inside the door wall), hero shot (−3.4, 0.7, −8.6) →
+(−2.6, 0.7, −7.4) (it was inside a post), finale crane top (0, 6.2, −8.4) → (0, 5.4, −7.4) (under the ivy shelf). Lamps, screens and
+emissive maps dim with daylight and the dark beats (runtime copies); ivy and hologram screens are culled when the orbit lens is inside
+them. The old `DomeInterior.fbx`, `DomePieces.asset`, `TropicalPlants.glb`, `DomeGlass.mat` and `DomeLamp.mat` are no longer used (kept).
+
+**Verification (final source; scene + dev player 274 MB, 0 build errors; release player rebuilt from the same source).** Full
+suite (`Docs/handoff/fulltest.sh`), every run errors=0 and no exceptions: real-pacing intro film (formation → hero shot → leaf vista) ·
+finale film · 24 beat screenshots · autoplay · autoplay wrong-answers-first · UI states (Ask-AI voice ok) · touch (drag 67.9°, 1 tap) ·
+perf run (lowest per-beat minimum 257 fps at Sunlight, FreeExplore 261; Scene2Start's 0 is the loading frame). Extra animation bursts
+(`-film -filmrate`): formation, Scene 8 skylight + beam, roots reveal, finale crane, Phloem auto-spin orbit — no clipping found.
+An independent review (3 reviewers + adversarial verifiers) confirmed 12 findings, all fixed: hologram screens glowed where their art is
+transparent (now straight alpha), acid/base glassware drew opaque (opacity map merged into the base alpha), thin ivy strands and the ends of
+the curved screens escaped the near-camera cull (now bounds-based), the inner floor ghost lay across the root column (now a ring from the
+planter wall), fade twins popped glossy (they copy the source gloss), the skylight's throat poked into the crown hub (y 12.1 → 11.9), three
+light shafts started inside tables, the Assessment card pose sat outside the bound (0.19 m pop), whole-plant orbits could dip into the bench
+props (pitch ≥ 0 now), plus dead code. 2 findings were refuted. Known and **not** from this change: a player run quit with `-quitafter`
+while music was still rendering crashed on shutdown (`audio render … Thread was being aborted`, also in older logs) — flagged as a
+separate task (AudioDirector background render vs. quit).
+
+## 0b. Dr. Curio: the classic robot, now with the user's green scarf (2026-10-08, evening)
 
 **Decisions (user, in order).** (1) A full replacement Dr. Curio was built from `D:\AI unity project\charcter\dr curio.blend` (rigged in
 Blender, 10 clips, face blendshapes, spring sprout) — the user preferred the original procedural robot; it is parked, complete, on branch
@@ -22,7 +60,7 @@ green lift like the shell's in dark micro worlds, casts shadows): 12 lines; ever
 **Also on main:** `-filmrate s` debug flag (animation bursts with `-film`, `-beat`, `-quitafter`; a bad value warns and keeps 3 s); Curio is
 hidden before the white flash into the leaf-interior vista (he flashed up in companion mode during the fade).
 
-**Housekeeping.** Running Build Scene regenerates `Materials/DomeGlass.mat` and `DomeLamp.mat`; their uncommitted local edits that existed at the
+**Housekeeping.** Build Scene (before 0a) regenerated `Materials/DomeGlass.mat` and `DomeLamp.mat`; their uncommitted local edits that existed at the
 start of this session were overwritten that way (they match the last commit). The texture-painting kit folder above predates the scarf
 decision: its in-game skin hook is not on main (its README says so).
 
@@ -154,7 +192,7 @@ scripted-shot depth of field, the end menu and Free Explore "Factory controls".
 - Bash heredocs containing an apostrophe failed in this environment; write scripts with the Write tool, then run them.
 - When stopping a background test run, also kill `fulltest.sh` itself (it relaunches the next player), then any `Photosynthesis.exe`.
 - An open Unity Editor on another project (AI OHM'S LAW) does not block batch builds; an editor on this project does.
-- Scripted shots are not clamped to the dome: keep (height / 10.3)² + (horizontal distance / 12)² < 1 from the chamber centre.
+- Scripted shots are not clamped to the dome: keep (height / 11.4)² + (horizontal distance / 9.4)² < 1 from the chamber centre (inside the posts, under the skylight).
 - The leaf model (`Resources/Models/LeafInside.fbx`) must stay **readable** (set by `ChamberBuilder.ConfigureImports`): chloroplasts are
   seeded on its cell meshes.
 - Atoms carry two materials (body + rim): code that swaps their material must swap the whole `sharedMaterials` set.

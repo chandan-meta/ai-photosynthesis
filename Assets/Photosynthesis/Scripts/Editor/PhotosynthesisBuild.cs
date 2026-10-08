@@ -20,9 +20,9 @@ namespace Photosynthesis.EditorTools
         public const string ScenePath = Root + "/Scenes/Scene02_BotanicalChamber.unity";
         const string MatDir = Root + "/Materials/Templates";
 
-        /// Implemented in ChamberBuilder.cs: place dome + vegetation + displays under the chamber and assign refs.
+        /// Implemented in ChamberBuilder.cs: place the environment model under the chamber and assign refs.
         static partial void PopulateChamber(Chamber chamber);
-        /// Implemented in ChamberBuilder.cs: importer settings for the dome FBX / vegetation GLB.
+        /// Implemented in ChamberBuilder.cs: importer settings for the environment FBX + textures and the G7 models.
         static partial void ConfigureImports();
 
         [MenuItem("Photosynthesis/Build Scene", priority = 0)]

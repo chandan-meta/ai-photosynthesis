@@ -45,7 +45,7 @@ namespace Photosynthesis
             hud.ZoomButton += d => cam.Zoom(d);
             hud.ClueClicked += id => { if (hubWant == null) return; if (id == hubWant) hubGo = true; else au.Play(Sfx.Wrong, 0.4f); };
             if (cam) { cam.UiBlocks = hud.PointerOverUI; cam.UserZoomed += d => { if (d > 0) userZoom += d; }; cam.Clicked += InspectPart;
-                cam.BoundCentre = ch.transform.position; cam.BoundExtents = new Vector3(12f, 10.3f, 12f); }   // orbit lens stays inside the rib fins (~12.35 m) and under the skylight/lamp ring (y 10.5–10.9); micro worlds are 2 km away, so it never applies there
+                cam.BoundCentre = ch.transform.position; cam.BoundExtents = new Vector3(9.4f, 11.4f, 9.4f); }   // orbit lens stays inside the ring of posts (inner corners r ≈ 9.0) and under the crown skylight (y 11.9); micro worlds are 2 km away, so it never applies there
         }
 
         // ================================================================== control
@@ -147,9 +147,10 @@ namespace Photosynthesis
         // ================================================================== helpers
         Vector3 PlantFocus => plant.Base + Vector3.up * ((plant.Top.y - plant.Base.y) * 0.5f);
         Vector3 CurioSpot => plant.Base + new Vector3(3.4f, 1.7f, -1.9f);
-        Vector3 Establish => plant.Base + new Vector3(0f, 2.9f, -10.2f);
-        const float OrbitDist = 8.8f;   // inside the palm ring (crowns reach r ≈ 8.5–14)
-        const float WholeFov = 56f;   // whole plant, crown to roots, inside the HUD band; widen the lens, not the orbit (palm/banana trunks stand at r ≈ 10–10.9)
+        Vector3 Establish => plant.Base + new Vector3(0f, 2.9f, -8.4f);   // on the door axis, 1.7 m in front of the door wall (r 10.07)
+        const float OrbitDist = 8.8f;   // just inside the posts (r ≈ 9); the dome bound pulls the lens in a little when it rides high
+        const float WholeFov = 56f;   // whole plant, crown to roots, inside the HUD band; widen the lens, not the orbit (posts, hanging ivy and holo panels stand at r ≈ 8–9.5).
+        // Its orbits keep pitch ≥ 0 (last Orbit argument): lower, the lens drops into the bench microscopes and glassware (r ≈ 9, y ≤ 1.4).
 
         IEnumerator Say(string id) { lastLineId = id; yield return dlg.Say(id); }
         IEnumerator SayAll(params string[] ids) { foreach (var id in ids) yield return Say(id); }
@@ -389,7 +390,7 @@ namespace Photosynthesis
             ch.SetFloorTransparent(true, 0.5f); plant.ShowRoots(true);
             yield return plant.SetTransparency(0.72f, 0.6f);
             plant.SetVessels(false, true); plant.SetFlow(Flow.Phloem, true); plant.SetFlow(Flow.Glucose, true);
-            cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f, WholeFov);   // matches Phloem's framing; also undoes the demo's 45° Focus lens
+            cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f, WholeFov, 0f);   // matches Phloem's framing; also undoes the demo's 45° Focus lens
         }
 
         // AI demos: one at a time, tracked so Hub can wait for it (demos restore their own visuals; stopping them would not).
@@ -443,8 +444,8 @@ namespace Photosynthesis
             ContextTopic = "the Botanical Investigation Chamber forming around you";
             au.Music(MusicState.NewWorld); hud.SetHudVisible(false); curio.SetVisible(false);
             ch.SetFormed(false); plant.SetGrown(false);
-            // world-forming reveal: crane-orbit ~48° round the plant onto the establishing pose, so palms, ribs and signs slide past
-            // each other while they form (yaw is spent 6–11 s, under the vegetation/glass/sunrise). Reduce motion keeps the near-axial pull-back.
+            // world-forming reveal: crane-orbit ~48° round the plant onto the establishing pose, so tables, posts and ivy slide past
+            // each other while they form (yaw is spent 6–11 s, under the assembly and the sunrise). Reduce motion keeps the near-axial pull-back.
             bool calm = Hud.ReduceMotion;
             cam.Cut(plant.Base + (calm ? new Vector3(0.6f, 1.7f, -4.2f) : new Vector3(-3.2f, 1.5f, -2.9f)), plant.Base + Vector3.up * 1.6f, 62f);
             Parallel(calm ? cam.Blend(Establish, PlantFocus + Vector3.up * 0.3f, 16f, 50f, Ease.InOut)
@@ -452,7 +453,7 @@ namespace Photosynthesis
             var form = Parallel(ch.Form(plant));
             yield return Fx.Wait(2.5f);   // Figma 01: title over the dark chamber; fully in by 3.7 s, gone by 7.1 s, before the sunrise
             yield return hud.Title("A New World", "Botanical Investigation Chamber", 2.6f);
-            au.Ambience("chamber");   // ~7.1 s: room tone, leaf rustle and birds fade in (1.6 s) as the glass closes and the sun rises
+            au.Ambience("chamber");   // ~7.1 s: room tone, leaf rustle and birds fade in (1.6 s) as the roof closes and the sun rises
             yield return form;
         }
 
@@ -489,9 +490,9 @@ namespace Photosynthesis
             yield return Say("s3_intro");
             // ---- cinematic prologue (one shot per storyboard line): hero plant → sunlight → through the leaf → the hidden world → back out
             int leaf = plant.FocusLeaf; bool calm = Hud.ReduceMotion;
-            // SHOT 02 — hero reveal: he turns to the plant; the camera swings low and wide so the crown stands against the glass
+            // SHOT 02 — hero reveal: he turns to the plant; the camera swings low and wide so the crown stands against the roof
             curio.LookAt(plant.Top);
-            var hero = plant.Base + new Vector3(-3.4f, 0.7f, -8.6f); var heroLook = PlantFocus + Vector3.up * 0.8f;   // low three-quarter: crown to pot against the glass
+            var hero = plant.Base + new Vector3(-2.6f, 0.7f, -7.4f); var heroLook = PlantFocus + Vector3.up * 0.8f;   // low three-quarter from beside the door: crown against the roof
             Coroutine heroMove = null;
             if (calm) cam.Cut(hero, heroLook, 50f); else heroMove = Parallel(cam.Arc(hero, heroLook, 2.6f, 50f));
             Parallel(curio.Scan(plant.Top, 2.5f)); hud.ShowScanner(ScanState.Scanning, "BIOLOGICAL ACTIVITY DETECTED", "Analysing the plant…", 0.6f);   // the readout never says the next line
@@ -686,7 +687,7 @@ namespace Photosynthesis
             if (place != Place.Chamber) yield return GoTo(Place.Chamber);
             plant.Signal(plant.Base, Palette.Water, true);
             ch.SetFloorTransparent(true, 2f); plant.ShowRoots(true);
-            yield return cam.Blend(plant.Base + new Vector3(2.5f, -0.4f, -5.5f), plant.RootTip + Vector3.up * 0.6f, 2.5f, 50f);
+            yield return cam.Blend(plant.Base + new Vector3(2.5f, -0.6f, -5.5f), plant.RootTip + Vector3.up * 0.6f, 2.5f, 50f);   // lens just under the floor plane (the planter lifts the plant 0.55 m): no grazing look through the ghost floor
             hud.Callout("roots", "ROOTS", "Hidden beneath the floor", Tone.Blue, () => plant.RootTip + Vector3.up * 0.4f);   // after the reveal: the label lands on its subject, clear of the dialogue
             yield return Say("s5_follow");
             plant.Signal(plant.Base, Palette.Water, false);
@@ -1101,7 +1102,7 @@ namespace Photosynthesis
             yield return plant.SetTransparency(0.72f, 1.5f);
             ch.SetFloorTransparent(true, 1f); plant.ShowRoots(true);
             plant.SetVessels(false, true); plant.SetFlow(Flow.Phloem, true); plant.SetFlow(Flow.Glucose, true);
-            cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, false, 3f, 11.5f, WholeFov); cam.AutoSpin = 10f;   // crown to roots in frame (PhloemReteach matches)
+            cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, false, 3f, 11.5f, WholeFov, 0f); cam.AutoSpin = 10f;   // crown to roots in frame (PhloemReteach matches)
             yield return Say("s12_rest");
             hud.Callout("phloem", "PHLOEM", "Food from the leaves", Tone.Orange, () => plant.Base + Vector3.up * 1.3f);
             hud.Callout("shoot", "GROWING SHOOT", "", Tone.Orange, () => plant.Shoot);
@@ -1176,7 +1177,7 @@ namespace Photosynthesis
             void working()
             {   // sunlight reads through the golden light flow; a beam flare would hide the processes
                 ch.SetFloorTransparent(true, 1f); plant.ShowRoots(true); Parallel(plant.SetTransparency(0.6f, 1f)); plant.SetVessels(true, true); plant.AllFlows(true);
-                cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f, WholeFov); cam.AutoSpin = 8f;   // crown clear of the top HUD, roots above the bottom panels; spins only when idle
+                cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f, WholeFov, 0f); cam.AutoSpin = 8f;   // crown clear of the top HUD, roots above the bottom panels; spins only when idle
             }
             working(); restoreFinal = working;
             hud.ShowInstruction("Rotate the plant — every process is running at once.", IconId.Replay);   // stays up through the lines
@@ -1195,9 +1196,9 @@ namespace Photosynthesis
             ContextTopic = "the end of the investigation";
             hud.HideInstruction(); hud.HideLine(); hud.SetCinematic(true); hud.SetAskAIVisible(false);
             restoreFinal = null; cam.AutoSpin = 0f; curio.LookAt(plant.Top);
-            // crane from the working-plant orbit up over the crown, looking down across it to the glass. The end pose stays inside the dome:
-            // (height / 10.3)² + (distance / 12)² < 1 from the chamber centre, or the lens enters the rib fins.
-            var top = plant.Base + new Vector3(0f, 6.2f, -8.4f); var topLook = PlantFocus + Vector3.up * 0.3f;
+            // crane from the working-plant orbit up over the crown, looking down across it to the lab. The end pose stays inside the dome bound,
+            // (height / 11.4)² + (distance / 9.4)² < 1 from the chamber centre, and under the ivy shelf (y ≈ 6–7 at r ≈ 9).
+            var top = plant.Base + new Vector3(0f, 5.4f, -7.4f); var topLook = PlantFocus + Vector3.up * 0.3f;
             if (Hud.ReduceMotion) cam.Cut(top, topLook, 56f); else Parallel(cam.Arc(top, topLook, 15f, 56f));
             int leaf = plant.FocusLeaf;
             // the relationship on the plant itself: three inputs arrive, two products leave
@@ -1303,15 +1304,15 @@ namespace Photosynthesis
             hud.SetInvestigation("FINAL INVESTIGATION", "Show what you can explain.", IconId.Target);
             // the question card takes the left 40 %: look past the plant's left so it sits in the right two-thirds. The yaw is pinned
             // (the old Establish+(-0.6,0.2,0) heading) so Curio's spot stays in the empty lower right after every reteach.
-            const float qYaw = -6f;
-            var qFocus = PlantFocus + new Vector3(-1.6f, 0.3f, 0f); var qPos = qFocus + Quaternion.Euler(10f, qYaw, 0f) * new Vector3(0f, 0f, -OrbitDist);
+            const float qYaw = -6f, qDist = 8.5f;   // qDist: the card pose sits inside the dome bound, so the Arc → Orbit hand-off has no dolly pop
+            var qFocus = PlantFocus + new Vector3(-1.6f, 0.3f, 0f); var qPos = qFocus + Quaternion.Euler(10f, qYaw, 0f) * new Vector3(0f, 0f, -qDist);
             Parallel(curio.Materialize(plant.Base + new Vector3(1.2f, 2.4f, -3.9f), Establish));   // the interviewer beams in beside the plant while the camera swings round (hides the jump from CurioSpot)
             yield return cam.Arc(qPos, qFocus, 2.6f, 48f);   // lands on the orbit pose: one move, from wherever the turntable stopped
-            cam.Orbit(qFocus, OrbitDist, qYaw, 10f, false, 3f, 11.5f);
+            cam.Orbit(qFocus, qDist, qYaw, 10f, false, 3f, 11.5f);
             curio.LookAtCamera();
             yield return Say("s15_final");
             var set = m.assessment.FinalSet(5);
-            IEnumerator reteach(Concept k) { yield return DemoInChamber(k); yield return cam.Arc(qPos, qFocus, 1.5f, 48f); cam.Orbit(qFocus, OrbitDist, qYaw, 10f, false, 3f, 11.5f); }   // same card framing and Curio spot
+            IEnumerator reteach(Concept k) { yield return DemoInChamber(k); yield return cam.Arc(qPos, qFocus, 1.5f, 48f); cam.Orbit(qFocus, qDist, qYaw, 10f, false, 3f, 11.5f); }   // same card framing and Curio spot
             for (int i = 0; i < set.Count; i++)
             {
                 var concept = set[i].concept;   // Assessment may re-plan later slots as the learner answers
@@ -1427,7 +1428,7 @@ namespace Photosynthesis
                     hud.SetZoomPath(0);
                     if (place != Place.Chamber) { yield return GoTo(Place.Chamber, true); if (gen != exploreGen) yield break; }
                     ch.SetFloorTransparent(true, 1f); plant.ShowRoots(true); Parallel(plant.SetTransparency(0.6f, 1f)); plant.SetVessels(true, true); plant.AllFlows(true);
-                    cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f, WholeFov);
+                    cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f, WholeFov, 0f);
                     hud.HideFreeExplore();
                     yield return Experiment(gen);
                     hud.ShowFreeExplore(k => pick = k, () => pick = "Exit");   // always back: a newer pick must never leave the learner without tiles or Exit
@@ -1454,9 +1455,9 @@ namespace Photosynthesis
                 case "Roots": cam.Orbit(plant.RootTip + Vector3.up * 0.8f, 6f, cam.transform.eulerAngles.y, 5f, true, 2f, 11f, 50f); hud.Callout("r", "ROOTS", "Absorb water and minerals", Tone.Blue, () => plant.RootTip); break;
                 case "Stem": cam.Orbit(plant.Base + Vector3.up * 1.2f, 6f, cam.transform.eulerAngles.y, 8f, true, 2f, 11f, 50f); plant.SetVessels(true, true); hud.Callout("s", "STEM", "Xylem + phloem run inside", Tone.Green, () => plant.Base + Vector3.up * 1.2f); break;
                 case "Leaf": cam.Orbit(plant.LeafCenter(leaf), 3.5f, cam.transform.eulerAngles.y, 20f, true, 1.2f, 10f, 50f); plant.HighlightLeaf(leaf, true); plant.SetFlow(Flow.Sunlight, true); plant.SetFlow(Flow.Chloroplast, true); break;
-                case "Xylem": plant.SetVessels(true, false); plant.SetFlow(Flow.Water, true); hud.Callout("x", "XYLEM", "Water ↑ from the roots", Tone.Blue, () => plant.Base + Vector3.up * 1f); cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 2f, 11.5f, WholeFov); break;
+                case "Xylem": plant.SetVessels(true, false); plant.SetFlow(Flow.Water, true); hud.Callout("x", "XYLEM", "Water ↑ from the roots", Tone.Blue, () => plant.Base + Vector3.up * 1f); cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 2f, 11.5f, WholeFov, 0f); break;
                 case "Phloem":
-                case "FollowFood": plant.SetVessels(false, true); plant.SetFlow(Flow.Phloem, true); plant.SetFlow(Flow.Glucose, true); hud.Callout("p", "PHLOEM", "Food from the leaves", Tone.Orange, () => plant.Base + Vector3.up * 1f); cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 2f, 11.5f, WholeFov); break;   // Phloem beat's whole-plant framing
+                case "FollowFood": plant.SetVessels(false, true); plant.SetFlow(Flow.Phloem, true); plant.SetFlow(Flow.Glucose, true); hud.Callout("p", "PHLOEM", "Food from the leaves", Tone.Orange, () => plant.Base + Vector3.up * 1f); cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 2f, 11.5f, WholeFov, 0f); break;   // Phloem beat's whole-plant framing
                 default: plant.HighlightLeaf(leaf, false); plant.SetVessels(true, true); plant.AllFlows(true); cam.Orbit(PlantFocus, OrbitDist, cam.transform.eulerAngles.y, 10f, true, 2f, 11.5f, 50f); cam.AutoSpin = 6f; break;   // the working plant; turns only when idle
             }
         }

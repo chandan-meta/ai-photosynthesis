@@ -9,7 +9,7 @@ Scene: `Assets/Photosynthesis/Scenes/Scene02_BotanicalChamber.unity`, generated 
 
 | Field | Type | Where it lives |
 |---|---|---|
-| `chamber` | `Chamber` | scene object (dome + vegetation placed by the editor builder) |
+| `chamber` | `Chamber` | scene object (the environment model placed by the editor builder) |
 | `cam` | `CameraDirector` | Main Camera |
 | `plant` | `HeroPlant` | created at runtime under `chamber.PlantAnchor` |
 | `curio` | `Curio` | created at runtime |
@@ -49,6 +49,18 @@ Question lines use ids `q_<QID>_lead`, `q_<QID>_ok`, `q_<QID>_no`.
 The robot is built in code (`Curio.Build`); the one imported piece is the green scarf from the user's `charcter/dr.blend`:
 `Tools/Curio/scarf.py` → `Resources/Characters/Curio_ScarfMesh.obj` (rig space) + `Curio_Scarf.png` (baked fabric). Re-run the script after
 the user edits the scarf in Blender.
+
+## Chamber environment
+The lab around the hero plant is the user's model `Ai Photoshynthesis1.fbx` (glass-roofed rotunda: rib roof, posts, lab tables,
+kiosks, hologram panels, hanging ivy, door at −Z). `Tools/Chamber/build_env.py` (Blender, source only read) cuts the soil out of its centre
+planter, rebuilds the floor as `Floor Inner` (planter wall r 2.9 to 6.4) + `Floor Outer`, decimates the microscopes and writes
+`Art/Environment/Chamber.fbx` + `Textures/`. `ChamberBuilder` (Build Scene) unpacks it under `Chamber/Dome`, derives `Art/Environment/Materials`
+(cutout foliage, glass, glowing screens and lamps), splits the roof into 12 × 3 sectors and hands every renderer except the floor, the planter
+(`Console*`) and the outer floor ring to the Scene 2 formation (`Chamber.domePieces`). At runtime (`Chamber.InitEnvironment`, by name) the
+inner floor and the planter get see-through twins for the roots x-ray, lamps/screens/emissive maps dim with daylight and mood (runtime
+copies), and see-through decor (foliage, screens) is culled when the lens is inside it. The hero plant stands in the procedural soil bed
+inside the planter rim (`PlatformHeight` 0.55, `RimTop` 0.592); the cyan ring and the skylight (y 11.9, just under the roof crown hub) are still
+procedural. Story cameras stay inside `BoundExtents` (9.4, 11.4, 9.4): the posts' inner corners are at r ≈ 9.0.
 
 ## Input
 Input System only (`UnityEngine.InputSystem`): `Mouse.current`, `Touchscreen.current.primaryTouch` (the finger is the pointer while
