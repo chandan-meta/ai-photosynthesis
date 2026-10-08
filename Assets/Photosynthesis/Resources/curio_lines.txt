@@ -1,0 +1,165 @@
+# Dr. Curio's lines — id|text. Source of truth for subtitles AND generated voice-over (Tools/GenerateVO.ps1).
+# Storyboard: "AI PHOTOSYNTHESIS — THE HIDDEN FOOD FACTORY" Scenes 2–15.
+s3_good|Good.
+s3_intro|You're exactly who I was looking for. Hi, my name is Dr. Curio. I'm a botanist, and a curious scientific investigator.
+s3_peaceful|This plant looks peaceful…
+s3_processes|…but right now, billions of tiny processes are happening inside it.
+s3_somewhere|And somewhere in there…
+s3_food|…food is being made.
+s3_three|Photosynthesis needs three important things.
+s3_tease|But I'm not giving them away that easily.
+s3_find|Find the three clues, and we'll catch this leaf making food.
+s3_askme|And if you get stuck, just ask me. I can show you anything in here.
+s4_first|First clue.
+s4_around|Something the plant needs is all around us.
+s4_closer|Let's get closer.
+s4_zoom|Let's zoom into the leaf.
+s4_stop|Stop.
+s4_found|Found something.
+s4_stomata|These tiny openings are called stomata.
+s4_entering|And look what's entering.
+s4_co2|Carbon dioxide from the air enters the leaf through the stomata.
+s4_ingredient|Looks like we've found our first ingredient.
+s5_second|Second clue. Let's scan the plant from top to bottom.
+s5_nothing|Leaves… nothing. Stem… nothing.
+s5_huh|Huh.
+s5_notleaf|Our second clue isn't starting in the leaf at all.
+s5_follow|Let's follow it.
+s6_recognise|Recognise this?
+s6_poured|The water Ishaan poured didn't just disappear.
+s6_select|Select a water molecule near the root.
+s6_absorbed|Water is absorbed from the soil by the roots.
+s6_andnow|And now…
+s6_ride|…we ride!
+s7_xylem|This is the xylem. It carries water and minerals upward, all the way from the roots.
+s7_two|Two ingredients.
+s7_so|So…
+s7_food|Where's the food?
+s7_exactly|Exactly.
+s8_co2|We've brought in carbon dioxide.
+s8_water|We've brought in water.
+s8_doing|And our food factory is doing…
+s8_nothing|…absolutely nothing.
+s8_missing|We're missing something.
+s8_inspect|Take a look around the plant. What could be missing?
+s8_thereyou|There you are!
+s8_light|Light provides the energy that drives photosynthesis.
+s8_everything|We've got everything.
+s8_notseen|But we still haven't seen how they become food.
+s8_open|Open the skylight above us — let's see what light does!
+s8_hint|Up there — the skylight. Give it a click!
+s8_deeper|Time to go deeper.
+s9_noteverywhere|Photosynthesis isn't happening everywhere in here.
+s9_inside|It's happening inside these.
+s9_chloroplast|Chloroplasts contain the green pigment chlorophyll.
+s9_absorbs|Chlorophyll absorbs light energy.
+s9_andnow|And now…
+s9_run|…the factory can run.
+s10_feed|The factory's ready. Send in the ingredients — click the carbon dioxide and the water.
+s10_hint|Click a carbon dioxide or a water molecule to send it in.
+s10_inco2|Carbon dioxide, in!
+s10_inh2o|Water, in!
+s10_thereitis|There it is.
+s10_kabir|The answer to Kabir's question.
+s10_glucose|The plant has made glucose — a carbohydrate that stores chemical energy.
+s10_uses|The plant can use this glucose for energy, growth, or convert it and store it for later.
+s10_summary|Using light energy, the plant converts carbon dioxide and water into energy-rich carbohydrates such as glucose.
+s10_ownfood|The plant made its own food.
+s11_hold|Hold on.
+s11_else|We made something else too.
+s11_oxygen|Oxygen is also produced during photosynthesis.
+s11_follow|Let's follow the oxygen.
+s11_entered|Carbon dioxide entered.
+s11_leaves|Oxygen leaves.
+s11_doorway|Same doorway. Different journey.
+s12_foodmade|Food made.
+s12_closed|Case closed.
+s12_ofcourse|…Of course not.
+s12_leaves|The plant makes food in its leaves…
+s12_rest|…but the rest of the plant needs it too.
+s12_phloem|Food is transported from leaves to other parts of the plant through the phloem.
+s12_compare|Try the switches: xylem, phloem, or both.
+s13_remember|Remember this?
+s13_thats|That's photosynthesis.
+s13_highways|Also, don't mix up our two highways. Xylem brought water to the leaf. Phloem carries food from the leaf to where it's needed.
+s14_beginning|At the beginning, it looked like this plant was doing nothing.
+s14_better|But now you know better.
+s14_mouth|No mouth.
+s14_plate|No plate.
+s14_kitchen|No kitchen.
+s14_tiny|Well… technically, millions of tiny kitchens.
+s14_look|Plants don't go looking for food.
+s14_make|They make it using photosynthesis.
+exp_intro|Now for the fun part. Let's try to break the food factory. Flip a switch and watch the meters.
+exp_light|No light, no energy. Food production stops.
+exp_co2|No carbon dioxide, no raw material. Nothing to build glucose from.
+exp_water|No water reaching the leaf, and the factory stops again.
+exp_phloem|Food is still being made — but it's stuck in the leaves.
+exp_all|Everything back on. Every ingredient matters — and both highways too.
+s15_solved|Three clues. One leaf, caught making food. Case closed... and this time, I mean it.
+s15_final|One last investigation. Let's see how much of the factory you can explain.
+s15_explore|The whole plant is yours now. Rotate it, zoom in, and follow anything you like.
+gen_wellspotted|Well spotted!
+gen_lookagain|Let's take another look.
+gen_tryagain|Now — try that one again.
+# Adaptive questions (Assessment.cs) — q_<ID>_lead · q_<ID>_ok (correct) · q_<ID>_no (incorrect / prediction encouragement)
+q_Q1_lead|Before we leave this leaf surface—what exactly did we just catch entering?
+q_Q1_ok|Exactly. Carbon dioxide from the air enters through the stomata.
+q_Q1_no|Watch our visitor again.
+q_Q2_lead|That was easy. Try this.
+q_Q2_ok|Exactly. Closed stomata restrict the entry of carbon dioxide.
+q_Q2_no|Close! Water comes up from the roots. The stomata are a doorway for a gas from the air. Watch which one.
+q_Q3_lead|Signal detected below us. Any prediction?
+q_Q3_ok|Good prediction. Let's go underground and prove it.
+q_Q3_no|Interesting theory. Let's investigate instead of guessing.
+q_Q4_lead|That was quite a ride! Quick check on the tunnel we just travelled through.
+q_Q4_ok|Correct. Xylem is our water highway.
+q_Q4_no|Remember the pathway we just travelled through? That was the xylem.
+q_Q5_lead|We have carbon dioxide. We have water. But food production is still zero. What's missing?
+q_Q5_ok|Let's test your theory.
+q_Q5_no|Let's see what happens when some energy arrives.
+q_Q6_lead|All three clues found! One tricky question about the last one.
+q_Q6_ok|Exactly. Sunlight isn't food. It's the energy that powers the food factory.
+q_Q6_no|Careful, that's a very common mix-up. Light isn't food, and it isn't a gas. It's the energy. Watch.
+q_Q7_lead|Our scanner says photosynthesis is concentrated inside these green structures. What are they?
+q_Q7_ok|Target identified: chloroplast.
+q_Q7_no|Good guess, but follow the green glow. Let's take a closer look.
+q_Q8_lead|Quick check on chlorophyll, the green pigment inside the chloroplasts.
+q_Q8_ok|Exactly. Chlorophyll captures the light energy needed for photosynthesis.
+q_Q8_no|Not quite. Watch the green pigment as the light strikes it.
+q_Q9_lead|Unknown molecule detected. After everything we've discovered, what do you think we've made?
+q_Q9_ok|Great prediction. Let's see if the scanner agrees.
+q_Q9_no|Interesting idea. Let's let the scanner decide.
+q_Q10_lead|Two journeys through the same doorway. Which way did each gas go?
+q_Q10_ok|Exactly. Same doorway. Different journey.
+q_Q10_no|Let's watch the doorway again. One gas comes in, and the other goes out.
+q_Q11_lead|Now, about our second highway.
+q_Q11_ok|Correct. Phloem carries food from the leaves to other parts of the plant.
+q_Q11_no|Not quite. Follow the orange glow. That's where the food travels.
+q_Q12_lead|You're on a roll. Let's make it harder.
+q_Q12_ok|Exactly. Xylem brings water upward from the roots.
+q_Q12_no|Tricky one. Think about what comes from the roots, and which highway carries it up.
+q_Q13_lead|Time to put the whole case together. What goes in, and what comes out?
+q_Q13_ok|Case solved. Now let's see the whole process together.
+q_Q13_no|Close. Think back. What did we collect, and what did the factory make?
+q_Q14_lead|Imagine a plant locked away in a dark cupboard.
+q_Q14_ok|Exactly. No light, no energy. The factory stops.
+q_Q14_no|Remember our sleepy leaf? It had carbon dioxide and water, but nothing happened until the light arrived.
+q_Q15_lead|Here's a leaf that's running short of one ingredient.
+q_Q15_ok|Right. Less carbon dioxide means less raw material, so less glucose.
+q_Q15_no|Think about where glucose gets its carbon. Let's watch carbon dioxide come in again.
+q_Q16_lead|Remember Manav's idea that plants get their food from the soil? Let's put it on trial.
+q_Q16_ok|Exactly. The soil gives water and minerals, but the food is made in the leaves.
+q_Q16_no|Remember the chloroplast? That's where the food was actually made.
+q_Q17_lead|Time for some plant detective work. Something inside this plant is damaged.
+q_Q17_ok|Spot on. No working xylem, no water reaching the leaves.
+q_Q17_no|Remember our ride? The xylem was the water highway.
+q_Q18_lead|Now the other highway is in trouble.
+q_Q18_ok|Exactly. The leaves can still make food, but it can't reach the rest of the plant.
+q_Q18_no|The xylem is fine, so water still arrives. Which highway carries the food away?
+q_Q19_lead|Let's retrace the water's journey.
+q_Q19_ok|Perfect. Soil, root, xylem, leaf. Just like our ride.
+q_Q19_no|Let's ride it again. Start in the soil and follow the water up.
+q_Q20_lead|Final challenge. Connect all three clues.
+q_Q20_ok|Brilliant. Raw materials plus energy. That's the whole factory.
+q_Q20_no|Let's sort the clues again. Two are ingredients, and one is the power supply.

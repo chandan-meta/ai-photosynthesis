@@ -1,0 +1,231 @@
+/* Photosynthesis — Hidden Food Factory · runtime HUD (Figma "UI System", file suKcNjnLh8gigaytOygbBs).
+   Structure and static colours are built in code (Hud*.cs); this sheet owns motion and interactive states,
+   because inline styles would override :hover / :active.
+   Translucency: this project blends UI in linear space, Figma in sRGB. Alphas of the DARK bases (10,28,23) (18,50,41)
+   (5,14,11) (15,77,51) below are Kit.GA() of the Figma values, 1-(1-a)^2.2, precomputed (USS can't call code); the Figma
+   value is the token. Light tints over glass are pre-mixed in sRGB and drawn near-opaque. */
+
+/* ---------- panel motion: opacity 0→1, 14px slide, 0.97→1 scale */
+.ps-anim {
+    transition-property: opacity, translate, scale;
+    transition-duration: 0.25s, 0.3s, 0.3s;
+    transition-timing-function: ease-out-cubic, ease-out-cubic, ease-out-cubic;
+}
+.ps-off { opacity: 0; translate: 0 14px; scale: 0.97 0.97; }
+/* edge-anchored panels enter from their own edge (no scale: they dock, they don't pop) */
+.ps-from-right.ps-off { translate: 24px 0; scale: 1 1; }
+.ps-from-left.ps-off  { translate: -24px 0; scale: 1 1; }
+.ps-from-top.ps-off   { translate: 0 -14px; scale: 1 1; }
+/* Ask Dr. Curio grows out of the orb under it */
+.ps-from-orb { transform-origin: 100% 100%; }
+.ps-reduce .ps-off, .ps-reduce .ps-from-right.ps-off, .ps-reduce .ps-from-left.ps-off, .ps-reduce .ps-from-top.ps-off { translate: 0 0; scale: 1 1; }
+.ps-reduce .ps-anim { transition-duration: 0.1s, 0s, 0s; }
+/* full-screen scrims (pause dim, loading cover) only fade: sliding/scaling a full-bleed fill exposes lit screen edges */
+.ps-scrim.ps-off { translate: 0 0; scale: 1 1; }
+
+/* ---------- cinematic shots (Hud.SetCinematic): secondary HUD fades out; top actions + Ask AI recede (80%, 92% size) but stay legible + clickable, and return to full on hover or while Ask AI is live */
+.ps-cine .ps-cine-hide { opacity: 0; transition-duration: 0.4s, 0.3s, 0.3s; }
+.ps-cine .ps-cine-dim { opacity: 0.8; scale: 0.92 0.92; transition-duration: 0.4s, 0.3s, 0.4s; }
+.ps-cine .ps-cine-dim:hover, .ps-cine .ps-cine-dim.ps-cine-awake { opacity: 1; scale: 1 1; transition-duration: 0.15s, 0.3s, 0.15s; }
+.ps-reduce.ps-cine .ps-cine-dim, .ps-reduce.ps-cine .ps-cine-dim:hover { scale: 1 1; transition-duration: 0.1s, 0s, 0s; }
+.ps-cine .ps-cine-dim.ps-off { opacity: 0; }
+
+.ps-dim { transition-property: opacity; transition-duration: 0.45s; transition-timing-function: ease-in-out-sine; }
+.ps-slot { transition-property: bottom, right; transition-duration: 0.32s, 0.3s; transition-timing-function: ease-out-cubic, ease-out-cubic; }
+.ps-shift { transition-property: right; transition-duration: 0.3s; transition-timing-function: ease-out-cubic; }
+.ps-hoverglow { opacity: 0; transition-property: opacity; transition-duration: 0.18s; }
+
+/* ---------- Button (pill) */
+.ps-btn {
+    flex-direction: row; align-items: center; justify-content: center; flex-shrink: 0;
+    padding: 11px 22px; border-radius: 999px; border-width: 1.5px;
+    transition-property: background-color, border-color, scale; transition-duration: 0.15s, 0.15s, 0.12s;
+}
+.ps-btn:hover:enabled { border-color: rgba(61, 214, 232, 0.9); }
+.ps-btn:hover:enabled > .ps-hoverglow { opacity: 1; }
+.ps-btn:active { scale: 0.97 0.97; }
+.ps-btn:disabled { opacity: 0.35; }
+.ps-btn--primary { background-color: rgba(31, 138, 85, 0.92); border-color: rgba(75, 224, 138, 0.9); }
+.ps-btn--primary:active { background-color: rgb(15, 77, 51); }
+/* Figma disabled primary: deep green fill, faint stroke (the 0.35 opacity dims the inline label) */
+.ps-btn--primary:disabled { background-color: rgb(15, 77, 51); border-color: rgba(75, 224, 138, 0.35); }
+.ps-btn--secondary { background-color: rgba(18, 50, 41, 0.97); border-color: rgba(127, 230, 207, 0.35); }
+.ps-btn--secondary:active { background-color: rgba(5, 14, 11, 0.99); }
+.ps-btn--gold { background-color: rgb(245, 196, 81); border-color: rgb(245, 196, 81); }
+.ps-btn--gold:hover:enabled { background-color: rgb(255, 212, 110); border-color: rgb(255, 232, 170); }
+.ps-btn--gold:active { background-color: rgb(201, 141, 22); }
+.ps-btn--ghost { background-color: rgba(0, 0, 0, 0); border-color: rgba(127, 230, 207, 0.3); }
+.ps-btn--ghost:active { background-color: rgba(5, 14, 11, 0.87); }
+/* selected button in a choice row (Free Explore ▸ Follow): same green as .ps-xtile--on / .ps-seg--green; stays green on hover + press */
+.ps-btn.ps-btn--on, .ps-btn.ps-btn--on:hover:enabled, .ps-btn.ps-btn--on:active { background-color: rgba(31, 138, 85, 0.9); border-color: rgb(75, 224, 138); }
+.ps-btn--big { padding: 14px 30px; }
+/* a button that is itself a shown/hidden panel (Exit Free Explore) keeps both transition sets */
+.ps-btn.ps-anim {
+    transition-property: opacity, translate, scale, background-color, border-color;
+    transition-duration: 0.25s, 0.3s, 0.3s, 0.15s, 0.15s;
+    transition-timing-function: ease-out-cubic, ease-out-cubic, ease-out-cubic, ease, ease;
+}
+
+/* ---------- HUD icon tile (Menu / Reset / Help) */
+.ps-tile {
+    width: 64px; align-items: center; padding: 10px 8px; border-radius: 14px;
+    background-color: rgba(10, 28, 23, 0.98); border-width: 1px; border-color: rgba(127, 230, 207, 0.25);
+    transition-property: border-color, background-color, scale; transition-duration: 0.15s;
+}
+.ps-tile:hover { border-color: rgba(61, 214, 232, 0.8); }
+.ps-tile:hover > .ps-hoverglow { opacity: 1; }
+.ps-tile:active { background-color: rgba(5, 14, 11, 0.99); scale: 0.96 0.96; }
+
+/* ---------- CC toggle (glass @80) + Ask AI orb press */
+.ps-cc { background-color: rgba(10, 28, 23, 0.97); border-width: 1px; border-color: rgba(127, 230, 207, 0.2); }
+.ps-cc.ps-anim { transition-property: opacity, translate, scale, border-color, background-color; }
+.ps-cc:hover { border-color: rgba(61, 214, 232, 0.8); }
+.ps-cc:hover > .ps-hoverglow { opacity: 1; }
+.ps-cc:active { background-color: rgba(5, 14, 11, 0.99); scale: 0.97 0.97; }
+.ps-orb:active { scale: 0.95 0.95; }
+
+/* ---------- round icon buttons */
+.ps-round {
+    align-items: center; justify-content: center;
+    background-color: rgba(18, 50, 41, 0.87); border-width: 1px; border-color: rgba(127, 230, 207, 0.35);
+    transition-property: border-color, background-color, scale, opacity; transition-duration: 0.15s;
+}
+.ps-round:hover { border-color: rgba(61, 214, 232, 0.9); background-color: rgba(18, 58, 56, 0.96); }   /* cyan @16 pre-mixed over glass */
+.ps-round:active { scale: 0.92 0.92; }
+.ps-round:disabled { opacity: 0.4; }
+.ps-round--cyan { background-color: rgba(61, 214, 232, 0.1); border-width: 1.5px; border-color: rgba(61, 214, 232, 0.8); }
+.ps-round--ghost { background-color: rgba(0, 0, 0, 0); border-color: rgba(127, 230, 207, 0.4); }
+.ps-round--mic { background-color: rgba(18, 50, 41, 0.99); border-width: 1.5px; border-color: rgba(61, 214, 232, 0.7); }
+.ps-round--send { background-color: rgb(61, 214, 232); border-width: 0; }
+.ps-round--send:hover { background-color: rgb(125, 233, 245); }
+.ps-round.ps-round--live { background-color: rgba(255, 107, 107, 0.28); border-color: rgb(255, 107, 107); scale: 1.08 1.08; }
+
+/* ---------- chips (Ask AI suggestions, debug beats) */
+.ps-chip {
+    padding: 9px 14px; border-radius: 999px; margin-right: 8px; margin-bottom: 8px;
+    background-color: rgba(18, 50, 41, 0.87); border-width: 1px; border-color: rgba(127, 230, 207, 0.3);
+    transition-property: border-color, background-color; transition-duration: 0.15s;
+}
+.ps-chip:hover { border-color: rgba(61, 214, 232, 0.9); }
+.ps-chip:active { background-color: rgba(15, 77, 51, 0.99); }
+.ps-chip.ps-chip--on { background-color: rgba(15, 77, 51, 0.99); border-color: rgb(75, 224, 138); }
+
+/* ---------- segmented pills (magnification, comparison, settings tabs, zoom path) */
+.ps-seg {
+    flex-direction: row; align-items: center; padding: 6px 14px; border-radius: 999px;
+    border-width: 1px; border-color: rgba(0, 0, 0, 0);
+    transition-property: background-color, border-color; transition-duration: 0.2s;
+}
+.ps-seg:hover { border-color: rgba(61, 214, 232, 0.5); }
+.ps-seg.ps-seg--on { background-color: rgba(21, 69, 69, 0.96); border-color: rgba(61, 214, 232, 0.9); }   /* cyan @22 pre-mixed over glass */
+.ps-seg--green.ps-seg--on { background-color: rgba(31, 138, 85, 0.92); border-color: rgb(75, 224, 138); }
+.ps-seg--plain.ps-seg--on { background-color: rgba(31, 138, 85, 0.9); border-color: rgba(0, 0, 0, 0); }
+
+/* ---------- Free Explore destination tile */
+.ps-xtile { width: 92px; align-items: center; }
+.ps-xtile-box {
+    width: 60px; height: 60px; border-radius: 16px; align-items: center; justify-content: center; margin-bottom: 8px;
+    background-color: rgba(18, 50, 41, 0.95); border-width: 1px; border-color: rgba(127, 230, 207, 0.25);
+    transition-property: background-color, border-color, scale; transition-duration: 0.15s;
+}
+.ps-xtile:hover .ps-xtile-box { border-color: rgba(61, 214, 232, 0.9); border-width: 1.5px; }
+.ps-xtile:active .ps-xtile-box { scale: 0.94 0.94; }
+.ps-xtile.ps-xtile--on .ps-xtile-box { background-color: rgba(31, 138, 85, 0.9); border-color: rgb(75, 224, 138); border-width: 2px; }
+
+/* ---------- MCQ answer option */
+.ps-opt {
+    flex-direction: row; align-items: center; padding: 10px 14px 10px 10px; border-radius: 14px; border-width: 1.5px;
+    background-color: rgba(18, 50, 41, 0.83); border-color: rgba(127, 230, 207, 0.2);
+    transition-property: background-color, border-color; transition-duration: 0.15s;
+}
+.ps-opt:hover { background-color: rgba(18, 50, 41, 0.97); border-color: rgba(61, 214, 232, 0.8); }
+.ps-opt-badge {
+    width: 30px; height: 30px; border-radius: 15px; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 12px;
+    background-color: rgba(5, 14, 11, 0.99); border-width: 1px; border-color: rgba(127, 230, 207, 0.2);
+}
+.ps-opt .ps-opt-letter { color: rgb(255, 255, 255); -unity-text-align: middle-center; }
+.ps-opt.ps-opt--sel { background-color: rgba(31, 138, 85, 0.7); border-color: rgb(75, 224, 138); }
+.ps-opt.ps-opt--sel .ps-opt-badge { background-color: rgb(75, 224, 138); border-color: rgb(75, 224, 138); }
+.ps-opt.ps-opt--sel .ps-opt-letter { color: rgb(30, 21, 5); }
+/* Correct @22 / Incorrect @18 pre-mixed over glass: linear blending made the plain tints read as bright slabs */
+.ps-opt.ps-opt--ok { background-color: rgba(25, 69, 49, 0.96); border-color: rgb(76, 214, 142); }
+.ps-opt.ps-opt--ok .ps-opt-badge { background-color: rgb(40, 113, 77); border-color: rgb(76, 214, 142); }
+.ps-opt.ps-opt--no { background-color: rgba(54, 42, 38, 0.96); border-color: rgb(255, 107, 107); }
+.ps-opt.ps-opt--no .ps-opt-badge { background-color: rgb(104, 58, 55); border-color: rgb(255, 107, 107); }
+.ps-opt.ps-opt--ok .ps-opt-letter, .ps-opt.ps-opt--no .ps-opt-letter { color: rgb(255, 255, 255); }
+/* retry: the option already tried reads calmer than a fresh wrong answer (dark badge, white letter, dimmed red ✕) */
+.ps-opt.ps-opt--off { opacity: 0.5; background-color: rgba(5, 14, 11, 0.55); border-color: rgba(255, 107, 107, 0.4); }
+
+/* ---------- Investigation progress item */
+.ps-prog {
+    flex-direction: row; align-items: center; width: 236px; padding: 8px 12px; border-radius: 12px; border-width: 1px;
+    transition-property: background-color, border-color; transition-duration: 0.25s;
+}
+.ps-prog--locked { background-color: rgba(18, 50, 41, 0.61); border-color: rgba(127, 230, 207, 0.2); }
+.ps-prog--available { background-color: rgba(18, 50, 41, 0.83); border-color: rgba(61, 214, 232, 0.6); }
+.ps-prog--active { background-color: rgba(31, 138, 85, 0.85); border-color: rgba(75, 224, 138, 0.95); border-width: 1.5px; }
+.ps-prog--done { background-color: rgba(15, 77, 51, 0.83); border-color: rgba(127, 230, 207, 0.12); }
+.ps-prog--available:hover, .ps-prog--active:hover { border-color: rgb(61, 214, 232); }
+
+/* ---------- Clue card */
+.ps-clue {
+    width: 172px; align-items: center; padding: 18px 14px; border-radius: 18px;
+    background-color: rgba(10, 28, 23, 0.98); border-width: 1px; border-color: rgba(127, 230, 207, 0.14);
+    transition-property: border-color, scale; transition-duration: 0.2s;
+}
+.ps-clue--available { border-width: 1.5px; border-color: rgba(61, 214, 232, 0.75); }
+.ps-clue--available:hover { border-color: rgb(61, 214, 232); scale: 1.04 1.04; }
+.ps-clue--found { border-width: 2px; }
+
+/* ---------- settings controls */
+.ps-toggle {
+    width: 46px; height: 26px; border-radius: 13px; flex-shrink: 0;
+    background-color: rgba(94, 110, 105, 0.8);
+    transition-property: background-color, scale; transition-duration: 0.18s, 0.12s;
+}
+.ps-toggle:hover > .ps-hoverglow { opacity: 1; }
+.ps-toggle:active { scale: 0.94 0.94; }
+.ps-toggle--on { background-color: rgb(75, 224, 138); }
+.ps-knob {
+    position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 10px; background-color: rgb(255, 255, 255);
+    transition-property: left; transition-duration: 0.18s; transition-timing-function: ease-out-cubic;
+}
+.ps-toggle--on .ps-knob { left: 23px; }
+/* the knob is a fixed 18×18 absolute element: its border draws inside it, nothing moves */
+.ps-slider-knob { border-width: 0; border-color: rgb(61, 214, 232); transition-property: scale, border-width; transition-duration: 0.12s; }
+.ps-slider:hover .ps-slider-knob { scale: 1.15 1.15; border-width: 2px; }
+.ps-slider--drag .ps-slider-knob { scale: 1.25 1.25; border-width: 2px; }
+.ps-drop {
+    flex-direction: row; align-items: center; width: 170px; padding: 8px 12px; border-radius: 10px;
+    background-color: rgba(18, 50, 41, 0.985); border-width: 1px; border-color: rgba(127, 230, 207, 0.3);
+    transition-property: border-color; transition-duration: 0.15s;
+}
+.ps-drop:hover { border-color: rgba(61, 214, 232, 0.9); }
+.ps-pop-item { padding: 8px 12px; border-radius: 8px; }
+.ps-pop-item:hover { background-color: rgb(25, 76, 72); }   /* cyan @16 pre-mixed over raised */
+.ps-pop-item.ps-pop-item--on { background-color: rgba(31, 138, 85, 0.6); }
+
+/* ---------- Ask AI text field (inner input of the built-in TextField) */
+.ps-field { flex-grow: 1; margin: 0; }
+.ps-field > .unity-base-text-field__input {
+    background-color: rgba(5, 14, 11, 0.99); border-width: 1px; border-color: rgba(127, 230, 207, 0.3);
+    border-radius: 21px; padding: 12px 18px; -unity-overflow-clip-box: padding-box;
+    color: rgb(255, 255, 255); font-size: 13px;
+}
+.ps-field:focus > .unity-base-text-field__input { border-color: rgba(61, 214, 232, 0.9); }
+
+/* ---------- keyboard focus (root .ps-kbd while Tab / Enter / arrows / Esc drive the HUD; a mouse press clears it) */
+.ps-kbd .ps-btn:focus, .ps-kbd .ps-tile:focus, .ps-kbd .ps-round:focus, .ps-kbd .ps-chip:focus, .ps-kbd .ps-opt:focus, .ps-kbd .ps-seg:focus, .ps-kbd .ps-drop:focus, .ps-kbd .ps-prog:focus, .ps-kbd .ps-clue:focus, .ps-kbd .ps-cc:focus { border-color: rgb(61, 214, 232); }
+.ps-kbd .ps-btn--gold:focus { border-color: rgb(255, 255, 255); }
+.ps-kbd .ps-round--send:focus { border-width: 2px; border-color: rgb(255, 255, 255); }
+.ps-kbd .ps-btn:focus > .ps-hoverglow, .ps-kbd .ps-tile:focus > .ps-hoverglow, .ps-kbd .ps-cc:focus > .ps-hoverglow, .ps-kbd .ps-toggle:focus > .ps-hoverglow { opacity: 1; }
+.ps-kbd .ps-xtile:focus .ps-xtile-box { border-width: 1.5px; border-color: rgb(61, 214, 232); }
+.ps-kbd .ps-toggle:focus .ps-knob { background-color: rgb(61, 214, 232); }
+.ps-kbd .ps-pop-item:focus { background-color: rgb(25, 76, 72); }
+
+/* screen-anchored world callouts move every frame via translate → never transition translate */
+.ps-fade {
+    transition-property: opacity, scale;
+    transition-duration: 0.25s, 0.3s;
+    transition-timing-function: ease-out-cubic, ease-out-back;
+}
