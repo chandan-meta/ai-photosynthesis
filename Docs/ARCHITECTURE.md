@@ -26,7 +26,9 @@ buttons, picks), world coroutines (e.g. `xylem.Ride`). Debug jumps = `story.Run(
 `Play` runs Scene2Start … FinalPlant; FinalPlant ends in `Finale()` ("THIS IS PHOTOSYNTHESIS", fade, end menu) which re-enters `Run` for
 Replay (Scene2Start) or Review (FreeExplore). Beats after FinalPlant (Assessment, Complete, FreeExplore) only run when jumped to, or from Review.
 
-Lines: `Resources/curio_lines.txt` (`id|text`). Voice clips: `Resources/VO/<id>.wav` (generated, see Tools/GenerateVO.ps1).
+Lines: `Resources/curio_lines.txt` (`id|text`). Voice clips: `Resources/VO/<id>.wav` (generated, see Tools/GenerateVO.py).
+Dynamic replies: `Dialogue.SayText` splits the text into sentences, loads `Resources/VO/kb/<Dialogue.KbKey(sentence)>` for each and joins
+them into one clip; any missing sentence → the device voice for the whole reply. `GenerateVO.py --kb` uses the same key and split.
 Question lines use ids `q_<QID>_lead`, `q_<QID>_ok`, `q_<QID>_no`.
 
 ## Rendering rules
@@ -34,6 +36,9 @@ Question lines use ids `q_<QID>_lead`, `q_<QID>_ok`, `q_<QID>_no`.
   which clone template materials from `Resources/PhotosynthesisMaterials` (`MatLib`) so builds keep every variant.
   Kinds: Lit, LitEmissive, LitTransparent, Glass, Unlit, UnlitTransparent, Additive, Leaf (double-sided lit),
   ParticleAdditive, ParticleAlpha. Emission is HDR: multiply colour by 2–6 for bloom (bloom threshold 1.0).
+  `MatLib.rim` (shader `Photosynthesis/MoleculeRim`, `Shaders/MoleculeRim.shader`): an additive fresnel edge light. `Fx.Molecule` adds it as
+  a second material on every atom (`Fx.Rim(colour)`, a lighter tint of the atom, LDR so it never blooms). Code that swaps atom materials
+  must swap the whole `sharedMaterials` set (see `LeafSurfaceWorld.SetDim`).
 * Post: Bloom, ACES, colour adjustments, vignette, Bokeh depth of field (Global Volume). The DoF is off by default; `CameraDirector`
   switches it on only during scripted shots (Blend / Arc / Ride / Push, High quality tier, not with Reduce motion), focused on the shot's
   subject, so orbit views, text, selectable structures and molecules stay sharp. Ambient is Trilight (no baking).

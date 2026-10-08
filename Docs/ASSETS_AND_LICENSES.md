@@ -9,7 +9,8 @@
 | `Resources/Fonts/Inter-*.ttf` | shipped with Unity 6000.3 editor (rsms/Inter) | SIL OFL 1.1 | UI typography |
 | `Resources/Fonts/Cinzel-SemiBold.ttf` (not yet added; Display falls back to Inter SemiBold until it is) | Google Fonts / NDISCOVER Cinzel (static instance) | SIL OFL 1.1 | Display titles |
 | Dr. Curio, hero plant, micro worlds, molecules, icons, SFX, music | generated procedurally in code | project-owned | — |
-| Voice-over `Resources/VO/*.wav` | Microsoft Edge neural TTS, voice `en-US-AnaNeural` (child, "cute" category) via `Tools/GenerateVO.py` | synthetic voice, generated for this project | Dr. Curio (replace with recorded VO by dropping same-named WAVs) |
+| `Shaders/MoleculeRim.shader` | written for this project | project-owned | fresnel edge light on molecule atoms |
+| Voice-over `Resources/VO/*.wav` | Microsoft Edge neural TTS, voice `en-US-AnaNeural` (child, "cute" category) via `Tools/GenerateVO.py` | synthetic voice, generated for this project | Dr. Curio: 170 story lines (`VO/<id>.wav`) + 272 Ask-AI reply sentences (`VO/kb/<key>.wav`). Replace story lines with recorded VO by dropping same-named WAVs |
 
 Not used (licence/weight): `potato_plants_collection.glb` (CC-BY-**NC** 4.0 — non-commercial, unsuitable for client demos),
 `plants_ready.glb` (CC-BY 4.0, 238k tris) and `potted_house_plants.glb` (CC-BY 4.0, 737k tris) — available if a heavier set dressing is wanted.

@@ -43,13 +43,13 @@ namespace Photosynthesis.EditorTools
             else Debug.LogWarning("[Photosynthesis] Dome model not found at " + DomeFbx);
             // TropicalPlants.glb: glTFast defaults are right (meters, alpha-mask materials, no colliders).
             // Client G7 models used at runtime (Resources/Models/*.fbx): no generated materials (LeafInteriorWorld re-materials by part name),
-            // no animation (the old VR sequences), not readable.
+            // no animation (the old VR sequences), readable.
             foreach (var guid in AssetDatabase.FindAssets("t:Model", new[] { Root + "/Resources/Models" }))
             {
                 if (!(AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid)) is ModelImporter g7)) continue;
-                if (g7.materialImportMode == ModelImporterMaterialImportMode.None && !g7.importAnimation && !g7.isReadable) continue;
+                if (g7.materialImportMode == ModelImporterMaterialImportMode.None && !g7.importAnimation && g7.isReadable) continue;
                 g7.materialImportMode = ModelImporterMaterialImportMode.None; g7.importAnimation = false; g7.animationType = ModelImporterAnimationType.None;
-                g7.isReadable = false; g7.importCameras = false; g7.importLights = false; g7.importBlendShapes = false;
+                g7.isReadable = true; g7.importCameras = false; g7.importLights = false; g7.importBlendShapes = false;   // readable: LeafInteriorWorld seeds chloroplasts on the cell surfaces
                 g7.SaveAndReimport();
             }
         }

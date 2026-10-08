@@ -36,7 +36,7 @@ namespace Photosynthesis
         int shot, activeShot; // activeShot != 0 while a Blend/Arc/Ride/Push owns the camera; Cut/Orbit supersede it
         float settle = 1f, fovTarget; Quaternion settleFrom;   // settle 0→1 while easing out of a scripted shot into orbit; fovTarget > 0: lens eased with the orbit (0 = leave the lens alone)
         float hold, drift, holdDist = 10f, lastFov; Vector3 lastPos, shakeOff; Quaternion lastRot;   // idle-hold drift: seconds left alone, metres pushed, subject distance; pose as we left it last frame
-        DepthOfField dof; Vector3 shotLook; float focusD;   // cinematic depth of field: focused on the current scripted shot's subject (High quality only)
+        DepthOfField dof; Vector3 shotLook; float focusD, lastTouch = -10f; Vector2 lastTouchPos;   // cinematic depth of field: focused on the current scripted shot's subject (High quality only)
 
         void Awake()
         {
@@ -206,10 +206,11 @@ namespace Photosynthesis
             if (dof != null)
             {   // Bokeh on the shot's subject during Blend / Arc / Ride / Push only; off under learner control, after cuts and in micro-world flights,
                 // so selectable structures, text and molecules stay sharp. High quality tier only (Performance: no DoF pass).
-                bool cine = activeShot != 0 && !Hud.ReduceMotion && QualitySettings.GetQualityLevel() >= 1;
+                float subj = Vector3.Distance(transform.position, shotLook);
+                bool cine = activeShot != 0 && !Hud.ReduceMotion && QualitySettings.GetQualityLevel() >= 1 && subj > 0.8f;   // a lens almost touching its subject (the dive into the leaf) would blur the frame to a wash
                 if (cine)
                 {
-                    float d = Mathf.Max(0.3f, Vector3.Distance(transform.position, shotLook));
+                    float d = subj;
                     focusD = dof.active ? Mathf.Lerp(focusD, d, 1f - Mathf.Exp(-6f * Time.deltaTime)) : d;
                     dof.focusDistance.value = focusD;
                 }
@@ -223,6 +224,8 @@ namespace Photosynthesis
             // (press and release within 6 px, 20 px for a finger) = Clicked. Zoom: wheel or the HUD + / −; pan stays on the mouse's right button.
             var mouse = Mouse.current; var touch = Touchscreen.current?.primaryTouch;
             bool finger = touch != null && (touch.press.isPressed || touch.press.wasReleasedThisFrame);
+            if (finger) { lastTouch = Time.unscaledTime; lastTouchPos = touch.position.ReadValue(); }
+            else if (Time.unscaledTime - lastTouch < 0.6f && mouse != null && (mouse.position.ReadValue() - lastTouchPos).sqrMagnitude < 400f) return;   // Windows promotes a tap to a mouse click at the same spot a moment later: never read that echo as a second tap
             if (!finger && mouse == null) return;
             Vector2 pos = finger ? touch.position.ReadValue() : mouse.position.ReadValue();
             bool pressed = finger ? touch.press.wasPressedThisFrame : mouse.leftButton.wasPressedThisFrame;

@@ -22,3 +22,4 @@ MonoBehaviour:
   leaf: {fileID: 2100000, guid: 3cfd1847bd43e01499384d739058008c, type: 2}
   particleAdditive: {fileID: 2100000, guid: adc94cb128a3dd1498391979c9ec2ec5, type: 2}
   particleAlpha: {fileID: 2100000, guid: 66eed4f756c0e8345ba1ab42547e9c2c, type: 2}
+  rim: {fileID: 2100000, guid: d514f240028f9b541b8d6d351400cc31, type: 2}

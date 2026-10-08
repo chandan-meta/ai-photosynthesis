@@ -438,6 +438,17 @@ namespace Photosynthesis
                         for (int i = 0; i < 12; i++) Bell(b, null, r.Range(0f, 0.6f), Hz(p[r.Index(p.Length)]), r.Range(0.1f, 0.25f), r.Range(0.2f, 0.45f));
                         VerbMono(b, 0.4f); return Peak(b, 0.45f);
                     }
+                case Sfx.FinaleCadence:
+                    {   // the Resolution music (F major) lands: Csus4 → F(add9) pad, a rising bell arpeggio and a low F, long tail
+                        b = new float[I(8.5f)];
+                        int[] sus = { 48, 55, 60, 65, 67 };
+                        foreach (var m in sus) Tone(b, 0f, Hz(m), Hz(m), 0.1f, 0.35f, 0.8f, 1f, 0.12f, 0f, 1.7f);
+                        int[] res = { 41, 53, 60, 65, 67, 69, 72 };
+                        foreach (var m in res) Tone(b, 1.4f, Hz(m), Hz(m), m < 50 ? 0.16f : 0.09f, 0.7f, 2.4f, 1f, 0.15f, 0f, 6.2f);
+                        int[] bell = { 77, 81, 84, 88, 89 };
+                        for (int i = 0; i < bell.Length; i++) Bell(b, null, 1.45f + i * 0.11f, Hz(bell[i]), 0.2f, 2.4f);
+                        VerbMono(b, 0.5f, 0.9f); return Peak(b, 0.7f);
+                    }
                 default: // Pop
                     b = new float[I(0.35f)];
                     Tone(b, 0f, 280f, 950f, 0.9f, 0.001f, 0.035f, 0.012f);
@@ -576,7 +587,7 @@ namespace Photosynthesis
         }
 
         // ================================================================== ambience beds (stereo loops)
-        public static bool HasBed(string bed) => bed == "chamber" || bed == "micro" || bed == "cell" || bed == "soil" || bed == "xylem";
+        public static bool HasBed(string bed) => bed == "chamber" || bed == "micro" || bed == "cell" || bed == "soil" || bed == "xylem" || bed == "dark";
 
         public static float[] MakeAmbience(string bed)
         {
@@ -667,6 +678,26 @@ namespace Photosynthesis
                             Bubble(L, R, t, f, a * 0.6f, pan, d); Bubble(wl, wr, t, f, a, pan, d);
                         }
                         wet = 0.5f; room = 0.88f; rms = 0.07f;
+                    }
+                    break;
+                case "dark": // the lights are out (Clue 3 → skylight): a low, slow hum and faint ticks of the dormant factory, never silence
+                    {
+                        float[] ph = new float[3], fq = { 41.2f, 61.7f, 82.4f }, am = { 0.32f, 0.12f, 0.05f };
+                        var nl = new Rng(seed + 5); var fl = new SVF();
+                        for (int i = 0; i < n; i++)
+                        {
+                            float t = i / (float)SR, sw = 0.7f + 0.3f * MathF.Sin(TAU * 0.06f * t), h = 0f;
+                            for (int k = 0; k < 3; k++) { ph[k] += fq[k] / SR; if (ph[k] >= 1f) ph[k] -= 1f; h += MathF.Sin(TAU * ph[k]) * am[k]; }
+                            fl.Run(nl.Next(), 220f, 1f);
+                            float x = (h * sw + fl.lp * 0.25f) * 0.8f;
+                            L[i] += x; R[i] += x * 0.96f;
+                        }
+                        for (int k = 0; k < 10; k++)
+                        {
+                            float t = r.Range(0.2f, loop + tail - 0.3f), pan = r.Range(-0.7f, 0.7f);
+                            Bubble(wl, wr, t, r.Range(900f, 1500f), 0.03f, pan, 0.02f);   // faint ticks, mostly reverb
+                        }
+                        wet = 0.4f; rms = 0.045f;
                     }
                     break;
                 default: // "xylem": flowing water rush + gurgles + low hum

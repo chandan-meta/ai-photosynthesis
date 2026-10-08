@@ -90,6 +90,8 @@ namespace Photosynthesis
         void Init()
         {
             if (inited) return; inited = true;
+            MusicVolume = PlayerPrefs.GetFloat("ps.vol.music", MusicVolume); SfxVolume = PlayerPrefs.GetFloat("ps.vol.sfx", SfxVolume);
+            VoiceVolume = PlayerPrefs.GetFloat("ps.vol.voice", VoiceVolume);   // Settings ▸ Audio survives a relaunch (HudSystem stores them)
             var host = new GameObject("Audio").transform; host.SetParent(transform, false);
             voice = Source(host, "Voice", 0, false);
             sfx = new AudioSource[SfxVoices]; sfxBase = new float[SfxVoices];
@@ -103,7 +105,7 @@ namespace Photosynthesis
             void Mus(MusicState m) => jobs.Add(("mus:" + m, () => Synth.MakeMusic(m)));
             void Amb(string b) => jobs.Add(("amb:" + b, () => Synth.MakeAmbience(b)));
             Mus(MusicState.NewWorld); Amb("chamber"); Mus(MusicState.Investigation); Amb("micro"); Mus(MusicState.Microscopic);
-            Amb("soil"); Mus(MusicState.WaterJourney); Amb("xylem"); Mus(MusicState.SunlightReveal); Amb("cell");
+            Amb("soil"); Mus(MusicState.WaterJourney); Amb("xylem"); Amb("dark"); Mus(MusicState.SunlightReveal); Amb("cell");
             Mus(MusicState.Reaction); Mus(MusicState.Resolution); Mus(MusicState.FreeExplore);
             // ponytail: one background Task renders everything (~3–8 s total, all off the main thread). WebGL has no threads —
             // render inline in small chunks there if that platform is ever targeted.

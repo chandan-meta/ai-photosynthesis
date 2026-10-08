@@ -394,7 +394,7 @@ namespace Photosynthesis
 
         void BuildQuestion()
         {
-            qCard = Hidden(Abs(Panel(20, 0.9f), 120, 170)); Size(qCard, 620); Pad(qCard, 24, 24, 24, 24);
+            qCard = Hidden(Abs(Panel(20, 1f), 120, 170)); Size(qCard, 620); Pad(qCard, 24, 24, 24, 24);   // opaque reading card
             var col = new FlexBox(false, 16); qCard.Add(col);
             var head = col.Put(new FlexBox(true, 10));
             qNum = head.Put(Txt("", TS.Label, TextSecondary)); qNum.style.flexGrow = 1;
@@ -597,7 +597,7 @@ namespace Photosynthesis
 
         void BuildReteach()
         {
-            reteachCard = Hidden(Abs(Panel(20, 0.92f, Incorrect, 2), 40, 260)); Size(reteachCard, 480); Pad(reteachCard, 24, 24, 24, 24);
+            reteachCard = Hidden(Abs(Panel(20, 1f, Incorrect, 2), 40, 260)); Size(reteachCard, 480); Pad(reteachCard, 24, 24, 24, 24);
             Glow(reteachCard, Incorrect, 20, 26, 0.5f);
             var col = new FlexBox(false, 14); reteachCard.Add(col);
             var head = col.Put(new FlexBox(true, 12));
@@ -797,7 +797,7 @@ namespace Photosynthesis
             for (int i = 0; i < 3; i++)
             {
                 int idx = i;
-                var s = cmpSegs[i] = Stadium(new VisualElement()); s.AddToClassList("ps-seg"); s.AddToClassList("ps-seg--green"); Pad(s, 10, 18);
+                var s = cmpSegs[i] = Stadium(new VisualElement()); s.AddToClassList("ps-seg"); s.AddToClassList("ps-seg--green"); Pad(s, 13, 18);
                 if (i > 0) s.style.marginLeft = 6;
                 s.Add(Icon(segs[i].Item2, 18, segs[i].Item3));
                 var l = Txt(segs[i].Item1, TS.Button, Text); l.style.marginLeft = 8; s.Add(l);
@@ -806,7 +806,7 @@ namespace Photosynthesis
             }
             CenterRow(panelLayer, 140).Add(cmpPill);
 
-            legend = Hidden(Abs(Panel(18), 40, 300)); Size(legend, 360); Pad(legend, 20, 20, 20, 20);
+            legend = Hidden(Abs(Panel(18, 1f), 40, 300)); Size(legend, 360); Pad(legend, 20, 20, 20, 20);
             var col = new FlexBox(false, 16); legend.Add(col);
             col.Put(Txt("Transport systems", TS.Label, TextSecondary));
             (string, Color, IconId, string)[] rows = { ("Xylem", Palette.Xylem, IconId.ArrowUp, "Water & minerals · roots → leaves (upward only)"), ("Phloem", Palette.Phloem, IconId.ArrowDown, "Food (glucose) · leaves → roots, shoots, flowers, fruits & storage") };
@@ -847,7 +847,7 @@ namespace Photosynthesis
 
         void BuildExperiment()
         {
-            expPanel = Hidden(Panel(18)); Size(expPanel, 360); Pad(expPanel, 20, 20, 20, 20);
+            expPanel = Hidden(Panel(18, 1f)); Size(expPanel, 360); Pad(expPanel, 20, 20, 20, 20);
             var col = new FlexBox(false, 14); expPanel.Add(col);
             var head = col.Put(new FlexBox(true, 12));
             head.Put(Circle(40, A(Gold, 0.16f), A(Gold, 0.8f), 1.5f, Icon(IconId.Settings, 20, Gold)));
@@ -867,6 +867,8 @@ namespace Photosynthesis
                 var rc = r.Put(new FlexBox(false, 2)); rc.style.flexGrow = 1; rc.style.flexShrink = 1;
                 rc.Put(Txt(rows[i].Item1, TS.H3, Text)); rc.Put(WrapText(Txt(rows[i].Item2, TS.Small, TextSecondary)));
                 expToggles[i] = r.Put(new PsToggle(true, v => { StyleExpRow(idx, v); expCb?.Invoke(idx, v); }));
+                r.style.minHeight = 48; r.style.alignItems = Align.Center; expToggles[i].pickingMode = PickingMode.Ignore; expToggles[i].focusable = false; r.AddToClassList("ps-exprow");   // the whole 320×48 row is the touch target, not the 46×26 switch
+                Click(r, () => { var t = expToggles[idx]; t.Value = !t.Value; StyleExpRow(idx, t.Value); expCb?.Invoke(idx, t.Value); }, Sfx.UiSelect);
             }
             var rule = col.Put(new VisualElement { pickingMode = PickingMode.Ignore }); Size(rule, ExpBarW, 1); Bg(rule, A(GlassStroke, 0.18f));
             for (int i = 0; i < 2; i++)
@@ -974,9 +976,9 @@ namespace Photosynthesis
             var body = col.Put(Txt("You caught a leaf making its own food. Watch it again, keep exploring the plant, or leave.", TS.Body, TextSecondary, 480));
             body.style.unityTextAlign = TextAnchor.UpperCenter;
             var b = col.Put(new FlexBox(true, 10));
-            endBtn = b.Put(Btn("Replay", ButtonKind.Gold, IconId.Replay, () => endChoice = 0));
-            b.Put(Btn("Review the plant", ButtonKind.Secondary, IconId.Eye, () => endChoice = 1));
-            b.Put(Btn("Exit", ButtonKind.Ghost, IconId.Exit, () => endChoice = 2));
+            b.Put(Btn("Replay", ButtonKind.Gold, IconId.Replay, () => endChoice = 0));
+            endBtn = b.Put(Btn("Review the plant", ButtonKind.Secondary, IconId.Eye, () => endChoice = 1));   // default focus: Enter never restarts the whole module
+            b.Put(Btn("Exit", ButtonKind.Ghost, IconId.Exit, () => OpenSystem(exitPanel)));   // the same confirm as every other Exit (a mis-tap must not close the app)
             CenterRow(overlayLayer, 330).Add(endCard);
         }
 
@@ -1028,7 +1030,7 @@ namespace Photosynthesis
             var col = new FlexBox(false, 14); exploreBar.Add(col);
             var head = col.Put(new FlexBox(true, 12));
             head.Put(Txt("Choose a part of the plant", TS.H3, Text)).style.flexGrow = 1;
-            head.Put(Txt("Drag to rotate · scroll to zoom · right-drag to pan", TS.Small, TextMuted));
+            head.Put(Txt("Drag to rotate · + / − to zoom", TS.Small, TextMuted));
             var tiles = col.Put(new VisualElement { pickingMode = PickingMode.Ignore });
             tiles.style.flexDirection = FlexDirection.Row; tiles.style.justifyContent = Justify.SpaceBetween;
             for (int i = 0; i < 9; i++)
@@ -1087,7 +1089,7 @@ namespace Photosynthesis
         }
 
         /// The magnification pill and the zoom-path breadcrumb share top-centre: stack the pill under the breadcrumb.
-        void PlaceMag() => magRow.style.top = IsShown(zoomPathPill) ? 98 : 40;
+        void PlaceMag() => magRow.style.top = IsShown(zoomPathPill) ? 112 : 40;   // under the 44 px-tall breadcrumb
 
         // ================================================================== transitions
         VisualElement loadingRoot, loadFill; RingElement loadRing; Label loadLabel, loadTitle, loadFact; int loadGen;

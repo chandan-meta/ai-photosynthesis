@@ -11,4 +11,4 @@ for s in range(0, len(files), per):
         im = Image.open(f).convert("RGB").resize((tw, th)); x, y = (i % cols) * tw, (i // cols) * (th + pad)
         sheet.paste(im, (x, y)); d.text((x + 6, y + th + 4), os.path.basename(f), fill=(230, 230, 230))
     sheet.save(os.path.join(out, f"sheet_{s // per:02d}.jpg"), quality=82)
-print(len(files), "frames →", (len(files) + per - 1) // per, "sheets in", out)
+print(len(files), "frames ->", (len(files) + per - 1) // per, "sheets in", out)

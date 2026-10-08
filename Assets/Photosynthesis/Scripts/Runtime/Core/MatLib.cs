@@ -8,5 +8,6 @@ namespace Photosynthesis
     public class MatLib : ScriptableObject
     {
         public Material lit, litEmissive, litTransparent, glass, unlit, unlitTransparent, additive, leaf, particleAdditive, particleAlpha;
+        public Material rim;   // Photosynthesis/MoleculeRim: fresnel edge light drawn as a second material on molecule atoms
     }
 }

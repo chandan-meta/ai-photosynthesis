@@ -59,9 +59,11 @@ namespace Photosynthesis
         IEnumerator Play(Beat from)
         {
             Prepare(from);
+            bool lift = fadeIn; fadeIn = false;
+            if (lift) StartCoroutine(hud.Fade(1f, 0f, Color.black));   // from the end menu: black on this same frame (Prepare cleared the fade)
             yield return null;
             yield return m.PrebuildWorlds();   // launch only: one micro world per frame on the dark, unformed opening; no-op once built
-            if (fadeIn) { fadeIn = false; yield return hud.Fade(1f, 0f, Color.black); Parallel(hud.Fade(0f, 1.6f)); }   // from the end menu: the picture comes back under the first beat
+            if (lift) Parallel(hud.Fade(0f, 1.6f));   // the picture comes back under the first beat
             // the lesson ends on "This is Photosynthesis." (FinalPlant → Finale). Assessment / Complete / Free Explore stay reachable from the
             // end menu (Review) and the debug panel, so a jump past FinalPlant still runs on through to Free Explore.
             var last = from > Beat.FinalPlant ? Beat.FreeExplore : Beat.FinalPlant;
@@ -199,11 +201,21 @@ namespace Photosynthesis
             if (forcedClue == want) { forcedClue = null; hud.ShowClueCards(false); au.Play(Sfx.UiSelect); yield break; }   // promised by Navigate
             yield return GoTo(Place.Chamber);
             m.HubOpen = true; hud.ShowClueCards(true); cam.Orbit(PlantFocus, OrbitDist, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f);
-            hud.ShowInstruction($"Select CLUE 0{(int)want + 1} to continue — or ask Dr. Curio.", IconId.Target);
+            hud.ShowInstruction($"Tap CLUE 0{(int)want + 1} to continue — or ask Dr. Curio.", IconId.Target);
             hubWant = want; hubGo = false;
+            if (want != ClueId.CO2) Parallel(Say("hub_next"));   // hubs 2 and 3 open with a spoken cue (hub 1 opens under s3_askme)
             float t0 = Time.time;   // Discovered: debug "Unlock all clues" while waiting
-            while (!hubGo && forcedClue != want && m.clues[want] != ClueState.Discovered && !(AutoPlay && Time.time - t0 > 1.5f && !dlg.Speaking)) yield return null;   // autoplay lets the opening line (s3_askme) finish
+            bool hinted = false, offered = false;
+            IEnumerator offer() { yield return hud.WaitButton($"OPEN CLUE 0{(int)want + 1}", IconId.Target, ButtonKind.Gold); if (hubWant == want) hubGo = true; }   // a big tap target for anyone who has not found the card
+            while (!hubGo && forcedClue != want && m.clues[want] != ClueState.Discovered && !(AutoPlay && Time.time - t0 > 1.5f && !dlg.Speaking))   // autoplay lets the opening line (s3_askme) finish
+            {
+                float el = Time.time - t0; bool quiet = !dlg.Speaking && !hud.TypingInChat && cam.IdleSeconds > 3f;   // never over Curio, the chat or a learner busy rotating
+                if (!hinted && el > 12f && quiet) { hinted = true; Parallel(Say("hub_hint")); curio.Emote(CurioEmote.Point); }
+                if (!offered && el > 22f && !dlg.Speaking) { offered = true; Parallel(offer()); }
+                yield return null;
+            }
             hubWant = null; forcedClue = null; m.HubOpen = false;
+            if (offered) hud.HideButton();
             hud.HideInstruction(); hud.ShowClueCards(false); au.Play(Sfx.UiSelect);
             while (demo != null) yield return null;   // let an AI demo put its visuals back before the next beat frames the camera
         }
@@ -447,7 +459,7 @@ namespace Photosynthesis
         IEnumerator ChamberLook()
         {
             ContextTopic = "the Botanical Investigation Chamber and its enormous central plant";
-            yield return LookAround("Look around — drag to rotate, scroll to zoom, click the plant to inspect it.", 7f);
+            yield return LookAround("Look around — drag to rotate, zoom with + / −, tap the plant to inspect it.", 3f);   // short: Curio arrives (and talks) sooner
         }
 
         // ================================================================== Scene 3 — Meet Dr. Curio
@@ -461,13 +473,14 @@ namespace Photosynthesis
             yield return curio.Materialize(CurioSpot, shot);   // face the final shot, not wherever the learner had orbited
             curio.LookAtCamera();
             Parallel(curio.Scan(cam.transform.position, 1.6f));
+            // the scan gag is voiced: he reads his scanner aloud, so "Good." lands with its context and the opening is never silent for long
             hud.ShowScanner(ScanState.Scanning, "SCAN…", "Unknown visitor detected", 0.2f); au.Play(Sfx.Scan);
-            yield return Fx.Wait(1.4f);
+            yield return Say("s3_scan1");
             hud.ShowScanner(ScanState.Scanning, "SPECIES: HUMAN", "Biometric scan complete", 1f); au.Play(Sfx.TargetLock);
-            yield return Fx.Wait(1.6f);
+            yield return Say("s3_scan2");
             Parallel(curio.Scan(cam.transform.position, 1.2f)); au.Play(Sfx.Beep);
             hud.ShowScanner(ScanState.Detected, "CURIOSITY LEVEL: SUSPICIOUSLY HIGH", "Recommendation: recruit immediately", 1f);
-            yield return Fx.Wait(1.8f);
+            yield return Say("s3_scan3");
             curio.Emote(CurioEmote.Nod);
             hud.SetCinematic(false);
             if (!Hud.ReduceMotion) Parallel(cam.Push(0.9f, 9f));   // slow push under his self-introduction (s3_good + s3_intro ≈ 9.35 s): medium → medium-close, Curio stays on the right third; the gaze Blend below supersedes it
@@ -479,24 +492,28 @@ namespace Photosynthesis
             // SHOT 02 — hero reveal: he turns to the plant; the camera swings low and wide so the crown stands against the glass
             curio.LookAt(plant.Top);
             var hero = plant.Base + new Vector3(-3.4f, 0.7f, -8.6f); var heroLook = PlantFocus + Vector3.up * 0.8f;   // low three-quarter: crown to pot against the glass
-            if (calm) cam.Cut(hero, heroLook, 50f); else Parallel(cam.Arc(hero, heroLook, 3.2f, 50f));
-            Parallel(curio.Scan(plant.Top, 2.5f)); hud.ShowScanner(ScanState.Scanning, "BIOLOGICAL ACTIVITY DETECTED", "Inside: billions of tiny processes", 0.6f);
+            Coroutine heroMove = null;
+            if (calm) cam.Cut(hero, heroLook, 50f); else heroMove = Parallel(cam.Arc(hero, heroLook, 2.6f, 50f));
+            Parallel(curio.Scan(plant.Top, 2.5f)); hud.ShowScanner(ScanState.Scanning, "BIOLOGICAL ACTIVITY DETECTED", "Analysing the plant…", 0.6f);   // the readout never says the next line
             yield return Say("s3_peaceful");
+            if (heroMove != null) yield return heroMove;   // the reveal lands before the light does
             // SHOT 03 — sunlight enters the frame and lands on the focus leaf; the camera pushes toward the leaf under the line
             hud.HideScanner();
-            Parallel(ch.SunBeam(plant.LeafCenter(leaf), () => { au.Play(Sfx.SunImpact, 0.45f); Parallel(ch.FadeSunBeam(2.2f)); }));   // the flare passes like a cloud: the leaf, not a white disc, fills the push-in
+            Parallel(ch.SunBeam(plant.LeafCenter(leaf), () => au.Play(Sfx.SunImpact, 0.45f)));   // the beam stays on through the push-in; it fades as we dive
             plant.SetFlow(Flow.Sunlight, true); plant.SetFlow(Flow.Chloroplast, true);
-            var leafDir = new Vector3(0.1f, 0.6f, 1f).normalized;
+            var leafDir = new Vector3(0.1f, -0.45f, 1f).normalized;   // from above: the lit upper surface, the beam entering at the top of frame
             if (calm) cam.Cut(plant.LeafCenter(leaf) - leafDir * 3.2f, plant.LeafCenter(leaf), 42f);
             else Parallel(cam.Focus(plant.LeafCenter(leaf), leafDir, 3.2f, 4.2f, 42f));
             yield return Say("s3_processes");
             // SHOT 04 — through the leaf surface (warm flash at the blade) · SHOT 05 — the hidden world inside the leaf (the client's cross-section model)
             hud.SetCinematic(true); au.Play(Sfx.Whoosh, 0.6f);
             Parallel(Say("s3_somewhere"));
+            Parallel(ch.FadeSunBeam(1.2f));
+            Parallel(plant.SetTransparency(0.55f, 1.2f));   // the leaf turns glassy as we close in: we pass through the surface into the green inside
             if (!calm) yield return cam.Focus(plant.LeafCenter(leaf), plant.LeafCenter(leaf) - cam.transform.position, 0.25f, 1.3f, 28f);
-            plant.SetFlow(Flow.Sunlight, false); plant.SetFlow(Flow.Chloroplast, false);
             au.Music(MusicState.Microscopic, 1.5f);
             yield return GoTo(Place.Interior, true);
+            plant.SetFlow(Flow.Sunlight, false); plant.SetFlow(Flow.Chloroplast, false); Parallel(plant.SetTransparency(0f, 0.05f));   // reset while the chamber is hidden
             curio.SetVisible(false);   // the vista plays alone; he is back at his spot for the briefing
             var glide = Parallel(m.interior.Glide(cam));
             while (dlg.Speaking) yield return null;
@@ -550,7 +567,7 @@ namespace Photosynthesis
             Parallel(Fx.Tween(2.2f, t => { if (leaf) leaf.transform.SetPositionAndRotation(Vector3.Lerp(from, front, t), Quaternion.Slerp(r0, r1, t)); }, Ease.InOut));
             yield return Say("s4_closer");
             hud.ShowMagnification(0);
-            hud.ShowInstruction("Let's zoom into the leaf — scroll or press +.", IconId.Zoom);
+            hud.ShowInstruction("Let's zoom into the leaf — press + (or scroll).", IconId.Zoom);
             userZoom = 0;
             Parallel(Say("s4_zoom"));
             float t0 = Time.time;
@@ -597,7 +614,7 @@ namespace Photosynthesis
             curio.Emote(CurioEmote.Surprise);
             yield return Say("s4_stop");
             m.leafSurface.SetGuardHighlight(true);   // only the hero stoma pulses: the one to zoom into
-            hud.ShowInstruction("Zoom into one pore — scroll or press +.", IconId.Zoom);
+            hud.ShowInstruction("Zoom into one pore — press + (or scroll).", IconId.Zoom);
             userZoom = 0; float t0 = Time.time;
             while (userZoom < 1f && !Module.Skipping && Time.time - t0 < (AutoPlay ? 1.5f : 20f)) yield return null;
             hud.HideInstruction(); hud.HideScanner();   // the scanner card would cover the GUARD CELLS callout at 100×
@@ -758,7 +775,7 @@ namespace Photosynthesis
             int leaf = plant.FocusLeaf;
             Vector3 lc = plant.LeafCenter(leaf);
             yield return cam.Arc(lc - new Vector3(0.2f, 0.25f, 1f).normalized * 4.5f, lc, 1.8f, 45f);   // the old Focus pose, reached round the plant from the hub orbit instead of through the leaf
-            ch.SetDarkness(0.85f, 4f); au.Ambience("none");   // lights go out before the zero reading: FOOD PRODUCTION: 0 and "absolutely nothing" land in shadow; room tone and birdsong go with the light (1.6 s bus fade inside the 4 s darkening)
+            ch.SetDarkness(0.85f, 4f); au.Ambience("dark");   // lights go out before the zero reading: FOOD PRODUCTION: 0 and "absolutely nothing" land in shadow; room tone and birdsong go with the light (1.6 s bus fade inside the 4 s darkening)
             Parallel(cam.Push(0.6f, 8f));   // slow push under the ~7 s "food production: 0" narration
             plant.SetIngredientsIdle(true); plant.SetDormant(true);
             hud.Callout("co2", "CO₂", "Carbon dioxide ✓", Tone.Cyan, () => plant.LeafCenter(leaf) + Vector3.left * 0.6f);
@@ -772,7 +789,7 @@ namespace Photosynthesis
             yield return Say("s8_missing");
             hud.ClearCallouts();
             Parallel(Say("s8_inspect"));
-            yield return LookAround("Click the plant to inspect it — what could be missing?", 7f);
+            yield return LookAround("Tap the plant to inspect it — what could be missing?", 7f);
             yield return Ask("Q5", null, force: true);
         }
 
@@ -783,12 +800,12 @@ namespace Photosynthesis
             int leaf = plant.FocusLeaf; Vector3 lc = plant.LeafCenter(leaf);
             ch.SetDarkness(0.85f, 0f); plant.SetDormant(true); plant.SetIngredientsIdle(true);
             hud.SetInvestigation("CLUE 03 — ???", "Let the light in — wake the food factory.", IconId.Target);   // name stays hidden until the beam reveals it
-            au.Music(MusicState.None, 1f); au.Ambience("none"); hud.HideScanner();   // silent dark room until the beam lands (no-ops in the normal flow; covers debug jumps and a chamber demo during Clue3); the FOOD PRODUCTION card would sit over the skylight
+            au.Music(MusicState.None, 1f); au.Ambience("dark"); hud.HideScanner();   // silent dark room until the beam lands (no-ops in the normal flow; covers debug jumps and a chamber demo during Clue3); the FOOD PRODUCTION card would sit over the skylight
             // low and looking up: the dark leaf above the bottom HUD, the closed skylight high in frame (aim by angle — the skylight is ~10 m above the leaf)
             Vector3 low = plant.Base + new Vector3(-1.5f, 0.8f, -9f), toLeaf = (lc - low).normalized, toSky = (ch.SkylightPos - low).normalized;
             Parallel(cam.Arc(low, low + Vector3.Slerp(toLeaf, toSky, 0.36f) * 8f, 2.5f, Mathf.Clamp(Vector3.Angle(toLeaf, toSky) * 1.7f, 55f, 66f)));
             ch.SetSkylightReady(true);
-            hud.ShowInstruction("Open the skylight — click it to let the light in.", IconId.Sun);
+            hud.ShowInstruction("Open the skylight — tap it to let the light in.", IconId.Sun);
             Parallel(Say("s8_open"));
             skylightHit = skyMiss = false; skylightWaiting = true;   // the learner opens the sky
             bool pressed = false, hinted = false, offered = false; float t0 = Time.time;
@@ -801,6 +818,7 @@ namespace Photosynthesis
                 yield return null;
             }
             skylightWaiting = false; if (offered) hud.HideButton();
+            if (dlg.Speaking) { au.StopVoice(); dlg.Cancel(); hud.HideLine(); curio.Talking = false; }   // the hint never talks over the skylight opening and the beam
             hud.HideInstruction(); ch.SetSkylightReady(false); au.Play(Sfx.UiSelect);
             yield return ch.OpenSkylight();
             au.Play(Sfx.EnergyBuild, 1f, 1.8f);   // the charge-up starts on the learner's action and peaks as the beam hits
@@ -937,7 +955,7 @@ namespace Photosynthesis
             // the three elements of the storyboard: CO₂ · H₂O · LIGHT ENERGY (Callout replaces by key, so a jump straight here is covered)
             hud.Callout("h2o", "H₂O", "Water", Tone.Blue, () => cw.Grana.position); hud.Callout("co2", "CO₂", "Carbon dioxide", Tone.Cyan, () => cw.Stroma.position);
             // the learner feeds the factory: each group is clicked in; one spoken nudge if they stall
-            hud.ShowInstruction("Send in the ingredients — click the CO₂ and the water.", IconId.Energy);
+            hud.ShowInstruction("Send in the ingredients — tap the CO₂ and the water.", IconId.Energy);
             Parallel(Say("s10_feed"));
             bool fed = false; float lastSend = Time.time; feedWaiting = true; feedAssist = false;
             IEnumerator hint()
@@ -1126,14 +1144,13 @@ namespace Photosynthesis
             yield return Say("s13_thats");
             // the equation lifts to a compact token row while the two highways light under a light dim
             Parallel(plant.SetTransparency(0.6f, 1.2f));
-            var hw = Parallel(Say("s13_highways"));
-            yield return Fx.Wait(3.1f);   // "Xylem brought water to the leaf."
-            hud.EquationCompact();        // the equation steps aside as the highways light
+            yield return Say("s13_highways");
+            hud.EquationCompact();        // the equation steps aside as the highways light, each on its own line
             plant.SetVessels(true, false); plant.SetFlow(Flow.Water, true);
             curio.Point(plant.Base + Vector3.up * 1.2f);
-            yield return Fx.Wait(2.3f);   // "Phloem carries food from the leaf…"
+            yield return Say("s13_xylem");
             plant.SetVessels(true, true); plant.SetFlow(Flow.Phloem, true);
-            yield return hw;
+            yield return Say("s13_phloem");
             yield return Fx.Wait(AutoPlay ? 0.5f : 1.5f);
             hud.HideEquation();
             plant.SetFlow(Flow.Water, false); plant.SetFlow(Flow.Phloem, false); plant.SetVessels(false, false);
@@ -1164,33 +1181,60 @@ namespace Photosynthesis
             working(); restoreFinal = working;
             hud.ShowInstruction("Rotate the plant — every process is running at once.", IconId.Replay);   // stays up through the lines
             yield return Fx.Wait(AutoPlay ? 0.5f : 4f);
+            hud.HideInstruction();   // the roots and the water uptake sit under it: the lines play over a clear plant
             yield return SayAll("s14_mouth", "s14_plate", "s14_kitchen", "s14_tiny", "s14_look", "s14_make");
             yield return Finale();
         }
 
-        /// The final educational reveal. The whole relationship runs in 3D (equation tokens over the working plant) under a slow pull-back,
-        /// "THIS IS PHOTOSYNTHESIS" holds, the processes settle, the music resolves and the picture fades. Nothing mandatory follows:
-        /// the end menu offers Replay · Review (Free Explore, with the factory controls) · Exit.
+        /// The final educational reveal. A slow crane rises over the working plant while the whole relationship is labelled on it in 3D
+        /// (water, carbon dioxide and light go in; glucose and oxygen come out), then "This is photosynthesis!" is spoken and shown, the
+        /// processes settle, the plant turns solid, the music resolves on a cadence and the picture fades to black under the title.
+        /// Nothing mandatory follows: the end menu offers Replay · Review (Free Explore, with the factory controls) · Exit.
         IEnumerator Finale()
         {
             ContextTopic = "the end of the investigation";
             hud.HideInstruction(); hud.HideLine(); hud.SetCinematic(true); hud.SetAskAIVisible(false);
             restoreFinal = null; cam.AutoSpin = 0f; curio.LookAt(plant.Top);
-            var wide = Establish + new Vector3(0f, 1.4f, -1.7f);   // the widest view that stays inside the dome (r 11.9 m < the rib fins at 12.35 m): crown to roots, glass and signs behind
-            if (Hud.ReduceMotion) cam.Cut(wide, PlantFocus, 58f); else Parallel(cam.Arc(wide, PlantFocus, 12f, 58f));
-            au.Play(Sfx.EnergyBuild, 0.5f);
-            yield return hud.Equation();
-            yield return Fx.Wait(AutoPlay ? 0.5f : 2.2f);
-            hud.HideEquation();
-            au.Play(Sfx.GlucoseDiscover, 0.8f);   // the 'food made' motif lands with the title; Fmaj9 sits in the F-major Resolution music
-            var title = Parallel(hud.Title("This is Photosynthesis", "Light energy turns water and carbon dioxide into glucose and oxygen", AutoPlay ? 2f : 6.5f));
-            yield return Fx.Wait(AutoPlay ? 1f : 4.5f);
-            // the processes settle one by one under the title; the plant turns solid again
-            foreach (var f in new[] { Flow.Sunlight, Flow.CO2, Flow.Water, Flow.Chloroplast, Flow.Glucose, Flow.O2, Flow.Phloem }) { plant.SetFlow(f, false); yield return Fx.Wait(0.3f); }
-            plant.SetVessels(false, false); Parallel(plant.SetTransparency(0f, 3f));
-            yield return title;
-            au.Music(MusicState.None, 4.5f); au.Ambience("none");
+            // crane from the working-plant orbit up over the crown, looking down across it to the glass. The end pose stays inside the dome:
+            // (height / 10.3)² + (distance / 12)² < 1 from the chamber centre, or the lens enters the rib fins.
+            var top = plant.Base + new Vector3(0f, 6.2f, -8.4f); var topLook = PlantFocus + Vector3.up * 0.3f;
+            if (Hud.ReduceMotion) cam.Cut(top, topLook, 56f); else Parallel(cam.Arc(top, topLook, 15f, 56f));
+            int leaf = plant.FocusLeaf;
+            // the relationship on the plant itself: three inputs arrive, two products leave
+            var tags = new (string key, string title, string sub, Tone tone, Func<Vector3> at, float t)[]
+            {
+                ("fw", "WATER", "up from the roots", Tone.Blue, () => plant.RootTip, 0.8f),
+                ("fc", "CARBON DIOXIDE", "in from the air", Tone.Cyan, () => plant.LeafUnderside(leaf), 1.6f),
+                ("fs", "SUNLIGHT", "light energy", Tone.Gold, () => plant.Top + Vector3.up * 0.2f, 2.4f),
+                ("fg", "GLUCOSE", "food, made in the leaves", Tone.Orange, () => plant.Base + Vector3.up * 1.2f, 3.8f),
+                ("fo", "OXYGEN", "out to the air", Tone.Green, () => plant.LeafCenter(leaf) + Vector3.up * 0.7f, 4.6f),
+            };
+            float t0 = Time.time;
+            foreach (var g in tags)
+            {
+                while (Time.time - t0 < g.t && !Module.Skipping) yield return null;
+                hud.Callout(g.key, g.title, g.sub, g.tone, g.at); au.Play(g.t < 3f ? Sfx.Pop : Sfx.Sparkle, 0.55f);
+            }
+            yield return Fx.Wait(1.2f);
+            au.Play(Sfx.EnergyBuild, 0.5f);   // the one riser, timed to peak as the title lands (~2.3 s)
+            yield return Fx.Wait(1.2f);
+            foreach (var g in tags) hud.HideCallout(g.key);
+            yield return Fx.Wait(1.1f);
+            // the reveal, spoken and shown together; the title sits in the upper third above the crown and is the caption
+            au.Play(Sfx.GlucoseDiscover, 0.8f); curio.Emote(CurioEmote.Celebrate);
+            var title = Parallel(hud.Title("This is Photosynthesis", "Light energy turns water and carbon dioxide into glucose and oxygen", 11f, 80f, 0.1f));
+            Parallel(Say("s14_this")); hud.HideLine();
+            yield return Fx.Wait(2.2f);
+            // the processes settle one by one under the title; the plant turns solid again and the floor closes
+            foreach (var f in new[] { Flow.Sunlight, Flow.CO2, Flow.Water, Flow.Chloroplast, Flow.Glucose, Flow.O2, Flow.Phloem }) { plant.SetFlow(f, false); yield return Fx.Wait(0.35f); }
+            plant.SetVessels(false, false); Parallel(plant.SetTransparency(0f, 2.5f)); ch.SetFloorTransparent(false, 2.5f);
+            yield return Fx.Wait(2.6f);
+            plant.ShowRoots(false);
+            // the music resolves on a cadence and the picture fades to black while the title is still up: the module ends on the statement
+            au.Play(Sfx.FinaleCadence, 0.9f); au.Music(MusicState.None, 1.2f); au.Ambience("none");
+            hud.SetHudVisible(false); hud.SetZoomControlVisible(false);   // Menu / Reset / Help and zoom leave with the picture; Prepare brings them back for Replay and Review
             yield return hud.Fade(1f, 3.2f, Color.black);
+            yield return title;          // the title holds alone on black, then fades
             yield return Fx.Wait(AutoPlay ? 0.2f : 1f);
             int choice = -1;
             if (AutoPlay) { Parallel(hud.EndMenu(r => { })); yield return Fx.Wait(1.5f); hud.CancelWaits(); choice = 1; }   // tests go on to Review (Free Explore + factory controls)
@@ -1205,11 +1249,14 @@ namespace Photosynthesis
         }
 
         /// "Break the factory": the learner switches supplies off and watches FOOD MADE / FOOD DELIVERED, then leaves from the panel when ready.
-        IEnumerator Experiment()
+        IEnumerator Experiment(int gen = -1)   // gen ≥ 0: Free Explore's Factory controls; a newer pick ends it
         {
             hud.HideInstruction();
             Parallel(Say("exp_intro"));
             var on = new[] { true, true, true, true }; var seen = new bool[4]; int tried = 0; bool go = false, praised = false;   // 0 sunlight · 1 CO₂ · 2 water · 3 phloem
+            string pending = null; bool live = true;   // a switch line waits for the one playing instead of cutting it off (the newest wins)
+            IEnumerator voice() { while (live) { if (pending != null && !dlg.Speaking) { var id = pending; pending = null; yield return Say(id); } else yield return null; } }
+            Parallel(voice());
             void apply()
             {   // a dormant plant suppresses every flow; with only the phloem cut, glucose still shows in the leaves
                 bool made = on[0] && on[1] && on[2];
@@ -1223,8 +1270,8 @@ namespace Photosynthesis
                 if (on[i] == v) return;
                 on[i] = v; apply();
                 if (i == 0) ch.SetDarkness(v ? 0f : 0.8f, 1.2f);
-                if (!v && !seen[i]) { seen[i] = true; tried++; curio.Emote(CurioEmote.Think); Parallel(Say(i switch { 0 => "exp_light", 1 => "exp_co2", 2 => "exp_water", _ => "exp_phloem" })); }
-                else if (v && !praised && tried >= 2 && on[0] && on[1] && on[2] && on[3]) { praised = true; curio.Emote(CurioEmote.Celebrate); Parallel(Say("exp_all")); }
+                if (!v && !seen[i]) { seen[i] = true; tried++; curio.Emote(CurioEmote.Think); pending = i switch { 0 => "exp_light", 1 => "exp_co2", 2 => "exp_water", _ => "exp_phloem" }; }
+                else if (v && !praised && tried >= 2 && on[0] && on[1] && on[2] && on[3]) { praised = true; curio.Emote(CurioEmote.Celebrate); pending = "exp_all"; }
             }
             hud.ShowExperiment(flip, () => go = true);
             var plain = restoreFinal; restoreFinal = () => { plain?.Invoke(); apply(); };
@@ -1234,10 +1281,12 @@ namespace Photosynthesis
                     foreach (var to in new[] { false, true }) { yield return Fx.Wait(0.8f); hud.SetExperimentToggle(k, to); flip(k, to); }
                 yield return Fx.Wait(0.8f);
             }
-            else while (!go && !AutoPlay && !Module.Skipping) yield return null;
+            else while (!go && !AutoPlay && !Module.Skipping && (gen < 0 || gen == exploreGen)) yield return null;
+            live = false;
             hud.HideExperiment();
             au.StopVoice(); dlg.Cancel(); hud.HideLine(); curio.Talking = false;   // an exp_* line must not carry over the FINAL INVESTIGATION move
             if (!on[0]) ch.SetDarkness(0f, 1f);
+            if (gen >= 0 && gen != exploreGen) { plant.SetDormant(false); yield break; }   // the new destination sets its own flows
             for (int k = 0; k < 4; k++) on[k] = true;
             apply();   // everything back on, not dormant
         }
@@ -1380,9 +1429,10 @@ namespace Photosynthesis
                     ch.SetFloorTransparent(true, 1f); plant.ShowRoots(true); Parallel(plant.SetTransparency(0.6f, 1f)); plant.SetVessels(true, true); plant.AllFlows(true);
                     cam.Orbit(PlantFocus + Vector3.down * 0.5f, OrbitDist + 0.4f, cam.transform.eulerAngles.y, 10f, true, 3f, 11.5f, WholeFov);
                     hud.HideFreeExplore();
-                    yield return Experiment();
+                    yield return Experiment(gen);
+                    hud.ShowFreeExplore(k => pick = k, () => pick = "Exit");   // always back: a newer pick must never leave the learner without tiles or Exit
                     if (gen != exploreGen) yield break;
-                    hud.ShowFreeExplore(k => pick = k, () => pick = "Exit"); hud.SetZoomPath(0); hud.SelectExplore("WholePlant");
+                    hud.SetZoomPath(0); hud.SelectExplore("WholePlant");
                     yield break;
                 }
                 case "FollowWater":

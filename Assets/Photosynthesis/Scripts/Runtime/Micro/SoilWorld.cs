@@ -514,7 +514,7 @@ namespace Photosynthesis
             molRoot = Fx.Node("Water Molecules", transform).transform;
             int n = molPos.Count;
             mols = new Transform[n]; halos = new GameObject[n]; home = molPos.ToArray(); nrm = molN.ToArray(); taken = new bool[n]; near = new bool[n];
-            var haloMat = K.GlowMat(new Color(Palette.Water.r * 2f, Palette.Water.g * 2f, Palette.Water.b * 2f, 0.9f));
+            var haloMat = K.GlowMat(new Color(Palette.Water.r * 1.15f, Palette.Water.g * 1.15f, Palette.Water.b * 1.15f, 0.9f));   // soft: the picked molecule reads, no bloom disc
             for (int i = 0; i < n; i++)
             {
                 var g = Fx.Molecule(Mol.H2O, molRoot, 0.3f, 0.7f); g.name = "H2O";

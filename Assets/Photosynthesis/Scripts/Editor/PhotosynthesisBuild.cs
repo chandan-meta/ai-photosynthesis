@@ -77,6 +77,10 @@ namespace Photosynthesis.EditorTools
             lib.leaf = Mat("Leaf", lit, false, 0, 0, true, 0.55f);
             lib.particleAdditive = Mat("ParticleAdditive", particles, true, 2, 0, false, 0);
             lib.particleAlpha = Mat("ParticleAlpha", particles, true, 0, 0, false, 0);
+            var rimPath = $"{MatDir}/Rim.mat"; var rimShader = AssetDatabase.LoadAssetAtPath<Shader>(Root + "/Shaders/MoleculeRim.shader");
+            lib.rim = AssetDatabase.LoadAssetAtPath<Material>(rimPath);
+            if (rimShader && !lib.rim) { lib.rim = new Material(rimShader); AssetDatabase.CreateAsset(lib.rim, rimPath); }
+            if (lib.rim && rimShader) { lib.rim.shader = rimShader; lib.rim.enableInstancing = true; EditorUtility.SetDirty(lib.rim); }
             EditorUtility.SetDirty(lib);
         }
 

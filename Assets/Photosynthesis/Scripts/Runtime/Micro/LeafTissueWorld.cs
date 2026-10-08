@@ -55,7 +55,7 @@ namespace Photosynthesis
             trailSugar = Fx.Mat(MatKind.Additive, new Color(Palette.Glucose.r * 1.5f, Palette.Glucose.g * 1.5f, Palette.Glucose.b * 1.5f, 0.5f));
             shaftMat = Fx.Mat(MatKind.Additive, new Color(1f, 0.86f, 0.5f, 0.16f)); Fx.SetTexture(shaftMat, MicroKitB.BeamTex);
 
-            var chlMesh = MicroKitB.Sphere(5, 9);
+            var chlMesh = MicroKitB.Sphere(7, 12);   // the dive, O₂ and food shots pass ~1 m from these: no visible facets
             var chl = new MicroKitB.Batch();
             void Chloroplast(Vector3 c, Vector3 outward, Vector3 up, float s) =>
                 chl.Add(chlMesh, c, Quaternion.LookRotation(outward, up), new Vector3(0.2f, 0.34f, 0.12f) * s);
@@ -77,7 +77,7 @@ namespace Photosynthesis
             epiLow.Make("LowerEpidermis", root, epi);
 
             // --- palisade mesophyll: tall columns lined with chloroplasts
-            var palMesh = MicroKitB.Super(new Vector3(PalR, PalH, PalR), 2, 3.5f, 10, 14);
+            var palMesh = MicroKitB.Super(new Vector3(PalR, PalH, PalR), 2, 3.5f, 14, 20);
             var palB = new MicroKitB.Batch();
             float Col(float x) => Mathf.Round((x + 8.6f) / 0.8f) * 0.8f - 8.6f;
             diveCell = new Vector3(Col(0.4f), PalY, FrontZ); o2Cell = new Vector3(Col(2.6f), PalY, FrontZ); foodCell = new Vector3(Col(-3.4f), PalY, FrontZ);
@@ -421,14 +421,15 @@ namespace Photosynthesis
             }, Ease.InOut);
             // 3 · it speeds away along the phloem; the camera stays by the tissue and pans after it (riding along
             //     only shows the bare tube against the void — the leaf must stay in frame as the point of departure)
+            Vector3 c2 = cam ? cam.transform.position : Vector3.zero;
             yield return Fx.Tween(2.6f, t =>
             {
-                float gz = Mathf.Lerp(-2.2f, 26f, Fx.Eval(t, Ease.In));
+                float gz = Mathf.Lerp(-2.2f, 6f, Fx.Eval(t, Ease.InOut));   // it leaves along the phloem and stays in frame
                 gt.localPosition = new Vector3(tube.x + Mathf.Sin(t * 9f) * 0.02f, tube.y + Mathf.Cos(t * 7f) * 0.02f, gz);
                 gt.localRotation = Quaternion.Euler(t * 140f, 0, t * 300f);
                 if (cam)
                 {
-                    var cp = W(new Vector3(tube.x + 1.2f + 0.5f * t, tube.y + 0.55f, -3.45f + 1.1f * Fx.Eval(t, Ease.InOut)));
+                    var cp = Vector3.Lerp(c2, W(new Vector3(tube.x + 2.5f, tube.y + 0.6f, -5f + 1.5f * Fx.Eval(t, Ease.InOut))), MicroKitB.Smooth01(t / 0.35f));   // eases out to beside the cut face: no translucent cells in front of the lens
                     var look = Vector3.Lerp(gt.position, W(new Vector3(tube.x, tube.y, 6f)), Mathf.Clamp01((t - 0.55f) / 0.45f));
                     cam.transform.SetPositionAndRotation(cp, Quaternion.LookRotation(look - cp, transform.up));
                 }

@@ -68,7 +68,7 @@ namespace Photosynthesis
             var col = new FlexBox(false, 18); settingsPanel.Add(col);
             var head = col.Put(new FlexBox(true, 10));
             head.Put(Txt("Settings", TS.H1, Text)).style.flexGrow = 1;
-            head.Put(Round(36, IconId.Close, 18, TextSecondary, CloseSystem, "ps-round--ghost"));
+            head.Put(Round(44, IconId.Close, 18, TextSecondary, CloseSystem, "ps-round--ghost"));
 
             var tabs = col.Put(new VisualElement()); tabs.style.flexDirection = FlexDirection.Row; tabs.style.alignSelf = Align.FlexStart;
             Pad(tabs, 4, 4); Radius(tabs, 999); Bg(tabs, AG(Sunken, 0.8f));
@@ -85,9 +85,9 @@ namespace Photosynthesis
             }
 
             var audio = settingsTabs[0];
-            SettingRow(audio, "Music volume", musicSlider = new PsSlider(0.6f, v => { var a = Ad; if (a) a.MusicVolume = v; }));
-            SettingRow(audio, "Effects volume", sfxSlider = new PsSlider(0.8f, v => { var a = Ad; if (a) a.SfxVolume = v; }));
-            SettingRow(audio, "Dr. Curio voice", voiceSlider = new PsSlider(1f, v => { var a = Ad; if (a) a.VoiceVolume = v; }));
+            SettingRow(audio, "Music volume", musicSlider = new PsSlider(0.6f, v => { var a = Ad; if (a) a.MusicVolume = v; PlayerPrefs.SetFloat("ps.vol.music", v); }));
+            SettingRow(audio, "Effects volume", sfxSlider = new PsSlider(0.8f, v => { var a = Ad; if (a) a.SfxVolume = v; PlayerPrefs.SetFloat("ps.vol.sfx", v); }));
+            SettingRow(audio, "Dr. Curio voice", voiceSlider = new PsSlider(1f, v => { var a = Ad; if (a) a.VoiceVolume = v; PlayerPrefs.SetFloat("ps.vol.voice", v); }));
             SettingRow(audio, "Microphone", Drop(MicOptions, () => string.IsNullOrEmpty(MicDevice) ? 0 : Array.IndexOf(MicDevices(), MicDevice) + 1,
                 i =>
                 {
@@ -136,6 +136,11 @@ namespace Photosynthesis
             var r = tab.Put(new FlexBox(true, 12)); Size(r, 544); r.style.minHeight = 34;
             r.Put(Txt(label, TS.Body, TextSecondary)).style.flexGrow = 1;
             r.Put(control);
+            if (control is PsToggle t)
+            {   // the whole 544×48 row is the touch target, not the 46×26 switch; the row takes keyboard focus and the switch shows it
+                r.style.minHeight = 48; r.style.alignItems = Align.Center; t.pickingMode = PickingMode.Ignore; t.focusable = false; r.AddToClassList("ps-exprow");
+                Click(r, t.Flip, Sfx.UiSelect);
+            }
         }
 
         void SelectTab(int i)
@@ -204,10 +209,10 @@ namespace Photosynthesis
             col.Put(Txt("Turn, zoom and question everything you see.", TS.Small, TextSecondary));
             (IconId, string, string)[] rows =
             {
-                (IconId.Replay, "Rotate the plant", "Left-drag"), (IconId.Zoom, "Zoom in / out", "Mouse wheel · + / −"),
-                (IconId.Target, "Pan", "Right-drag"), (IconId.Eye, "Select a structure", "Click"),
-                (IconId.Mic, "Ask Dr. Curio", "ASK AI button · hold M to talk"), (IconId.CC, "Subtitles", "C"),
-                (IconId.ChevronRight, "Continue dialogue", "Space"), (IconId.Check, "Answer a question", "1–4 · Enter"), (IconId.Pause, "Pause", "Esc")
+                (IconId.Replay, "Rotate the plant", "Drag"), (IconId.Zoom, "Zoom in / out", "+ / − buttons · mouse wheel"),
+                (IconId.Target, "Pan", "Right-drag (mouse only)"), (IconId.Eye, "Select a structure", "Tap or click"),
+                (IconId.Mic, "Ask Dr. Curio", "ASK AI button · hold the mic to talk"), (IconId.CC, "Subtitles", "CC button · C"),
+                (IconId.ChevronRight, "Continue dialogue", "› button · Space"), (IconId.Check, "Answer a question", "Tap an answer · 1–4 · Enter"), (IconId.Pause, "Pause", "Menu button · Esc")
             };
             foreach (var (ic, action, keys) in rows)
             {
@@ -329,7 +334,7 @@ namespace Photosynthesis
             head.Put(Circle(48, Raised, A(Cyan, 0.9f), 2, chatAvatar = new ArtElement(ArtId.Curio, 42)));
             var hc = head.Put(new FlexBox(false, 0)); hc.style.flexGrow = 1;
             hc.Put(Txt("Ask Dr. Curio", TS.H2, Text)); hc.Put(Txt("Botanist · Investigator · AI companion", TS.Caption, TextMuted));
-            head.Put(Round(34, IconId.Close, 16, TextSecondary, CloseChat, "ps-round--ghost"));
+            head.Put(Round(44, IconId.Close, 18, TextSecondary, CloseChat, "ps-round--ghost"));
 
             chatScroll = col.Put(new ScrollView(ScrollViewMode.Vertical));
             chatScroll.style.maxHeight = 300; chatScroll.style.flexShrink = 1;
@@ -415,7 +420,7 @@ namespace Photosynthesis
             var b = new VisualElement(); Pad(b, 10, 14); Radius(b, 14); b.style.maxWidth = 330;
             Bg(b, learner ? A(Green, 0.85f) : AG(Raised, 0.75f));
             if (!learner) Border(b, A(Cyan, 0.35f), 1);
-            var l = WrapText(Txt(Prose(text), TS.Small, Text)); l.style.maxWidth = 302; b.Add(l);
+            var l = WrapText(Txt(Prose(text), TS.Body, Text)); l.style.maxWidth = 302; b.Add(l);   // replies are teaching text: Body, not Small
             row.Add(b);
             AppendChat(row);
         }

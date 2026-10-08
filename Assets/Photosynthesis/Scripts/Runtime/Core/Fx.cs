@@ -51,6 +51,15 @@ namespace Photosynthesis
         }
 
         public static void SetColor(Material m, Color c) { m.SetColor(BaseColor, c); if (m.HasProperty("_Color")) m.SetColor("_Color", c); }
+
+        static readonly Dictionary<Color, Material> rims = new Dictionary<Color, Material>();
+        /// Shared fresnel rim (second material on an atom). Null when the scene builder has not made the template yet.
+        public static Material Rim(Color c)
+        {
+            var l = Lib; if (l == null || !l.rim) return null;
+            if (!rims.TryGetValue(c, out var m) || !m) { rims[c] = m = new Material(l.rim); m.SetColor("_RimColor", c); }
+            return m;
+        }
         public static void SetAlpha(Material m, float a) { var c = m.GetColor(BaseColor); c.a = a; SetColor(m, c); }
         public static void SetEmission(Material m, Color c) { if (m.HasProperty(EmissionColor)) m.SetColor(EmissionColor, c); }
         public static void SetTexture(Material m, Texture t) { if (m.HasProperty(BaseMap)) m.SetTexture(BaseMap, t); }
@@ -191,7 +200,12 @@ namespace Photosynthesis
             // glossy, slightly metallic atoms: a soft specular highlight and a rim of reflected sky read as a smooth, premium surface (shared material, set once)
             foreach (var am in new[] { C, O, H }) { if (am.HasProperty(Smoothness)) am.SetFloat(Smoothness, 0.82f); if (am.HasProperty(Metallic)) am.SetFloat(Metallic, 0.14f); }
             if (bond.HasProperty(Smoothness)) bond.SetFloat(Smoothness, 0.6f);
-            void Atom(Vector3 p, float r, Material m) => Prim(PrimitiveType.Sphere, root.transform, p * size, Vector3.one * r * size, m, false, "Atom");
+            void Atom(Vector3 p, float r, Material m)
+            {   // glossy atom + a soft fresnel rim in a lighter tint of its own colour (LDR: an edge light, never a bloom halo)
+                var g = Prim(PrimitiveType.Sphere, root.transform, p * size, Vector3.one * r * size, m, false, "Atom");
+                var rim = Rim(Color.Lerp(m.GetColor(BaseColor), Color.white, 0.55f) * 0.55f);
+                if (rim) g.GetComponent<MeshRenderer>().sharedMaterials = new[] { m, rim };
+            }
             void Bond(Vector3 a, Vector3 b)
             {
                 var g = Prim(PrimitiveType.Cylinder, root.transform, (a + b) * 0.5f * size, new Vector3(0.12f, Vector3.Distance(a, b) * 0.5f, 0.12f) * size, bond, false, "Bond");

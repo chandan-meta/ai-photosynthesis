@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -50,7 +52,47 @@ namespace Photosynthesis
         public IEnumerator Say(string id, float hold = 0.2f) { lastId = id; return Speak(Text(id), SkipVoice ? null : Resources.Load<AudioClip>("VO/" + id), hold, false); }
 
         /// Speak dynamic text (AI replies). Uses device TTS when available.
-        public IEnumerator SayText(string text, float hold = 0.3f) { lastId = null; return Speak(text, null, hold, !SkipVoice); }
+        public IEnumerator SayText(string text, float hold = 0.3f) { lastId = null; var kb = SkipVoice ? null : KbClip(text); return Speak(text, kb, hold, kb == null && !SkipVoice); }
+
+        // ------------------------------------------------------------------ pre-generated voice for dynamic replies
+        /// Stable key of one sentence: FNV-1a over its lower-case ASCII letters and digits. Tools/GenerateVO.py --kb computes the same.
+        public static string KbKey(string sentence)
+        {
+            uint h = 2166136261u; int n = 0;
+            foreach (char ch in sentence.ToLowerInvariant())
+                if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')) { h ^= ch; h *= 16777619u; n++; }
+            return n == 0 ? "" : h.ToString("x8");
+        }
+
+        static readonly Regex Sentences = new Regex(@"(?<=[.!?…:])\s+");
+        static AudioClip kbJoined;
+
+        /// The reply as one clip joined from Resources/VO/kb sentence clips, or null when any sentence has none (then the whole reply
+        /// uses the device voice, so one answer never switches voices half-way).
+        public static AudioClip KbClip(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            var clips = new List<AudioClip>(); int frames = 0;
+            foreach (var s in Sentences.Split(text.Trim()))
+            {
+                var k = KbKey(s); if (k.Length == 0) continue;
+                var c = Resources.Load<AudioClip>("VO/kb/" + k); if (!c) return null;
+                clips.Add(c); frames += c.samples;
+            }
+            if (clips.Count == 0) return null;
+            if (clips.Count == 1) return clips[0];
+            int chans = clips[0].channels, hz = clips[0].frequency; var data = new float[frames * chans]; int at = 0;
+            foreach (var c in clips)
+            {
+                if (c.channels != chans || c.frequency != hz) return null;
+                if (c.loadState != AudioDataLoadState.Loaded) c.LoadAudioData();
+                var d = new float[c.samples * chans]; if (!c.GetData(d, 0)) return null;
+                Array.Copy(d, 0, data, at, d.Length); at += d.Length;
+            }
+            if (kbJoined) Destroy(kbJoined);
+            kbJoined = AudioClip.Create("kb-reply", frames, chans, hz, false); kbJoined.SetData(data, 0);
+            return kbJoined;
+        }
 
         IEnumerator Speak(string text, AudioClip clip, float hold, bool tts)
         {

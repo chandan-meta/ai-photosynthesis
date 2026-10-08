@@ -1,5 +1,8 @@
 # Dr. Curio's lines — id|text. Source of truth for subtitles AND generated voice-over (Tools/GenerateVO.ps1).
 # Storyboard: "AI PHOTOSYNTHESIS — THE HIDDEN FOOD FACTORY" Scenes 2–15.
+s3_scan1|Ooh! Unknown visitor detected…
+s3_scan2|Species… human!
+s3_scan3|Curiosity level… suspiciously high!
 s3_good|Good.
 s3_intro|You're exactly who I was looking for. Hi, my name is Dr. Curio. I'm a botanist, and a curious scientific investigator.
 s3_peaceful|This plant looks peaceful…
@@ -10,6 +13,8 @@ s3_three|Photosynthesis needs three important things.
 s3_tease|But I'm not giving them away that easily.
 s3_find|Find the three clues, and we'll catch this leaf making food.
 s3_askme|And if you get stuck, just ask me. I can show you anything in here.
+hub_next|Next clue unlocked! Tap it when you're ready.
+hub_hint|Psst! Tap the glowing clue card to keep investigating.
 s4_first|First clue.
 s4_around|Something the plant needs is all around us.
 s4_closer|Let's get closer.
@@ -47,7 +52,7 @@ s8_light|Light provides the energy that drives photosynthesis.
 s8_everything|We've got everything.
 s8_notseen|But we still haven't seen how they become food.
 s8_open|Open the skylight above us — let's see what light does!
-s8_hint|Up there — the skylight. Give it a click!
+s8_hint|Up there — the skylight. Give it a tap!
 s8_deeper|Time to go deeper.
 s9_noteverywhere|Photosynthesis isn't happening everywhere in here.
 s9_inside|It's happening inside these.
@@ -55,8 +60,8 @@ s9_chloroplast|Chloroplasts contain the green pigment chlorophyll.
 s9_absorbs|Chlorophyll absorbs light energy.
 s9_andnow|And now…
 s9_run|…the factory can run.
-s10_feed|The factory's ready. Send in the ingredients — click the carbon dioxide and the water.
-s10_hint|Click a carbon dioxide or a water molecule to send it in.
+s10_feed|The factory's ready. Send in the ingredients — tap the carbon dioxide and the water.
+s10_hint|Tap a carbon dioxide or a water molecule to send it in.
 s10_inco2|Carbon dioxide, in!
 s10_inh2o|Water, in!
 s10_thereitis|There it is.
@@ -80,8 +85,10 @@ s12_rest|…but the rest of the plant needs it too.
 s12_phloem|Food is transported from leaves to other parts of the plant through the phloem.
 s12_compare|Try the switches: xylem, phloem, or both.
 s13_remember|Remember this?
-s13_thats|That's photosynthesis.
-s13_highways|Also, don't mix up our two highways. Xylem brought water to the leaf. Phloem carries food from the leaf to where it's needed.
+s13_thats|That's the whole recipe.
+s13_highways|Also, don't mix up our two highways.
+s13_xylem|Xylem brought water up to the leaf.
+s13_phloem|Phloem carries food from the leaf to where it's needed.
 s14_beginning|At the beginning, it looked like this plant was doing nothing.
 s14_better|But now you know better.
 s14_mouth|No mouth.
@@ -89,7 +96,8 @@ s14_plate|No plate.
 s14_kitchen|No kitchen.
 s14_tiny|Well… technically, millions of tiny kitchens.
 s14_look|Plants don't go looking for food.
-s14_make|They make it using photosynthesis.
+s14_make|They make it themselves.
+s14_this|This is photosynthesis!
 exp_intro|Now for the fun part. Let's try to break the food factory. Flip a switch and watch the meters.
 exp_light|No light, no energy. Food production stops.
 exp_co2|No carbon dioxide, no raw material. Nothing to build glucose from.

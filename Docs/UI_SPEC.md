@@ -34,7 +34,7 @@ Linear project: dark-fill alphas pass through Kit.GA (1-(1-a)^2.2); Figma values
 | H3 | 16 | SemiBold | |
 | Body | 15 | Regular | line-height 145% |
 | Body Strong | 15 | SemiBold | |
-| Small | 13 | Regular | |
+| Small | 14 | Regular | (Figma 13; +1 so explanations stay ≥ 11 px at the 0.8 floor) |
 | Label | 12 | SemiBold | UPPERCASE, letter-spacing 10% (Figma 11; deliberate deviation for the 720p floor) |
 | Button | 14 | SemiBold | |
 | Caption | 13 | SemiBold | letter-spacing 2% (Figma 12; deliberate deviation for the 720p floor) |
@@ -101,14 +101,26 @@ Dr. Curio avatar: white→#BFD3CE radial head r22, dark visor rect (14.5,26 35×
 leaf sprout antenna (green gradient), gold-rimmed lens r6.5 at (47,44).
 
 ## Finale + end menu (added 2026-10-07; Figma write access was unavailable — View seat only — so this section is the design record)
-* **Finale title** (Hud.Title): big "THIS IS PHOTOSYNTHESIS" (Display, gold, dark plate as the other titles), small line
-  "Light energy turns water and carbon dioxide into glucose and oxygen" (Body, text/secondary). Fades in over 1.2 s, holds 6.5 s, fades 0.8 s.
-  Shown in cinematic HUD mode (investigation, progress, zoom, CC hidden; top actions and Ask AI receded) over the working plant and the
-  compact equation row, under a 12 s pull-back. Then a 3.2 s fade to black (fadeEl, scene ink → black).
+* **Finale labels**: five World Callouts on the working plant during a 15 s crane: WATER "up from the roots" (blue, root tip),
+  CARBON DIOXIDE "in from the air" (cyan, leaf underside), SUNLIGHT "light energy" (gold, crown), then GLUCOSE "food, made in the leaves"
+  (orange, stem) and OXYGEN "out to the air" (green, leaf); cleared before the title.
+* **Finale title** (Hud.Title with top 80, dim 0.1): big "THIS IS PHOTOSYNTHESIS" (Display, gold, dark plate as the other titles) in the
+  upper third above the crown; small line "Light energy turns water and carbon dioxide into glucose and oxygen" at 22 px in text/primary
+  (finale only; other titles keep Body 15 text/secondary). Spoken together with Dr. Curio's "This is photosynthesis!" (no subtitle bar).
+  Fades in 1.2 s, holds 11 s. Cinematic HUD mode; Ask AI hidden; Menu/Reset/Help hide when the 3.2 s fade to black starts. The fade
+  layer sits under the title layer, so the title stays alone on black for ~2 s, then fades.
 * **End menu** (HudLearning.EndMenu, overlay layer, centred, top 330): glass panel 560 wide, radius 20, fill surface/glass @94 %,
   stroke gold @80 % 1.5 px, soft gold glow; padding 32; column gap 18, centred: Art/ClueSun 80 px, H1 "Investigation complete" (gold),
   Body (text/secondary, 480 wide, centred) "You caught a leaf making its own food. Watch it again, keep exploring the plant, or leave.",
-  button row gap 10: **Replay** (Gold, Replay icon, initial focus) · **Review the plant** (Secondary, Eye icon) · **Exit** (Ghost, Exit icon).
-  No narration, no score. Replay restarts at Scene 2; Review opens Free Explore (which now also has a Secondary "Factory controls"
-  button in the Follow row, opening the Scene 14 switches panel; its continue button reads "Back to the plant"); Exit quits.
+  button row gap 10: **Replay** (Gold, Replay icon) · **Review the plant** (Secondary, Eye icon, initial focus) · **Exit** (Ghost, Exit
+  icon, opens the same exit confirm as every other Exit). No narration, no score. Replay restarts at Scene 2; Review opens Free Explore
+  (which now also has a Secondary "Factory controls" button in the Follow row, opening the Scene 14 switches panel; its continue button
+  reads "Back to the plant").
 * **Prologue** (Scene 3): cinematic HUD mode from the dive through the leaf until the clue cards appear; no new elements.
+* **Hub button**: after ~22 s in a clue hub, the standard big Gold button (bottom slot) "OPEN CLUE 0N" with the Target icon.
+
+## Touch sizes (2026-10-08)
+Zoom ± 48 (icon 22) · dialogue › 48 · close buttons 44 · `.ps-seg` padding 13×18 (~44 tall; the breadcrumb sits at top 44 and the
+magnification pill below it at 112) · `.ps-chip` 13×16 · `.ps-drop` 13×12 · slider hit area 240×44 · Factory controls: the whole row is the
+target (min height 48), the 46×26 switch only shows the state. Reading cards (question, reteach, legend, Factory controls, info card) are
+opaque (no blur in UI Toolkit, so bright 3D signs would ghost through text).

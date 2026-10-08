@@ -35,7 +35,7 @@ namespace Photosynthesis
     {
         UiHover, UiClick, UiSelect, Unlock, Success, Wrong, Scan, Beep, TargetLock, AnalysisComplete,
         Whoosh, Materialize, WaterAbsorb, WaterRush, EnergyBuild, SunImpact, ChloroplastActivate,
-        GlucoseDiscover, OxygenRelease, Sparkle, Pop
+        GlucoseDiscover, OxygenRelease, Sparkle, Pop, FinaleCadence
     }
 
     public enum MusicState { None, NewWorld, Investigation, Microscopic, WaterJourney, SunlightReveal, Reaction, Resolution, FreeExplore }

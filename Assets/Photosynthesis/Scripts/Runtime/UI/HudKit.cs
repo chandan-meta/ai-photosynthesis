@@ -70,7 +70,7 @@ namespace Photosynthesis
                 case TS.H2: size = 20; sb = true; spacing = -0.1f; break;
                 case TS.H3: size = 16; sb = true; break;
                 case TS.BodyStrong: sb = true; break;
-                case TS.Small: size = 13; break;
+                case TS.Small: size = 14; break;   // ≥ 11 px at the 0.8 scale floor (explanations, tooltips, callout lines)
                 case TS.Label: size = 12; sb = true; spacing = 1.1f; upper = true; break;     // 12/13 (Figma 11/12): ≥9.6 px at the 720p scale floor
                 case TS.Button: size = 14; sb = true; spacing = 0.14f; break;
                 case TS.Caption: size = 13; sb = true; spacing = 0.24f; break;
@@ -331,6 +331,8 @@ namespace Photosynthesis
             Value = value;
         }
         public bool Value { get => on; set { on = value; EnableInClassList("ps-toggle--on", on); } }
+        /// Toggle as if clicked (the row that owns the switch is the touch target).
+        public void Flip() { Value = !on; changed?.Invoke(on); }
     }
 
     /// Figma "Slider": 240 track, green fill, 18px knob. Drag anywhere on it (pointer captured).
@@ -341,12 +343,12 @@ namespace Photosynthesis
         public PsSlider(float value, Action<float> changed)
         {
             this.changed = changed; AddToClassList("ps-slider");
-            Kit.Size(this, W, 20); style.flexShrink = 0; style.justifyContent = Justify.Center;
+            Kit.Size(this, W, 44); style.flexShrink = 0; style.justifyContent = Justify.Center;   // 44 px touch height; the track stays 6 px
             var track = new VisualElement { pickingMode = PickingMode.Ignore }; Kit.Size(track, W, 6); Kit.Radius(track, 3); Kit.Bg(track, Palette.Raised);
             fill = new VisualElement { pickingMode = PickingMode.Ignore }; Kit.Size(fill, 0, 6); Kit.Radius(fill, 3); Kit.Bg(fill, Palette.GreenBright);
             track.Add(fill); Add(track);
             knob = new VisualElement { pickingMode = PickingMode.Ignore }; knob.AddToClassList("ps-slider-knob");
-            Kit.Abs(knob, 0, 1); Kit.Size(knob, 18, 18); Kit.Radius(knob, 9); Kit.Bg(knob, Color.white); Add(knob);
+            Kit.Abs(knob, 0, 13); Kit.Size(knob, 18, 18); Kit.Radius(knob, 9); Kit.Bg(knob, Color.white); Add(knob);
             // no Clickable here, so :active never fires: the drag state is a class (.ps-slider--drag grows the knob)
             RegisterCallback<PointerDownEvent>(e => { drag = true; AddToClassList("ps-slider--drag"); this.CapturePointer(e.pointerId); Set(e.localPosition.x); });
             RegisterCallback<PointerMoveEvent>(e => { if (drag) Set(e.localPosition.x); });

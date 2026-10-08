@@ -102,7 +102,7 @@
 
 /* ---------- chips (Ask AI suggestions, debug beats) */
 .ps-chip {
-    padding: 9px 14px; border-radius: 999px; margin-right: 8px; margin-bottom: 8px;
+    padding: 13px 16px; border-radius: 999px; margin-right: 8px; margin-bottom: 8px;
     background-color: rgba(18, 50, 41, 0.87); border-width: 1px; border-color: rgba(127, 230, 207, 0.3);
     transition-property: border-color, background-color; transition-duration: 0.15s;
 }
@@ -112,7 +112,7 @@
 
 /* ---------- segmented pills (magnification, comparison, settings tabs, zoom path) */
 .ps-seg {
-    flex-direction: row; align-items: center; padding: 6px 14px; border-radius: 999px;
+    flex-direction: row; align-items: center; padding: 13px 18px; border-radius: 999px;   /* ≥ 44 px tall: touch */
     border-width: 1px; border-color: rgba(0, 0, 0, 0);
     transition-property: background-color, border-color; transition-duration: 0.2s;
 }
@@ -196,7 +196,7 @@
 .ps-slider:hover .ps-slider-knob { scale: 1.15 1.15; border-width: 2px; }
 .ps-slider--drag .ps-slider-knob { scale: 1.25 1.25; border-width: 2px; }
 .ps-drop {
-    flex-direction: row; align-items: center; width: 170px; padding: 8px 12px; border-radius: 10px;
+    flex-direction: row; align-items: center; width: 170px; padding: 13px 12px; border-radius: 10px;
     background-color: rgba(18, 50, 41, 0.985); border-width: 1px; border-color: rgba(127, 230, 207, 0.3);
     transition-property: border-color; transition-duration: 0.15s;
 }
@@ -221,6 +221,7 @@
 .ps-kbd .ps-btn:focus > .ps-hoverglow, .ps-kbd .ps-tile:focus > .ps-hoverglow, .ps-kbd .ps-cc:focus > .ps-hoverglow, .ps-kbd .ps-toggle:focus > .ps-hoverglow { opacity: 1; }
 .ps-kbd .ps-xtile:focus .ps-xtile-box { border-width: 1.5px; border-color: rgb(61, 214, 232); }
 .ps-kbd .ps-toggle:focus .ps-knob { background-color: rgb(61, 214, 232); }
+.ps-kbd .ps-exprow:focus .ps-knob { background-color: rgb(61, 214, 232); }   /* Factory controls: the row takes focus, its switch shows it */
 .ps-kbd .ps-pop-item:focus { background-color: rgb(25, 76, 72); }
 
 /* screen-anchored world callouts move every frame via translate → never transition translate */

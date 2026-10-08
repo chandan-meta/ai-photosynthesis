@@ -4,6 +4,7 @@ using System.IO;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace Photosynthesis
 {
@@ -32,6 +33,7 @@ namespace Photosynthesis
                 if (args[i] == "-shots" && i + 1 < args.Length) shotsDir = args[i + 1];
                 if (args[i] == "-film" && i + 1 < args.Length) StartCoroutine(Film(args[i + 1]));
                 if (args[i] == "-uishots" && i + 1 < args.Length) StartCoroutine(UiShots(args[i + 1]));
+                if (args[i] == "-touchtest") StartCoroutine(TouchTest());
                 if (args[i] == "-quitafter" && i + 1 < args.Length) float.TryParse(args[i + 1], out quitAfter);
                 if (args[i] == "-quality" && i + 1 < args.Length)
                 {
@@ -148,6 +150,33 @@ namespace Photosynthesis
             }
         }
 
+        /// -touchtest : a simulated touchscreen drags across the Free Explore plant (the camera must turn) and taps it (a click must fire), then quit.
+        IEnumerator TouchTest()
+        {
+            var m = Module.I; yield return new WaitForSecondsRealtime(2f);
+            m.story.Run(Beat.FreeExplore); yield return new WaitForSecondsRealtime(5f);
+            m.cam.AutoSpin = 0f;   // the idle turntable would turn the camera without any touch
+            var ts = InputSystem.AddDevice<Touchscreen>();
+            Vector2 a = new Vector2(Screen.width * 0.42f, Screen.height * 0.6f), b = a + new Vector2(Screen.width * 0.14f, 0f);
+            float yaw0 = m.cam.transform.eulerAngles.y;
+            InputSystem.QueueStateEvent(ts, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Began, position = a }); yield return null; yield return null;
+            for (int i = 1; i <= 12; i++) { InputSystem.QueueStateEvent(ts, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Moved, position = Vector2.Lerp(a, b, i / 12f) }); yield return null; }
+            InputSystem.QueueStateEvent(ts, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = b }); yield return null;
+            yield return new WaitForSecondsRealtime(1.2f);
+            float turned = Mathf.Abs(Mathf.DeltaAngle(yaw0, m.cam.transform.eulerAngles.y));
+            int taps = 0; Action<Vector2> onTap = p => taps++; m.cam.Clicked += onTap;
+            var c = new Vector2(Screen.width * 0.5f, Screen.height * 0.55f);
+            InputSystem.QueueStateEvent(ts, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Began, position = c }); yield return null; yield return null;
+            InputSystem.QueueStateEvent(ts, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = c }); yield return null; yield return null;
+            yield return new WaitForSecondsRealtime(0.8f);
+            m.cam.Clicked -= onTap; InputSystem.RemoveDevice(ts);
+            bool ok = turned > 5f && taps == 1; if (!ok) errors++;
+            Debug.Log($"[Photosynthesis] touchtest: drag turned the camera {turned:0.0}°, tap fired {taps} click(s) → {(ok ? "ok" : "FAIL")}");
+            Debug.Log($"[Photosynthesis] touchtest complete, errors={errors}");
+            yield return new WaitForSecondsRealtime(0.5f);
+            Application.Quit();
+        }
+
         /// -film dir : a frame every 3 s for as long as the module runs (a play-through filmstrip for review).
         IEnumerator Film(string dir)
         {
@@ -202,8 +231,12 @@ namespace Photosynthesis
             h.ShowComparison(x => { }); yield return Snap("xylem_phloem_toggle"); h.HideComparison();
             StartCoroutine(h.Equation()); yield return Snap("equation", 6f); h.HideEquation();
             StartCoroutine(h.Complete(4, 5, Level.Average, r => { })); yield return Snap("complete", 1.5f); h.CancelWaits();
+            h.SetHudVisible(false); h.SetAskAIVisible(false); h.SetProgressVisible(false); h.SetZoomControlVisible(false);   // as Finale(): only the end menu on black
             StartCoroutine(h.Fade(1f, 0f, Color.black)); yield return null; StartCoroutine(h.EndMenu(r => { })); yield return Snap("end_menu", 1f); h.CancelWaits(); StartCoroutine(h.Fade(0f, 0f));
-            StartCoroutine(h.Title("This is Photosynthesis", "Light energy turns water and carbon dioxide into glucose and oxygen", 3f)); yield return Snap("finale_title", 1.3f);
+            h.SetHudVisible(true); h.SetCinematic(true);
+            StartCoroutine(h.Title("This is Photosynthesis", "Light energy turns water and carbon dioxide into glucose and oxygen", 3f, 80f, 0.1f)); yield return Snap("finale_title", 1.3f);
+            h.SetCinematic(false); h.SetAskAIVisible(true); h.SetProgressVisible(true); h.SetZoomControlVisible(true);
+            { bool kb = Dialogue.KbClip("Bye for now! I'll be right here if you need me.") != null; if (!kb) errors++; Debug.Log($"[Photosynthesis] kb voice for dynamic replies: {(kb ? "ok" : "MISSING")}"); }
             h.SetProgressVisible(false);   // as Story.FreeExplore: the tracker is gone, the Exit button owns that corner
             h.ShowFreeExplore(k => { }, () => { }); h.SetZoomPath(1); yield return Snap("free_explore"); h.HideFreeExplore();
             h.SetProgressVisible(true);

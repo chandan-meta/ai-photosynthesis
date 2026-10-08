@@ -47,7 +47,7 @@ namespace Photosynthesis
         Transform stoma, guards, hero, molRoot, pingRoot;
         Transform[] pings, amb, o2, flowIn, flowOut;
         Vector3[] ambHome; Vector3[][] o2Paths, inPaths, outPaths;
-        Renderer[] ambR; Material[] ambMats;
+        Renderer[] ambR; Material[][] ambMats;   // full material sets: atoms carry a second (rim) material
         Material guardMat, rimMat, pingMat, poreGlowMat, frostMat, dimMat;
         GameObject rim, poreGlow, frost, heroHalo;
         TrailRenderer trail;
@@ -194,16 +194,17 @@ namespace Photosynthesis
             clock += dt;
             if (ambientOn)
             {
-                bool fading = ambK < 1f;
                 ambK = Mathf.MoveTowards(ambK, 1f, dt * 1.4f);
                 Vector3 grow = Vector3.one * K.Smooth01(ambK);
+                var lens = Module.I && Module.I.cam ? Module.I.cam.transform.position : Vector3.zero;   // during CO2Enter the ambient CO₂ near the lens shrinks away from the hero
                 for (int i = 0; i < amb.Length; i++)
                 {
                     float s = i * 7.31f;
                     amb[i].localPosition = ambHome[i] + new Vector3(Mathf.PerlinNoise(clock * 0.11f, s) - 0.5f,
                         (Mathf.PerlinNoise(s, clock * 0.09f) - 0.5f) * 0.6f, Mathf.PerlinNoise(clock * 0.1f + s, s * 0.5f) - 0.5f) * 1.5f;
                     amb[i].localRotation = Quaternion.Euler(clock * (20 + i * 3 % 25), clock * (30 + i * 7 % 40), i * 40f);
-                    if (fading) amb[i].localScale = grow;
+                    float near = dimmed ? Mathf.Clamp01((Vector3.Distance(amb[i].position, lens) - 1.2f) / 1.4f) : 1f;
+                    amb[i].localScale = grow * near;
                 }
             }
             if (flowsOn)
@@ -213,7 +214,7 @@ namespace Photosynthesis
                 for (int i = 0; i < flowOut.Length; i++) Travel(flowOut[i], outPaths[i], Mathf.Repeat(flowT / 3.6f + (i + 0.5f) / flowOut.Length, 1f));
             }
             if (heroResting) hero.localPosition = CO2Path[4] + new Vector3(Mathf.Sin(clock * 0.7f), Mathf.Sin(clock * 0.9f + 1f) * 0.6f, Mathf.Cos(clock * 0.6f)) * 0.12f;
-            if (hero.gameObject.activeSelf) heroHalo.transform.localScale = Vector3.one * (1.15f + 0.12f * Mathf.Sin(clock * 5f));
+            if (hero.gameObject.activeSelf) heroHalo.transform.localScale = Vector3.one * (1.45f + 0.12f * Mathf.Sin(clock * 5f));
             if (guardHL)
             {
                 float p = 1f + 0.3f * Mathf.Sin(clock * 3.2f);   // clock: the pulse holds still while frozen
@@ -267,7 +268,7 @@ namespace Photosynthesis
         {
             if (dimmed == on) return;
             dimmed = on;
-            for (int i = 0; i < ambR.Length; i++) ambR[i].sharedMaterial = on ? dimMat : ambMats[i];
+            for (int i = 0; i < ambR.Length; i++) ambR[i].sharedMaterials = on ? new[] { dimMat } : ambMats[i];
         }
 
         // ================================================================== epidermis
@@ -559,8 +560,8 @@ namespace Photosynthesis
             var r = new System.Random(9);
             molRoot = Fx.Node("Molecules", transform).transform;
 
-            hero = Fx.Molecule(Mol.CO2, molRoot, 0.24f, 0.9f).transform; hero.name = "CO2 (highlighted)";
-            heroHalo = K.Glow(hero, Vector3.zero, 1.15f, K.GlowMat(new Color(Palette.Cyan.r * 2.4f, Palette.Cyan.g * 2.4f, Palette.Cyan.b * 2.4f, 0.9f)));
+            hero = Fx.Molecule(Mol.CO2, molRoot, 0.38f, 0.9f).transform; hero.name = "CO2 (highlighted)";   // the narrated molecule outranks the ambient ones (0.22)
+            heroHalo = K.Glow(hero, Vector3.zero, 1.45f, K.GlowMat(new Color(Palette.Cyan.r * 1.2f, Palette.Cyan.g * 1.2f, Palette.Cyan.b * 1.2f, 0.9f)));   // soft halo: no bloom disc
             trail = hero.gameObject.AddComponent<TrailRenderer>();
             trail.time = 0.9f; trail.minVertexDistance = 0.03f; trail.widthMultiplier = 0.16f; trail.numCapVertices = 4;
             trail.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
@@ -590,8 +591,8 @@ namespace Photosynthesis
                 }
                 rl.AddRange(amb[i].GetComponentsInChildren<Renderer>());
             }
-            ambR = rl.ToArray(); ambMats = new Material[ambR.Length];
-            for (int i = 0; i < ambR.Length; i++) ambMats[i] = ambR[i].sharedMaterial;
+            ambR = rl.ToArray(); ambMats = new Material[ambR.Length][];
+            for (int i = 0; i < ambR.Length; i++) ambMats[i] = ambR[i].sharedMaterials;
             dimMat = Own(Fx.Mat(MatKind.LitTransparent, new Color(0.62f, 0.7f, 0.78f, 0.22f)));
 
             var o2Halo = K.GlowMat(new Color(Palette.Oxygen.r * 2f, Palette.Oxygen.g * 2f, Palette.Oxygen.b * 2f, 0.85f));

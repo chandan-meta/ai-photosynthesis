@@ -273,8 +273,8 @@ namespace Photosynthesis
             Pad(zoomCtl, 12, 10, 12, 10);
             var zc = new FlexBox(false, 10); zc.style.alignItems = Align.Center; zoomCtl.Add(zc);
             zc.Put(Icon(IconId.Zoom, 22, TextSecondary));
-            zc.Put(Round(36, IconId.Plus, 18, Text, () => ZoomButton?.Invoke(1f)));
-            zc.Put(Round(36, IconId.Minus, 18, Text, () => ZoomButton?.Invoke(-1f)));
+            zc.Put(Round(48, IconId.Plus, 22, Text, () => ZoomButton?.Invoke(1f)));   // ≥ 44 px: the only zoom on a tablet (no pinch)
+            zc.Put(Round(48, IconId.Minus, 22, Text, () => ZoomButton?.Invoke(-1f)));
             zc.Put(Txt("Zoom", TS.Caption, TextMuted));
             hudLayer.Add(zoomCtl);
             foreach (var e in new[] { investigation, progressPanel, ccToggle, zoomCtl }) e.AddToClassList(CineHide);
@@ -402,8 +402,8 @@ namespace Photosynthesis
             var col = row.Put(new FlexBox(false, 4)); col.style.flexGrow = 1; col.style.flexShrink = 1;
             dlgSpeaker = col.Put(Txt("Dr. Curio", TS.H3, Cyan));
             dlgLine = col.Put(Txt("", TS.Body, Text, 580));
-            dlgSubsOff = col.Put(Txt("Subtitles off · press C to show them", TS.Small, TextMuted));
-            dlgNext = row.Put(Round(40, IconId.ChevronRight, 20, Cyan, () => { if (dlgNextIcon.Id == IconId.Replay) ReplayClicked?.Invoke(); else NextClicked?.Invoke(); }, "ps-round--cyan"));
+            dlgSubsOff = col.Put(Txt("Subtitles off · tap CC to show them", TS.Small, TextMuted));
+            dlgNext = row.Put(Round(48, IconId.ChevronRight, 22, Cyan, () => { if (dlgNextIcon.Id == IconId.Replay) ReplayClicked?.Invoke(); else NextClicked?.Invoke(); }, "ps-round--cyan"));
             dlgNextIcon = dlgNext.Q<IconElement>();
             CenterRow(panelLayer, float.NaN, 40).Add(dlgPanel);
             dlgPanel.RegisterCallback<GeometryChangedEvent>(_ => RelayoutBottom());
@@ -693,13 +693,16 @@ namespace Photosynthesis
         }
 
         /// Centred display title (e.g. "A New World", "Photosynthesis"). Fades in, holds, fades out.
-        public IEnumerator Title(string big, string small, float hold)
+        public IEnumerator Title(string big, string small, float hold, float top = 388f, float dim = 0.3f)
         {
             int my = ++titleGen;
             Set(titleBig, big); titleSmall.text = small;
             titleSmall.style.display = string.IsNullOrEmpty(small) ? DisplayStyle.None : DisplayStyle.Flex;
             titleBox.style.display = DisplayStyle.Flex;
-            Dim(DimSrc.Title, 0.3f);                                     // the 3D recedes a little so the plate edge blends in
+            titleBox.parent.style.top = top;                             // centre (388) by default; the finale puts it in the upper third above the crown
+            bool finale = top < 200f;                                     // the finale's summary is the module's last statement: it reads at 22 px, full white
+            titleSmall.style.fontSize = finale ? 22f : 15f; titleSmall.style.color = finale ? Text : TextSecondary;
+            Dim(DimSrc.Title, dim);                                      // the 3D recedes a little so the plate edge blends in
             yield return Fx.Tween(ReduceMotion ? 0.3f : 1.2f, k =>
             {
                 if (my != titleGen) return;
@@ -721,11 +724,11 @@ namespace Photosynthesis
         void BuildInfo()
         {
             infoWrap = Abs(new VisualElement { pickingMode = PickingMode.Ignore }, float.NaN, 380, 40); infoWrap.AddToClassList("ps-shift");
-            infoCard = Hidden(Panel(20, 0.88f, A(GlassStroke, 0.28f))); Size(infoCard, 380); Pad(infoCard, 20, 20, 20, 20);
+            infoCard = Hidden(Panel(20, 1f, A(GlassStroke, 0.28f))); Size(infoCard, 380); Pad(infoCard, 20, 20, 20, 20);   // opaque: no blur in UI Toolkit, so bright signs behind would ghost through the text
             var col = new FlexBox(false, 14); infoCard.Add(col);
             var head = col.Put(new FlexBox(true, 10));
             infoTitle = head.Put(WrapText(Txt("", TS.H2, Text))); infoTitle.style.flexGrow = 1; infoTitle.style.flexShrink = 1;
-            head.Put(Round(32, IconId.Close, 16, TextSecondary, HideInfo, "ps-round--ghost"));
+            head.Put(Round(44, IconId.Close, 18, TextSecondary, HideInfo, "ps-round--ghost"));
             var vis = col.Put(new VisualElement()); Size(vis, 340, 150); Radius(vis, 14); Bg(vis, A(GreenDeep, 0.9f)); Border(vis, A(GreenBright, 0.25f), 1);
             vis.style.alignItems = Align.Center; vis.style.justifyContent = Justify.Center;
             var halo = Circle(120, A(GreenBright, 0.07f), Color.clear, 0); Glow(halo, GreenBright, 60, 30, 0.25f);
