@@ -512,9 +512,9 @@ namespace Photosynthesis
             Parallel(plant.SetTransparency(0.55f, 1.2f));   // the leaf turns glassy as we close in: we pass through the surface into the green inside
             if (!calm) yield return cam.Focus(plant.LeafCenter(leaf), plant.LeafCenter(leaf) - cam.transform.position, 0.25f, 1.3f, 28f);
             au.Music(MusicState.Microscopic, 1.5f);
+            curio.SetVisible(false);   // the vista plays alone (hidden before the flash, so he never shows while it fades); back at his spot for the briefing
             yield return GoTo(Place.Interior, true);
             plant.SetFlow(Flow.Sunlight, false); plant.SetFlow(Flow.Chloroplast, false); Parallel(plant.SetTransparency(0f, 0.05f));   // reset while the chamber is hidden
-            curio.SetVisible(false);   // the vista plays alone; he is back at his spot for the briefing
             var glide = Parallel(m.interior.Glide(cam));
             while (dlg.Speaking) yield return null;
             yield return Fx.Wait(AutoPlay ? 0.3f : 1.4f);

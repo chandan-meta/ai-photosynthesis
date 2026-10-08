@@ -28,7 +28,8 @@ namespace Photosynthesis
         static readonly Color BeamCol = new Color(0.55f, 1.9f, 2.1f, 0.6f), LineCol = new Color(1.2f, 3.2f, 3.6f, 1f),
             RingCol = new Color(0.8f, 2.6f, 2.9f, 0.9f), HoloCol = new Color(0.6f, 1.9f, 2.1f, 0.9f), GlowCol = new Color(2.6f, 1.9f, 0.7f, 0.9f),
             HoverCol = new Color(0.4f, 1.6f, 1.75f, 0.7f),
-            ShellLift = new Color(0.035f, 0.045f, 0.042f);   // faint self-light so the white shell never goes black in dark micro worlds
+            ShellLift = new Color(0.035f, 0.045f, 0.042f),   // faint self-light so the white shell never goes black in dark micro worlds
+            ScarfLift = new Color(0.008f, 0.03f, 0.01f);
         static readonly Vector3 RestR = new Vector3(0.215f, -0.045f, 0.075f), RestL = new Vector3(-0.2f, -0.02f, 0.1f),
             ShoulderR = new Vector3(0.13f, 0.11f, 0.02f), ScanHold = new Vector3(-0.19f, 0.2f, 0.17f), ShutHold = new Vector3(-0.12f, 0.17f, 0.21f);
         static readonly int BaseMap = Shader.PropertyToID("_BaseMap");
@@ -43,7 +44,7 @@ namespace Photosynthesis
         Transform home, rig, headPivot, head, antenna, eyeR, eyeL, mouth, handR, handL, finger, scanner, lens, iris;
         Transform beam, coreLine, ring, ping, holo, glow;
         ParticleSystem vortex, glyphs;
-        Material shellMat, coatMat, eyeMat, mouthMat, coreMat, budMat, hoverMat, lensMat, beamMat, lineMat, ringMat, pingMat, holoMat, glowMat;
+        Material shellMat, coatMat, scarfMat, eyeMat, mouthMat, coreMat, budMat, hoverMat, lensMat, beamMat, lineMat, ringMat, pingMat, holoMat, glowMat;
         Mesh coneMesh; readonly Vector3[] coneV = new Vector3[(BeamSides + 1) * 2]; readonly Vector2[] coneUV = new Vector2[(BeamSides + 1) * 2];
         readonly float[] coneCos = new float[BeamSides + 1], coneSin = new float[BeamSides + 1];
         readonly List<Object> owned = new List<Object>();
@@ -185,6 +186,7 @@ namespace Photosynthesis
             foreach (var r in casters) r.shadowCastingMode = mode;   // no shadows thrown into micro worlds from the lens
             // Micro-world moods (soil, cell) can be very dark: lift the white shell/coat so his silhouette always reads.
             Fx.SetEmission(shellMat, ShellLift * (on ? 4f : 1f)); Fx.SetEmission(coatMat, ShellLift * (on ? 4f : 1f));
+            if (scarfMat) Fx.SetEmission(scarfMat, ScarfLift * (on ? 4f : 1f));
         }
 
         /// "He shuts his scanner dramatically": raise, twirl, iris snaps shut, satisfied nod.
@@ -551,6 +553,14 @@ namespace Photosynthesis
                     .transform.localRotation = Quaternion.Euler(-16f, side * 20f, side * 24f);
             Part("Core Light", dome, coreMat, rig, new Vector3(0f, -0.035f, 0.121f), new Vector3(90f, 0f, 0f), Vector3.one * 0.03f);
             Part("Leaf Badge", leaf, leafMat, rig, new Vector3(-0.072f, 0.035f, 0.108f), new Vector3(-10f, -28f, 25f), Vector3.one * 0.04f);
+            // green leaf scarf knotted over the collar: the user's, from charcter/dr.blend (Tools/Curio/scarf.py), already in rig space
+            var scarfMesh = Resources.LoadAll<Mesh>("Characters/Curio_ScarfMesh");
+            if (scarfMesh.Length > 0)
+            {
+                scarfMat = M(MatKind.Leaf, Color.white, ScarfLift, 0.15f, 0f);   // double-sided cloth
+                var fabric = Resources.Load<Texture2D>("Characters/Curio_Scarf"); if (fabric) Fx.SetTexture(scarfMat, fabric); else Fx.SetColor(scarfMat, Palette.Green);
+                Caster(Fx.MeshObj("Scarf", scarfMesh[0], scarfMat, rig).transform);
+            }
             // hover glow: soft horizontal light pool just under the torso (double-sided additive, so it reads from above and below)
             Fx.Prim(PrimitiveType.Quad, rig, new Vector3(0f, -0.172f, 0f), Vector3.one * 0.46f, hoverMat, false, "Hover Glow").transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             var motes = Fx.Particles("Hover Motes", rig, new Fx.PCfg

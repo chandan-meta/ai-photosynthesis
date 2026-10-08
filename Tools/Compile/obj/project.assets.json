@@ -13,9 +13,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\AI unity project\\AI PHOTOSYNTHESIS\\Tools\\Compile\\Runtime.csproj",
-      "projectName": "Runtime",
-      "projectPath": "D:\\AI unity project\\AI PHOTOSYNTHESIS\\Tools\\Compile\\Runtime.csproj",
+      "projectUniqueName": "D:\\AI unity project\\AI PHOTOSYNTHESIS\\Tools\\Compile\\Editor.csproj",
+      "projectName": "Editor",
+      "projectPath": "D:\\AI unity project\\AI PHOTOSYNTHESIS\\Tools\\Compile\\Editor.csproj",
       "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
       "outputPath": "D:\\AI unity project\\AI PHOTOSYNTHESIS\\Tools\\Compile\\obj\\",
       "projectStyle": "PackageReference",

@@ -45,6 +45,11 @@ Question lines use ids `q_<QID>_lead`, `q_<QID>_ok`, `q_<QID>_no`.
 * Micro worlds set their own `RenderSettings` fog/ambient in `ApplyMood()`; `Chamber.SetVisible(true)` restores the chamber mood.
 * Colours: `Palette` (Types.cs) == Figma tokens.
 
+## Dr. Curio's scarf
+The robot is built in code (`Curio.Build`); the one imported piece is the green scarf from the user's `charcter/dr.blend`:
+`Tools/Curio/scarf.py` → `Resources/Characters/Curio_ScarfMesh.obj` (rig space) + `Curio_Scarf.png` (baked fabric). Re-run the script after
+the user edits the scarf in Blender.
+
 ## Input
 Input System only (`UnityEngine.InputSystem`): `Mouse.current`, `Touchscreen.current.primaryTouch` (the finger is the pointer while
 it is down: drag = rotate, tap = click; pan stays on the mouse), `Keyboard.current`. The camera exposes `Clicked(screenPos)` (click

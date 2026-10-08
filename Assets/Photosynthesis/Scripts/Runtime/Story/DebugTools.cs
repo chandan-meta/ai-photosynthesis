@@ -19,12 +19,18 @@ namespace Photosynthesis
     {
         ProfilerRecorder drawCalls, setPass, tris;
         float fps; int frames; float acc;
-        string shotsDir; float quitAfter = -1;
+        string shotsDir; float quitAfter = -1, filmRate = 3f;
 
         void Start()
         {
             var m = Module.I;
             var args = Environment.GetCommandLineArgs();
+            int fr = Array.IndexOf(args, "-filmrate");
+            if (fr >= 0)
+            {
+                if (fr + 1 < args.Length && float.TryParse(args[fr + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float rate) && rate > 0f) filmRate = rate;
+                else Debug.LogWarning("[Photosynthesis] -filmrate needs a positive number of seconds (e.g. 0.5); keeping 3 s");
+            }
             for (int i = 0; i < args.Length; i++)
             {
                 if (args[i] == "-autoplay") { m.story.AutoPlay = true; m.dialogue.SkipVoice = true; }
@@ -177,13 +183,14 @@ namespace Photosynthesis
             Application.Quit();
         }
 
-        /// -film dir : a frame every 3 s for as long as the module runs (a play-through filmstrip for review).
+        /// -film dir : a frame every 3 s (or -filmrate s) for as long as the module runs (a play-through filmstrip for review;
+        /// -filmrate 0.2 with -beat X -quitafter N gives an animation burst).
         IEnumerator Film(string dir)
         {
             Directory.CreateDirectory(dir);
             for (int i = 0; ; i++)
             {
-                yield return new WaitForSecondsRealtime(3f);
+                yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, filmRate));
                 ScreenCapture.CaptureScreenshot(Path.Combine(dir, $"{i:000}_{Time.realtimeSinceStartup:0000}s_{Module.I.Beat}.png"));
             }
         }

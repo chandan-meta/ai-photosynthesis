@@ -9,6 +9,8 @@
 | `Resources/Fonts/Inter-*.ttf` | shipped with Unity 6000.3 editor (rsms/Inter) | SIL OFL 1.1 | UI typography |
 | `Resources/Fonts/Cinzel-SemiBold.ttf` (not yet added; Display falls back to Inter SemiBold until it is) | Google Fonts / NDISCOVER Cinzel (static instance) | SIL OFL 1.1 | Display titles |
 | Dr. Curio, hero plant, micro worlds, molecules, icons, SFX, music | generated procedurally in code | project-owned | — |
+| `Resources/Characters/Curio_ScarfMesh.obj` + `Curio_Scarf.png` | the user's `D:\AI unity project\charcter\dr.blend` via `Tools/Curio/scarf.py`: scarf mesh from the user's Tripo-generated model; fabric baked from the BlenderKit material \"Snooker Pool Table Cloth\" by Textures Can (textures in `charcter\textures\Snooker_Pool_Table_Cloth_*.jpg`) | mesh: supplied by the user (Tripo; plan/licence per the user's account) · fabric: **BlenderKit Royalty Free** (use in products allowed; do not redistribute the source textures) | Dr. Curio's green leaf scarf |
+| (branch `feature/tripo-curio` only) Dr. Curio replacement | client file `D:\AI unity project\charcter\dr curio.blend` (Tripo meshes) | supplied by client | not used on main (the user kept the classic robot) |
 | `Shaders/MoleculeRim.shader` | written for this project | project-owned | fresnel edge light on molecule atoms |
 | Voice-over `Resources/VO/*.wav` | Microsoft Edge neural TTS, voice `en-US-AnaNeural` (child, "cute" category) via `Tools/GenerateVO.py` | synthetic voice, generated for this project | Dr. Curio: 170 story lines (`VO/<id>.wav`) + 272 Ask-AI reply sentences (`VO/kb/<key>.wav`). Replace story lines with recorded VO by dropping same-named WAVs |
 

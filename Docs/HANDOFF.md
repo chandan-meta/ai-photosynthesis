@@ -1,8 +1,40 @@
-# Handoff — Photosynthesis module, 2026-10-08
+# Handoff — Photosynthesis module, 2026-10-08 (evening update)
 
-Read this first. It records where the work against the client's 2026-10-07 master prompt stands, what is verified, and what is left.
+Read this first. Section 0 is the latest work; sections 1–8 (morning) still hold.
 Project: `D:\AI unity project\AI PHOTOSYNTHESIS` (Unity 6000.3.0f1, URP 17.3, UI Toolkit, Input System).
-Git: local repository on `main` (baseline `daf9bf5` = the 2026-10-07 handoff state, then today's commit). **No remote yet** (section 7).
+Git: local repository, `main` = the module (baseline `daf9bf5`, `85e0b0a` review passes, then the Dr. Curio scarf commit).
+Branch `feature/tripo-curio` parks the rejected character replacement (below). **No remote yet** (section 7).
+
+## 0. Dr. Curio: the classic robot, now with the user's green scarf (2026-10-08, evening)
+
+**Decisions (user, in order).** (1) A full replacement Dr. Curio was built from `D:\AI unity project\charcter\dr curio.blend` (rigged in
+Blender, 10 clips, face blendshapes, spring sprout) — the user preferred the original procedural robot; it is parked, complete, on branch
+`feature/tripo-curio` (commit `3c35700`, pipeline `Tools/Curio` there). (2) The user got an FBX of the classic robot to repaint
+(`D:\AI unity project\charcter\dr curio classic\`) and came back with `dr.blend`: their own Tripo robot built on that FBX. (3) Final call:
+**keep the original Dr. Curio and its animation; add only the green scarf from `dr.blend`.** That is what `main` ships.
+
+**The scarf.** `blender -b --factory-startup -P Tools/Curio/scarf.py` reads `dr.blend` (never written), takes the scarf, fits it to the
+classic torso (85 % about the knot, 2 cm back), bakes its fabric (the cloth texture through the user's colour nodes) to
+`Resources/Characters/Curio_Scarf.png` (512 px, empty texels filled so mipmaps stay green) and writes `Resources/Characters/Curio_ScarfMesh.obj`
+already in Curio's rig space (Unity's OBJ import mirrors X into it). `Curio.Build` adds it under the rig (double-sided Leaf material, a faint
+green lift like the shell's in dark micro worlds, casts shadows): 12 lines; every animation is the original.
+
+**Also on main:** `-filmrate s` debug flag (animation bursts with `-film`, `-beat`, `-quitafter`; a bad value warns and keeps 3 s); Curio is
+hidden before the white flash into the leaf-interior vista (he flashed up in companion mode during the fade).
+
+**Housekeeping.** Running Build Scene regenerates `Materials/DomeGlass.mat` and `DomeLamp.mat`; their uncommitted local edits that existed at the
+start of this session were overwritten that way (they match the last commit). The texture-painting kit folder above predates the scarf
+decision: its in-game skin hook is not on main (its README says so).
+
+**Client ZIP:** unchanged since the 2026-10-07 inventory; `Photosynthesis_Leaf_inside.fbx` remains in use (Scene 3 prologue interior), the
+other models stay unused for the reasons in `ASSETS_AND_LICENSES.md`. **Lighting:** realtime only (story-animated sun/ambient, runtime-built
+plant and micro worlds make baked GI wrong or empty); SSAO gives contact shadows.
+
+**Verification (final build, dev player 435 MB, 0 build errors):** beat screenshots errors=0 (scarf visible in the chamber and in companion
+mode) · intro animation burst errors=0 · autoplay errors=0 · autoplay wrong-answers-first errors=0 · UI states errors=0 with the Ask-AI voice
+check ok · simulated touch ok (drag 67.9°, 1 click) · performance run: see `Logs/player-perf.log` (table in the commit notes). An independent
+review (code + asset inspector, adversarial verification) confirmed 3 small issues, all fixed (licence row for the BlenderKit fabric,
+handoff wording, stale staged DebugTools copy); 3 other findings were refuted.
 
 ## 1. Where it stands
 
