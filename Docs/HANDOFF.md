@@ -43,6 +43,24 @@ props (pitch ≥ 0 now), plus dead code. 2 findings were refuted. Known and **no
 while music was still rendering crashed on shutdown (`audio render … Thread was being aborted`, also in older logs) — flagged as a
 separate task (AudioDirector background render vs. quit).
 
+## 0a-2. Model exports, ZIP folder, gameplay recording (2026-10-09)
+
+- **`-exportmodels <dir>`** (dev or release player, `ModelExport.cs`): dumps every runtime-built model — hero plant (grown, roots and
+  vessels on), Dr. Curio, the chamber's procedural pieces (static batching is skipped under this flag so the combined meshes stay
+  readable), the four molecules and all seven micro worlds — as OBJ + MTL + PNG (GPU read-back of the generated textures), one folder
+  each, then quits. `Tools/Export/export_used.py` (Blender) turns each into an FBX with the textures embedded (`leaf` mode; `verify`
+  mode re-imports and counts packed images); `chamber` and `curio` modes export the lab model and the Curio kit + scarf. The user's
+  copies live in `Exports/UsedModels/` (git-ignored, README inside): 17 FBX files.
+- **`Art/G7/`** now holds all 15 client-ZIP models with their referenced textures, imported with materials (README inside). The 146 MB
+  garden and its 27 textures are git-ignored (GitHub's 100 MB limit); everything else there is tracked.
+- **Gameplay recording:** `Recordings/` (git-ignored) — `Tools/Record/record.sh <out.mp4> <max s> [player args]` (release player
+  windowed 1600×900, ffmpeg gdigrab capture of the window's screen region, `loopback_rec.py` WASAPI loopback audio that follows the
+  default output device, NVENC through the imageio-ffmpeg 7.1 binary because the installed ffmpeg 8.1 needs a newer NVIDIA driver;
+  `postprocess.sh` makes the 720p copy). The 2026-10-09 run: 8 min 17 s, 1600×900/30 fps, plus a 720p copy and three sub-25 MB chapters.
+- **Disk:** both drives were full on 2026-10-09; old test frame dumps under `Logs/` (film*/burst*/ui_*) were deleted. Watch free space before builds.
+- **Editor open = no batch builds.** While the user's editor held the project, the export player was built from a copy of the project
+  (`Library` copied without caches, Mono backend) — slow (shader variants recompile); better to ask for the editor to be closed.
+
 ## 0b. Dr. Curio: the classic robot, now with the user's green scarf (2026-10-08, evening)
 
 **Decisions (user, in order).** (1) A full replacement Dr. Curio was built from `D:\AI unity project\charcter\dr curio.blend` (rigged in

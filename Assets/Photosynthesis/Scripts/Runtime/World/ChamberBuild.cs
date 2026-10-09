@@ -62,7 +62,7 @@ namespace Photosynthesis
 
             BuildPlatform(); BuildUnderground(); BuildShafts(); BuildBeam(); BuildSkylight(); BuildFormationFx();
             InitPieces(); InitEnvironment();
-            StaticBatchingUtility.Combine(staticRoot.gameObject);
+            if (!ModelExport.Requested) StaticBatchingUtility.Combine(staticRoot.gameObject);
         }
 
         /// Opaque renderer + transparent twin used while the floor is see-through (no keyword switching at runtime).

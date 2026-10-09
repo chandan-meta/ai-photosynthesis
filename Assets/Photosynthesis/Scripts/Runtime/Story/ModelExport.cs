@@ -12,6 +12,9 @@ namespace Photosynthesis
     /// textures embedded (Tools/Export). World space with X mirrored (left- to right-handed), each model centred on its root.
     public static class ModelExport
     {
+        /// True when the player was started with -exportmodels: the chamber then skips static batching (combined meshes are unreadable).
+        public static bool Requested => System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-exportmodels") >= 0;
+
         public static IEnumerator Run(string dir)
         {
             yield return null; yield return null;   // Module.Start has shown the start screen: chamber formed, plant grown, Curio placed
