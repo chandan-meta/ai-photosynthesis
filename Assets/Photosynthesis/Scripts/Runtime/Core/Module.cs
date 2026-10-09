@@ -77,6 +77,8 @@ namespace Photosynthesis
         public bool HubOpen { get; set; }
 
         int skipFrame = -1;
+        public bool AtStartScreen { get; private set; }
+        bool starting;
 
         void Awake()
         {
@@ -112,7 +114,47 @@ namespace Photosynthesis
             for (int i = 0; i < args.Length - 1; i++)
                 if (args[i] == "-beat" && Enum.TryParse(args[i + 1], true, out Beat b)) startBeat = b;
             Fx.Sanitize(gameObject); if (chamber) Fx.Sanitize(chamber.gameObject);
-            story.Run(startBeat);
+            bool automated = Array.IndexOf(args, "-beat") >= 0 || Array.IndexOf(args, "-autoplay") >= 0 || Array.IndexOf(args, "-shots") >= 0 || Array.IndexOf(args, "-uishots") >= 0 || Array.IndexOf(args, "-touchtest") >= 0;
+            if (automated || startBeat != Beat.Scene2Start) story.Run(startBeat);
+            else ShowStartScreen();
+        }
+
+        public void ShowStartScreen()
+        {
+            StopAllCoroutines(); starting = false; AtStartScreen = true;
+            story.StopForBanner();
+            chamber.ResetVisuals(); chamber.SetVisible(true); chamber.SetFormed(true); plant.ResetVisuals(); plant.SetGrown(true);
+            foreach (var w in new MicroWorld[] { leafSurface, soil, xylem, tissue, cell, chloroplast, interior }) w.Show(false);
+            chamber.SetVisible(true); clues.ResetFor(Beat.Scene2Start); HubOpen = false;
+            cam.UserControl = false; cam.AutoSpin = 0; cam.Cut(plant.Base + new Vector3(0, 3.2f, -8.2f), plant.Base + new Vector3(-1.3f, 2f, 0), 56f);
+            curio.SetVisible(true); curio.Companion(false); curio.Place(plant.Base + new Vector3(3.4f, 1.45f, -1.9f), cam.transform.position); curio.Talking = false; curio.LookAtCamera(); curio.Wave();
+            hud.ShowStartBanner(BeginInvestigation);
+            audioDirector.StopVoice(); audioDirector.Music(MusicState.Investigation); audioDirector.Ambience("chamber");
+            Debug.Log("[Polish] Start banner ready; story and narration gated");
+        }
+
+        public void BeginInvestigation()
+        {
+            if (!AtStartScreen || starting || hud.Paused) return;
+            starting = true; StartCoroutine(LaunchInvestigation());
+        }
+
+        public void LeaveStartScreen()
+        {
+            // A developer beat jump also leaves the banner; cancel a pending title transition before it can override the jump.
+            if (AtStartScreen) StopAllCoroutines();
+            AtStartScreen = false; starting = false;
+        }
+
+        System.Collections.IEnumerator LaunchInvestigation()
+        {
+            hud.DismissStartBanner(); curio.Wave();
+            // The original formation starts under a short ink fade, so its unformed reset never flashes into the banner.
+            yield return hud.Fade(1f, Hud.ReduceMotion ? 0.18f : 0.55f);
+            AtStartScreen = false; starting = false; story.Run(Beat.Scene2Start);
+            yield return null;
+            yield return hud.Fade(0f, Hud.ReduceMotion ? 0.18f : 0.65f);
+            Debug.Log("[Polish] Start activated once; original Scene2Start running");
         }
 
         /// Builds the micro worlds one per frame (Story.Play runs it before the first beat). In Start they added ~1–2 s to the

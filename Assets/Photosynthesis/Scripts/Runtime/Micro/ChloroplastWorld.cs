@@ -52,12 +52,12 @@ namespace Photosynthesis
             sphere = MicroKitB.Sphere(8, 12);
 
             // --- materials
-            var outerMat = Fx.Mat(MatKind.LitTransparent, capOuterC = new Color(0.46f, 0.86f, 0.46f, 0.3f), new Color(0.02f, 0.09f, 0.03f), 0.93f);
-            var innerMat = Fx.Mat(MatKind.LitTransparent, capInnerC = new Color(0.62f, 0.92f, 0.52f, 0.2f), new Color(0.03f, 0.1f, 0.03f), 0.9f);
+            var outerMat = Fx.Mat(MatKind.LitTransparent, capOuterC = new Color(0.46f, 0.72f, 0.26f, 0.16f), new Color(0.015f, 0.04f, 0.01f), 0.7f);
+            var innerMat = Fx.Mat(MatKind.LitTransparent, capInnerC = new Color(0.62f, 0.82f, 0.42f, 0.11f), new Color(0.015f, 0.045f, 0.01f), 0.66f);
             capOuterMat = new Material(outerMat); capInnerMat = new Material(innerMat);
             rimC = new Color(0.75f, 1f, 0.7f, 0.85f);
             rimMat = Fx.Mat(MatKind.Glass, rimC, new Color(0.15f, 0.6f, 0.2f), 0.8f);
-            granaE = new Color(0.02f, 0.22f, 0.05f); lamE = new Color(0.02f, 0.16f, 0.04f);
+            granaE = new Color(0.01f, 0.085f, 0.015f); lamE = new Color(0.01f, 0.06f, 0.012f);
             granaMat = Fx.Mat(MatKind.LitEmissive, new Color(0.11f, 0.56f, 0.19f), granaE, 0.88f);
             lamMat = Fx.Mat(MatKind.LitEmissive, new Color(0.22f, 0.64f, 0.28f), lamE, 0.75f);
             beamMat = Fx.Mat(MatKind.Additive, new Color(2.2f, 1.8f, 0.9f, 0.6f)); Fx.SetTexture(beamMat, MicroKitB.BeamTex);
@@ -241,7 +241,7 @@ namespace Photosynthesis
             ApplyGlow(t);
             Bob(water, t, 0.07f); Bob(co2, t, 0.1f); Bob(bubbles, t, 0.12f);
             if (cycle) cycle.transform.GetChild(0).localRotation = Quaternion.Euler(0, 0, t * 40f);
-            if (glucose) glucose.transform.localRotation = Facing * Quaternion.Euler(0, 30f * Mathf.Sin(t * 0.5f), t * 10f);
+            if (glucose) glucose.transform.localRotation = Facing * Quaternion.Euler(0, 12f * Mathf.Sin(t * 0.4f), 5f * Mathf.Sin(t * 0.2f));
         }
 
         static void Bob(List<Floater> l, float t, float amp)
@@ -258,9 +258,9 @@ namespace Photosynthesis
         {
             float on = MicroKitB.Smooth01(hl);
             float pulse = on * (0.65f + 0.35f * Mathf.Sin(t * 2.6f));
-            var gold = new Color(1.2f, 0.85f, 0.2f) * (flash * 0.7f);
-            Fx.SetEmission(granaMat, granaE + new Color(0.1f, 0.85f, 0.22f) * pulse + gold);
-            Fx.SetEmission(lamMat, lamE + new Color(0.07f, 0.7f, 0.18f) * pulse + gold * 0.6f);
+            var gold = new Color(0.32f, 0.21f, 0.04f) * flash;
+            Fx.SetEmission(granaMat, granaE + new Color(0.035f, 0.25f, 0.055f) * pulse + gold);
+            Fx.SetEmission(lamMat, lamE + new Color(0.025f, 0.19f, 0.04f) * pulse + gold * 0.6f);
             foreach (var g in grana)
             {
                 bool vis = on > 0.01f;
@@ -690,21 +690,16 @@ namespace Photosynthesis
 
             // 3 · a new ring molecule assembles beside the cycle — semi-transparent, unfinished, until the learner proceeds
             var ghost = Fx.Node("FormingMolecule", transform, GluPos).transform; ghost.localRotation = Facing; transient.Add(ghost.gameObject);
-            var pos = new Vector3[12]; var rad = new float[12]; var outline = new List<Vector3>(6);
-            for (int i = 0; i < 6; i++)
-            {
-                float a = i * Mathf.PI / 3f; pos[i] = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * 0.9f; rad[i] = 0.42f; outline.Add(pos[i] * GluSize);
-            }
-            for (int i = 1; i < 6; i++) { pos[5 + i] = pos[i] * 1.55f; rad[5 + i] = 0.3f; }
-            pos[11] = pos[5] + new Vector3(0.5f, -0.7f, 0f); rad[11] = 0.38f;
+            var geometry = GlucoseGeometry.Data; int totalAtoms = geometry.atoms.Length;
+            var pos = new Vector3[totalAtoms]; var rad = new float[totalAtoms]; var outline = new List<Vector3>(6);
+            for (int i = 0; i < totalAtoms; i++) { pos[i] = geometry.atoms[i].position; rad[i] = geometry.atoms[i].size; }
+            foreach (int i in geometry.ring) outline.Add(pos[i] * GluSize);
             var bonds = new List<(int a, int b)>();
-            for (int i = 0; i < 6; i++) bonds.Add((i, (i + 1) % 6));
-            for (int i = 1; i < 6; i++) bonds.Add((i, 5 + i));
-            bonds.Add((5, 11));
+            foreach (var link in geometry.bonds) bonds.Add((link.a, link.b));
             Fx.MeshObj("Outline", outlineMesh ? outlineMesh : outlineMesh = MicroKitB.Loop(outline, 0.03f, 6), outlineMat, ghost);
             var src = ghost.InverseTransformPoint(W(Site));
-            var atoms = new Transform[12]; var launch = new float[12];
-            for (int i = 0; i < 12; i++) { atoms[i] = Fx.Prim(PrimitiveType.Sphere, ghost, src, Vector3.zero, ghostMat, false, "Atom").transform; launch[i] = -1f; }
+            var atoms = new Transform[totalAtoms]; var launch = new float[totalAtoms];
+            for (int i = 0; i < totalAtoms; i++) { atoms[i] = Fx.Prim(PrimitiveType.Sphere, ghost, src, Vector3.zero, ghostMat, false, "Atom").transform; launch[i] = -1f; }
             var bondT = new Transform[bonds.Count]; var grow = new float[bonds.Count];
             for (int i = 0; i < bonds.Count; i++)
             {
@@ -717,10 +712,10 @@ namespace Photosynthesis
             {
                 clk += Module.Skipping ? 5f : Time.deltaTime;
                 bool go = fast || (told && proceed());
-                int limit = !told ? 3 : go ? 12 : 5;
-                if (next < limit && clk >= nextAt) { launch[next++] = clk; nextAt = clk + (go ? 0.12f : told ? 1.3f : 0.4f); }
+                int limit = !told ? 3 : go ? totalAtoms : 5;
+                if (next < limit && clk >= nextAt) { launch[next++] = clk; nextAt = clk + (go ? 1.44f / totalAtoms : told ? 1.3f : 0.4f); }
                 bool settled = true;
-                for (int i = 0; i < 12; i++)
+                for (int i = 0; i < totalAtoms; i++)
                 {
                     if (launch[i] < 0f) continue;
                     float s = Mathf.Clamp01((clk - launch[i]) / 0.45f); if (s < 1f) settled = false;
@@ -736,12 +731,12 @@ namespace Photosynthesis
                     float s = Mathf.Clamp01((clk - grow[i]) / 0.3f); if (s < 1f) settled = false;
                     bondT[i].localScale = new Vector3(0.12f * GluSize, Vector3.Distance(pos[a], pos[b]) * GluSize * 0.5f * s, 0.12f * GluSize);
                 }
-                ghostA = go && next >= 12 ? Mathf.MoveTowards(ghostA, 0.9f, Time.deltaTime * 1.5f) : 0.3f + 0.1f * Mathf.Sin(clk * 6f);
+                ghostA = go && next >= totalAtoms ? Mathf.MoveTowards(ghostA, 0.9f, Time.deltaTime * 1.5f) : 0.3f + 0.1f * Mathf.Sin(clk * 6f);
                 Fx.SetColor(ghostMat, new Color(1f, 0.82f, 0.5f, ghostA));
                 Fx.SetColor(outlineMat, new Color(2f, 1.5f, 0.6f, Mathf.Min(1f, clk * 2f) * (0.4f + 0.15f * Mathf.Sin(clk * 4f))));
                 ghost.localRotation = Facing * Quaternion.Euler(0f, 18f * Mathf.Sin(clk * 0.8f), 0f);
                 if (!told && next >= 3 && settled) { told = true; onUnknown?.Invoke(); }
-                if (next >= 12 && settled) break;
+                if (next >= totalAtoms && settled) break;
                 yield return null;
             }
 

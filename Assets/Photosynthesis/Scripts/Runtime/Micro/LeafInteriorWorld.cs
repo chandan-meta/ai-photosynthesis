@@ -42,6 +42,9 @@ namespace Photosynthesis
             var phloem = Fx.Mat(MatKind.LitTransparent, new Color(1f, 0.64f, 0.28f, 0.5f), Palette.Phloem * 0.25f, 0.8f);
             var vein = Fx.Mat(MatKind.LitTransparent, new Color(0.7f, 0.55f, 0.9f, 0.45f), new Color(0.12f, 0.06f, 0.2f), 0.7f);
             var guard = Fx.Mat(MatKind.LitTransparent, new Color(0.4f, 0.82f, 0.36f, 0.6f), new Color(0.03f, 0.12f, 0.03f), 0.7f);
+            foreach (var m in new[] { epi, pal, spongy, sheath }) SurfaceArt.Apply(m, "Membrane");
+            foreach (var m in new[] { xylem, phloem }) SurfaceArt.Apply(m, "Vascular");
+            SurfaceArt.Apply(guard, "Guard");
             var water = Fx.Shared(MatKind.LitEmissive, Palette.Water, Palette.Water * 1.6f);
             var palHosts = new List<Renderer>(); var spongyHosts = new List<Renderer>();
             foreach (var r in rs)

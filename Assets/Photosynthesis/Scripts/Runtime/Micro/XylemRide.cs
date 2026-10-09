@@ -207,13 +207,13 @@ namespace Photosynthesis
                 float a = u * Mathf.PI * 2f, st = 0.82f + 0.1f * Mathf.Sin(a * 7f + Mathf.Sin(a * 3f) * 2f) + 0.08f * Mathf.Sin(a * 17f);
                 var c = Sect(WallC, v * L) * st; c.a = 0.3f * st; return c;
             }));
-            wallMat = Own(Fx.Mat(MatKind.LitTransparent, Color.white, new Color(1.2f, 1.2f, 1.2f), 0.65f));
+            wallMat = Own(Fx.Mat(MatKind.LitTransparent, new Color(1f, .96f, .85f), new Color(.10f, .12f, .075f), 0.65f));
             Fx.SetTexture(wallMat, wallTex); wallMat.SetTexture("_EmissionMap", wallTex);
             Fx.MeshObj("Xylem Vessel", Own(K.Tube(pts, i => R(path.S(i)), 24, true, i => path.S(i) / L)), wallMat, transform);
 
             // lignin: double spiral thickening + perforation-plate rims between vessel elements
             var bandTex = Own(K.Tex(4, 256, (u, v) => Color.Lerp(Sect(WallC, v * L), Color.white, 0.55f)));
-            var bandMat = Own(Fx.Mat(MatKind.LitEmissive, Color.white, new Color(0.7f, 0.7f, 0.7f), 0.6f));
+            var bandMat = Own(Fx.Mat(MatKind.LitEmissive, new Color(.85f, .84f, .65f), new Color(.06f, .075f, .045f), 0.6f));
             Fx.SetTexture(bandMat, bandTex); bandMat.SetTexture("_EmissionMap", bandTex);
             var parts = new List<CombineInstance>(); var temp = new List<Mesh>();
             for (int h = 0; h < 2; h++)
@@ -405,7 +405,7 @@ namespace Photosynthesis
                 if (i <= 8) Beads.Create("Vein Flow", transform, pts, i == 0 ? 5 : 3, i == 0 ? 0.4f : 0.3f, beadMat, i == 0 ? 0.15f : 0.28f);
             }
             Fx.MeshObj("Leaf Veins", Own(K.Merge(walls, "Leaf Veins")), Own(Fx.Mat(MatKind.LitTransparent, new Color(0.75f, 1f, 0.75f, 0.35f), new Color(0.1f, 0.25f, 0.12f), 0.8f)), transform);
-            Fx.MeshObj("Leaf Vein Water", Own(K.Merge(cores, "Leaf Vein Water")), Own(Fx.Mat(MatKind.Additive, new Color(Palette.Water.r * 1.8f, Palette.Water.g * 1.8f, Palette.Water.b * 1.8f, 0.9f))), transform);
+            Fx.MeshObj("Leaf Vein Water", Own(K.Merge(cores, "Leaf Vein Water")), Own(Fx.Mat(MatKind.Additive, new Color(Palette.Water.r * .65f, Palette.Water.g * .65f, Palette.Water.b * .65f, .35f))), transform);
             foreach (var m in temp) Destroy(m);
 
             // sunlight pouring down through the palisade

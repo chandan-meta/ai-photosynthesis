@@ -56,6 +56,8 @@ namespace Photosynthesis.EditorTools
                 options = options
             });
             Debug.Log($"[Photosynthesis] Player build ({options}) -> {path}: {report.summary.result}, {report.summary.totalErrors} errors, {report.summary.totalSize / (1024 * 1024)} MB");
+            if (!Application.isBatchMode && report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                throw new System.InvalidOperationException("Photosynthesis build failed: " + report.summary.result);
             if (Application.isBatchMode) EditorApplication.Exit(report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded ? 0 : 1);
         }
 

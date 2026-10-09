@@ -40,7 +40,7 @@ namespace Photosynthesis
             if (inited) return; inited = true;
             m = Module.I; hud = m.hud; cam = m.cam; au = m.audioDirector; dlg = m.dialogue; plant = m.plant; ch = m.chamber; curio = m.curio;
             m.clues.Changed += (id, s) => hud.SetClueState(id, s, s == ClueState.Discovered);
-            hud.ResetRequested += () => { m.assessment.Reset(); Run(Beat.Scene2Start); };
+            hud.ResetRequested += () => { m.assessment.Reset(); m.ShowStartScreen(); };
             hud.ExitRequested += Quit;
             hud.ZoomButton += d => cam.Zoom(d);
             hud.ClueClicked += id => { if (hubWant == null) return; if (id == hubWant) hubGo = true; else au.Play(Sfx.Wrong, 0.4f); };
@@ -52,8 +52,16 @@ namespace Photosynthesis
         public void Run(Beat from)
         {
             Start();
+            m.LeaveStartScreen();
+            hud.DismissStartBanner();
             StopAllCoroutines();
             runner = StartCoroutine(Play(from));
+        }
+
+        public void StopForBanner()
+        {
+            Start(); StopAllCoroutines(); runner = null; dlg.Cancel(); au.StopVoice();
+            hud.CancelWaits(); hud.HideTransient(); hud.HideLine();
         }
 
         IEnumerator Play(Beat from)

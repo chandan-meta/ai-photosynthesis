@@ -9,6 +9,25 @@ namespace Photosynthesis
     public enum Ease { Linear, In, Out, InOut, Back, Elastic }
     public enum Mol { CO2, H2O, O2, Glucose }
 
+    [Serializable]
+    public class GlucoseGeometry
+    {
+        [Serializable] public class Atom { public string element; public Vector3 position; public float size; }
+        [Serializable] public class Bond { public int a, b, order; }
+        public Atom[] atoms; public Bond[] bonds; public int[] ring; public string source, name;
+        static GlucoseGeometry data;
+        public static GlucoseGeometry Data
+        {
+            get
+            {
+                if (data != null) return data;
+                var json = Resources.Load<TextAsset>("Molecules/GlucoseGeometry");
+                if (!json) throw new InvalidOperationException("Verified glucose molecular data is missing");
+                return data = JsonUtility.FromJson<GlucoseGeometry>(json.text);
+            }
+        }
+    }
+
     /// Shared helpers: materials, meshes, molecules, particles, tweens. Everything procedural goes through here.
     public static class Fx
     {
@@ -38,6 +57,7 @@ namespace Photosynthesis
             if (emission.HasValue && m.HasProperty(EmissionColor)) m.SetColor(EmissionColor, emission.Value);
             if (smoothness >= 0 && m.HasProperty(Smoothness)) m.SetFloat(Smoothness, smoothness);
             if (metallic >= 0 && m.HasProperty(Metallic)) m.SetFloat(Metallic, metallic);
+            if (metallic > 0.5f) SurfaceArt.Apply(m, "Gold", false, 0.2f);
             return m;
         }
 
@@ -82,6 +102,7 @@ namespace Photosynthesis
 
         public static GameObject MeshObj(string name, Mesh mesh, Material m, Transform parent, bool shadows = false)
         {
+            if (mesh && mesh.isReadable && mesh.tangents.Length == 0 && mesh.uv.Length == mesh.vertexCount && mesh.normals.Length == mesh.vertexCount) mesh.RecalculateTangents();
             var g = Node(name, parent);
             g.AddComponent<MeshFilter>().sharedMesh = mesh;
             var r = g.AddComponent<MeshRenderer>(); r.sharedMaterial = m;
@@ -195,6 +216,7 @@ namespace Photosynthesis
         public static GameObject Molecule(Mol kind, Transform parent, float size = 1f, float glow = 0.6f)
         {
             var root = Node(kind.ToString(), parent);
+            if (kind == Mol.Glucose) glow = .08f; // atom colors remain legible; the separate discovery halo provides the gold cue
             Material C = Shared(MatKind.LitEmissive, Palette.Carbon, Palette.Carbon * 0.2f), O = Shared(MatKind.LitEmissive, Palette.OxygenAtom, Palette.OxygenAtom * glow),
                 H = Shared(MatKind.LitEmissive, Palette.Hydrogen, Palette.Hydrogen * glow * 0.5f), bond = Shared(MatKind.Lit, new Color(0.85f, 0.88f, 0.9f));
             // glossy, slightly metallic atoms: a soft specular highlight and a rim of reflected sky read as a smooth, premium surface (shared material, set once)
@@ -224,12 +246,10 @@ namespace Photosynthesis
                     Atom(Vector3.left * 0.33f, 0.65f, O); Atom(Vector3.right * 0.33f, 0.65f, O); break;
                 case Mol.Glucose:
                     {
-                        var ring = new Vector3[6];
-                        for (int i = 0; i < 6; i++) { float a = i * Mathf.PI / 3f; ring[i] = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0) * 0.9f; }
-                        for (int i = 0; i < 6; i++) { Atom(ring[i], 0.42f, i == 0 ? O : C); Bond(ring[i], ring[(i + 1) % 6]); }
-                        for (int i = 1; i < 6; i++) { var o = ring[i] * 1.55f; Atom(o, 0.3f, i % 2 == 0 ? O : H); Bond(ring[i], o); } // OH / H groups
-                        var ch2 = ring[5] + new Vector3(0.5f, -0.7f, 0); Atom(ch2, 0.38f, C); Bond(ring[5], ch2);
-                        var halo = Prim(PrimitiveType.Sphere, root.transform, Vector3.zero, Vector3.one * 3.4f * size, Shared(MatKind.Additive, new Color(Palette.Glucose.r, Palette.Glucose.g, Palette.Glucose.b, 0.18f)), false, "Halo");
+                        var geometry = GlucoseGeometry.Data;
+                        foreach (var atom in geometry.atoms) Atom(atom.position, atom.size, atom.element == "C" ? C : atom.element == "O" ? O : H);
+                        foreach (var link in geometry.bonds) Bond(geometry.atoms[link.a].position, geometry.atoms[link.b].position);
+                        Prim(PrimitiveType.Sphere, root.transform, Vector3.zero, Vector3.one * 3.7f * size, Shared(MatKind.Additive, new Color(Palette.Glucose.r, Palette.Glucose.g, Palette.Glucose.b, 0.045f)), false, "Halo");
                     }
                     break;
             }

@@ -49,3 +49,65 @@ Desktop.ini
 
 # Python caches (Tools/)
 __pycache__/
+
+# G7 ZIP garden model: 146 MB, over GitHub's 100 MB file limit (kept locally in Art/G7; not used by the game)
+/Assets/Photosynthesis/Art/G7/GardenEnvironment.fbx
+/Assets/Photosynthesis/Art/G7/GardenEnvironment.fbx.meta
+# ...and its 27 textures (used by nothing else), with their .meta files
+/Assets/Photosynthesis/Art/G7/Textures/Base_AO.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Base_AO.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Base_Diff.png
+/Assets/Photosynthesis/Art/G7/Textures/Base_Diff.png.meta
+/Assets/Photosynthesis/Art/G7/Textures/Base_Normal.png
+/Assets/Photosynthesis/Art/G7/Textures/Base_Normal.png.meta
+/Assets/Photosynthesis/Art/G7/Textures/House_Plant_AO.jpg
+/Assets/Photosynthesis/Art/G7/Textures/House_Plant_AO.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/House_Plant_Diff.tga
+/Assets/Photosynthesis/Art/G7/Textures/House_Plant_Diff.tga.meta
+/Assets/Photosynthesis/Art/G7/Textures/House_Plant_NM.jpg
+/Assets/Photosynthesis/Art/G7/Textures/House_Plant_NM.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Leaf_Bump.png
+/Assets/Photosynthesis/Art/G7/Textures/Leaf_Bump.png.meta
+/Assets/Photosynthesis/Art/G7/Textures/Leaf_Diff.png
+/Assets/Photosynthesis/Art/G7/Textures/Leaf_Diff.png.meta
+/Assets/Photosynthesis/Art/G7/Textures/Plant_AO.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Plant_AO.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Plant_Diff.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Plant_Diff.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Plant_Diff_NORM.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Plant_Diff_NORM.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Root_Diff.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Root_Diff.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Soil_Diff.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Soil_Diff.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stem_01_Diff.png
+/Assets/Photosynthesis/Art/G7/Textures/Stem_01_Diff.png.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stone_AO.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Stone_AO.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Boundry_AO.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Boundry_AO.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Boundry_Diff.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Boundry_Diff.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Boundry_NM.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Boundry_NM.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Diff.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Diff.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stone_NM.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Stone_NM.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Path.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Stone_Path.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Wood_Pillars_AO.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Wood_Pillars_AO.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Wood_Pillars_Diff.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Wood_Pillars_Diff.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Wood_Pillars_NORM.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Wood_Pillars_NORM.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Wooden_Frence_AO.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Wooden_Frence_AO.jpg.meta
+/Assets/Photosynthesis/Art/G7/Textures/Wooden_Frence_Diff.png
+/Assets/Photosynthesis/Art/G7/Textures/Wooden_Frence_Diff.png.meta
+/Assets/Photosynthesis/Art/G7/Textures/Wooden_Frence_NORM.jpg
+/Assets/Photosynthesis/Art/G7/Textures/Wooden_Frence_NORM.jpg.meta
+
+# model exports for the user (regenerable)
+/Exports/

@@ -28,7 +28,7 @@ namespace Photosynthesis
         }
 
         /// Construct now without showing it (no activation, no mood change). Show() calls this lazily too.
-        public void Prebuild() { if (built) return; built = true; Build(); Fx.Sanitize(gameObject); }
+        public void Prebuild() { if (built) return; built = true; Build(); SurfaceArt.DressWorld(this); Fx.Sanitize(gameObject); }
 
         /// Construct all geometry (called once, lazily).
         protected abstract void Build();

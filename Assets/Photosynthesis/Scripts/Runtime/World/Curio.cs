@@ -23,8 +23,8 @@ namespace Photosynthesis
         const float R = 0.225f;                                       // head radius (m)
         const float VisorAz = 50f * Mathf.Deg2Rad, VisorEl = 32f * Mathf.Deg2Rad, VisorEl0 = -5f * Mathf.Deg2Rad;
         const int BeamSides = 16;
-        static readonly Color ShellBottom = Palette.Hex(0xBFD3CE), VisorCol = Palette.Hex(0x0A1A1F), Graphite = Palette.Hex(0x22302C),
-            CoatCol = Palette.Hex(0xEEF6F3), BudCol = Palette.Hex(0xA6FFD6);
+        static readonly Color ShellBottom = Palette.Hex(0xE9DFC6), VisorCol = Palette.Hex(0x030C10), Graphite = Palette.Hex(0x22302C),
+            CoatCol = Palette.Hex(0xF5EEDF), BudCol = Palette.Hex(0x75B947);
         static readonly Color BeamCol = new Color(0.55f, 1.9f, 2.1f, 0.6f), LineCol = new Color(1.2f, 3.2f, 3.6f, 1f),
             RingCol = new Color(0.8f, 2.6f, 2.9f, 0.9f), HoloCol = new Color(0.6f, 1.9f, 2.1f, 0.9f), GlowCol = new Color(2.6f, 1.9f, 0.7f, 0.9f),
             HoverCol = new Color(0.4f, 1.6f, 1.75f, 0.7f),
@@ -52,6 +52,7 @@ namespace Photosynthesis
         Quaternion restRotR, restRotL, thinkRot, surpriseRot, cheerRotR, cheerRotL, companionRot;
         Vector3 fingerScale;
         bool built, companion;
+        public bool IsCompanion => companion;
 
         // ------------------------------------------------------------------ state
         /// Set by Dialogue while a line is up. The talking pulse follows the real voice level; with no voice audio
@@ -68,6 +69,9 @@ namespace Photosynthesis
         Vector2 eyeLook, glanceEye; Vector3 glanceHead;
         bool antInit; Vector3 antPrev, antVel0; Vector2 antAng, antAngVel;
         Camera viewCam;
+        float waveUntil;
+        Transform scarf;
+        public void Wave() => waveUntil = Time.time + 2.8f;
 
         bool Visible => gameObject.activeInHierarchy;
         float Scale => Mathf.Max(1e-4f, transform.lossyScale.x);
@@ -374,6 +378,12 @@ namespace Photosynthesis
                 if (dir.sqrMagnitude > 1e-6f) { dir.Normalize(); tR = ShoulderR + dir * 0.3f; qR = Quaternion.LookRotation(dir, Vector3.up); }
             }
             handR.localPosition = Vector3.Lerp(handR.localPosition, tR, k9);
+            if (t < waveUntil)
+            {
+                tR = new Vector3(0.29f, 0.23f, 0.12f);
+                handR.localPosition = Vector3.Lerp(handR.localPosition, tR, k9);
+                qR = Quaternion.Euler(-30f, 0f, -30f + 22f * Mathf.Sin(t * 9f));
+            }
             handR.localRotation = Quaternion.Slerp(handR.localRotation, qR, k9);
             finger.localScale = Vector3.Lerp(finger.localScale, pointing ? fingerScale : Vector3.zero, Mathf.Min(1f, k9 * 1.4f));
 
@@ -421,13 +431,14 @@ namespace Photosynthesis
             antAngVel += ((goal - antAng) * 140f - antAngVel * 7f) * sdt;
             antAng = Vector2.ClampMagnitude(antAng + antAngVel * sdt, 40f);
             antenna.localRotation = Quaternion.Euler(antAng.x - 6f, 0f, antAng.y);
+            if (scarf) scarf.localRotation = Quaternion.Euler(1.8f * Mathf.Sin(t * 1.7f) + voice * 2f, 0, antAng.y * 0.055f);
 
             // ---- emissive pulses (eyes / mouth / chest / sprout bud / hover ring)
-            Fx.SetEmission(eyeMat, Palette.Cyan * (3f + 2.4f * voice + 0.8f * beamOn));
+            Fx.SetEmission(eyeMat, Palette.Cyan * (1.4f + 0.8f * voice + 0.3f * beamOn));
             Fx.SetEmission(mouthMat, Palette.Cyan * (0.6f + 3.2f * voice));
             mouth.localScale = new Vector3(0.03f * (1f - 0.2f * voice), 0.005f + 0.012f * voice * (0.6f + 0.4f * Mathf.Sin(t * 17f)), 0.006f);
             Fx.SetEmission(coreMat, Palette.Cyan * (1.6f + 0.5f * Mathf.Sin(t * 2f) + 2f * voice));
-            Fx.SetEmission(budMat, BudCol * (1.4f + 0.5f * Mathf.Sin(t * 2.4f) + 4f * voice));
+            Fx.SetEmission(budMat, BudCol * (0.08f + 0.035f * voice));
             Fx.SetColor(hoverMat, HoverCol * (0.8f + 0.2f * Mathf.Sin(t * 3.1f) - 2.2f * (bob - 0.02f)));   // brighter as he dips toward it
             if (cam && glow.gameObject.activeSelf) glow.rotation = cam.transform.rotation;
         }
@@ -508,18 +519,21 @@ namespace Photosynthesis
 
             // ---- materials (cloned templates, colours only)
             var shellTex = Own(GradientTex());
-            var shell = shellMat = M(MatKind.LitEmissive, Color.white, ShellLift, 0.82f, 0f); Fx.SetTexture(shell, shellTex);
+            var shell = shellMat = M(MatKind.LitEmissive, Color.white, ShellLift, 0.78f, 0f); Fx.SetTexture(shell, shellTex); SurfaceArt.Apply(shell, "Shell");
             var coat = coatMat = M(MatKind.LitEmissive, CoatCol, ShellLift, 0.45f, 0f);
             var graphite = M(MatKind.Lit, Graphite, null, 0.78f, 0.25f);
             var visorMat = M(MatKind.LitEmissive, VisorCol, new Color(0.01f, 0.045f, 0.05f), 0.97f, 0f);
+            SurfaceArt.Apply(visorMat, "Screen"); Fx.SetColor(visorMat, Color.white);
             var bezelMat = M(MatKind.Lit, Palette.Hex(0xDCE8E4), null, 0.92f, 0.35f);
             var glintMat = M(MatKind.Additive, new Color(1f, 1f, 1f, 0.3f));
             var white = M(MatKind.LitEmissive, Color.white, Color.white * 2.2f);
-            var leafMat = M(MatKind.Leaf, Palette.GreenBright, Palette.GreenBright * 0.35f);
+            var leafMat = M(MatKind.Leaf, Color.white, new Color(.025f, .075f, .006f), .4f); SurfaceArt.Apply(leafMat, "Guard");
             var stalkMat = M(MatKind.Lit, Palette.Green, null, 0.5f, 0f);
             var cuffMat = M(MatKind.LitEmissive, Palette.GlassStroke, Palette.GlassStroke * 0.6f, 0.8f, 0f);
             var gold = M(MatKind.LitEmissive, Palette.Gold, Palette.GoldDeep * 0.35f, 0.8f, 0.9f);
+            SurfaceArt.Apply(gold, "Gold"); Fx.SetColor(gold, Color.white);
             eyeMat = M(MatKind.LitEmissive, Palette.Cyan, Palette.Cyan * 3f, 0.9f, 0f);
+            eyeMat.SetTexture("_EmissionMap", SurfaceArt.Map("Eye", "Emission"));
             mouthMat = M(MatKind.LitEmissive, Palette.Cyan, Palette.Cyan);
             coreMat = M(MatKind.LitEmissive, Palette.Cyan, Palette.Cyan * 2f, 0.9f, 0f);
             budMat = M(MatKind.LitEmissive, BudCol, BudCol * 2f);
@@ -532,7 +546,7 @@ namespace Photosynthesis
 
             // ---- meshes (low-poly lathes)
             Vector2 V(float x, float y) => new Vector2(x, y);
-            Mesh headMesh = Lathe(SphereProfile(12, 1f, 0f), 16, "CurioHead"), ball = Lathe(SphereProfile(6, 0.5f, 0f), 9, "CurioBall"),
+            Mesh headMesh = Lathe(SphereProfile(24, 1f, 0f), 40, "CurioHead"), ball = Lathe(SphereProfile(10, 0.5f, 0f), 14, "CurioBall"),
                 bead = Lathe(SphereProfile(3, 0.5f, 0f), 6, "CurioBead"), pill = Lathe(SphereProfile(6, 0.5f, 0.25f), 10, "CurioPill"),
                 puck = Lathe(new[] { V(0f, -0.32f), V(0.82f, -0.32f), V(1f, -0.2f), V(1f, 0.2f), V(0.82f, 0.32f), V(0f, 0.32f) }, 10, "CurioPuck"),
                 disc = Lathe(new[] { V(1f, 0f), V(0f, 0f) }, 14, "CurioDisc"),
@@ -540,7 +554,7 @@ namespace Photosynthesis
                 band = Lathe(new[] { V(1f, -0.5f), V(1f, 0.5f) }, 10, "CurioBand"), line = Lathe(new[] { V(1f, 0f), V(1f, 1f) }, 6, "CurioLine"),
                 rod = Lathe(new[] { V(0f, -0.5f), V(1f, -0.5f), V(1f, -0.5f), V(1f, 0.5f) }, 8, "CurioRod"),
                 torus = Lathe(Circle(1f, 0.27f, 5), 12, "CurioTorus"), rim = Lathe(Circle(1f, 0.2f, 6), 14, "CurioRim"),
-                thin = Lathe(Circle(1f, 0.05f, 4), 20, "CurioRing"), torsoMesh = Lathe(TorsoProfile(), 14, "CurioTorso"), leaf = LeafMesh();
+                thin = Lathe(Circle(1f, 0.05f, 4), 20, "CurioRing"), torsoMesh = Lathe(TorsoProfile(), 32, "CurioTorso"), leaf = LeafMesh();
             foreach (var m in new[] { headMesh, ball, bead, pill, puck, disc, dome, band, line, rod, torus, rim, thin, torsoMesh, leaf }) owned.Add(m);
 
             // ---- body
@@ -559,7 +573,8 @@ namespace Photosynthesis
             {
                 scarfMat = M(MatKind.Leaf, Color.white, ScarfLift, 0.15f, 0f);   // double-sided cloth
                 var fabric = Resources.Load<Texture2D>("Characters/Curio_Scarf"); if (fabric) Fx.SetTexture(scarfMat, fabric); else Fx.SetColor(scarfMat, Palette.Green);
-                Caster(Fx.MeshObj("Scarf", scarfMesh[0], scarfMat, rig).transform);
+                SurfaceArt.Apply(scarfMat, "Scarf", false, 0.3f);
+                scarf = Fx.MeshObj("Scarf", scarfMesh[0], scarfMat, rig).transform; Caster(scarf);
             }
             // hover glow: soft horizontal light pool just under the torso (double-sided additive, so it reads from above and below)
             Fx.Prim(PrimitiveType.Quad, rig, new Vector3(0f, -0.172f, 0f), Vector3.one * 0.46f, hoverMat, false, "Hover Glow").transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
@@ -574,8 +589,9 @@ namespace Photosynthesis
             // ---- head
             headPivot = Fx.Node("Neck Pivot", rig, new Vector3(0f, 0.2f, 0f)).transform;
             head = Fx.Node("Head", headPivot, new Vector3(0f, 0.205f, 0f)).transform;
+            head.localScale = new Vector3(1.12f, 0.96f, 0.95f);
             Caster(Part("Shell", headMesh, shell, head, Vector3.zero, Vector3.zero, Vector3.one * R));
-            Fx.MeshObj("Visor", Own(Visor(R * 1.012f, 4, 24)), visorMat, head);
+            Fx.MeshObj("Visor", Own(Visor(R * 1.012f, 8, 48)), visorMat, head);
             var rimPts = new List<Vector3>(21); for (int j = 0; j <= 20; j++) rimPts.Add(VisorDir(1f, j / 20f * Mathf.PI * 2f) * (R * 1.006f));
             Fx.MeshObj("Visor Bezel", Own(Fx.Tube(rimPts, 0.0085f, 0.0085f, 4)), bezelMat, head);
             var glintPts = new List<Vector3>(8); for (int j = 0; j < 8; j++) glintPts.Add(VisorDir(0.8f, (35f + j * 40f / 7f) * Mathf.Deg2Rad) * (R * 1.017f));
@@ -764,11 +780,12 @@ namespace Photosynthesis
         /// Unit leaf (length 1 along +Y) with a folded midrib and a forward curl. Rendered double-sided (Leaf material).
         static Mesh LeafMesh()
         {
-            const int seg = 6; var v = new Vector3[(seg + 1) * 3]; var tri = new int[seg * 12];
+            const int seg = 12; var v = new Vector3[(seg + 1) * 3]; var tri = new int[seg * 12]; var uv = new Vector2[v.Length];
             for (int j = 0; j <= seg; j++)
             {
                 float t = j / (float)seg, w = 0.225f * Mathf.Pow(Mathf.Max(0f, Mathf.Sin(Mathf.PI * Mathf.Pow(t, 0.8f))), 0.75f), z = 0.15f * t * t;
                 v[j * 3] = new Vector3(-w, t, z + 0.25f * w); v[j * 3 + 1] = new Vector3(0f, t, z); v[j * 3 + 2] = new Vector3(w, t, z + 0.25f * w);
+                uv[j * 3] = new Vector2(0, t); uv[j * 3 + 1] = new Vector2(.5f, t); uv[j * 3 + 2] = new Vector2(1, t);
             }
             int q = 0;
             for (int j = 0; j < seg; j++)
@@ -777,7 +794,7 @@ namespace Photosynthesis
                 tri[q++] = l0; tri[q++] = l1; tri[q++] = m0; tri[q++] = m0; tri[q++] = l1; tri[q++] = m1;
                 tri[q++] = m0; tri[q++] = m1; tri[q++] = r0; tri[q++] = r0; tri[q++] = m1; tri[q++] = r1;
             }
-            var m = new Mesh { name = "CurioLeaf", vertices = v, triangles = tri }; m.RecalculateNormals(); m.RecalculateBounds(); return Fx.FixNormals(m);
+            var m = new Mesh { name = "CurioLeaf", vertices = v, uv = uv, triangles = tri }; m.RecalculateNormals(); m.RecalculateBounds(); return Fx.FixNormals(m);
         }
 
         static Texture2D Tex(int w, int h, string name, TextureWrapMode u, TextureWrapMode v) =>

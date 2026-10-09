@@ -78,7 +78,9 @@ namespace Photosynthesis
             pivot = Fx.Node("Plant", transform).transform;
             beadMesh = Own(PlantMesh.Sphere(8, 6)); molSphere = Own(PlantMesh.Sphere(12, 8)); hexMesh = Own(PlantMesh.Hexagon());
 
-            texTop = Own(PlantLeafShape.BladeTexture(512, true)); texUnder = Own(PlantLeafShape.BladeTexture(256, false));
+            texTop = SurfaceArt.Map("LeafTop", "Albedo"); texUnder = SurfaceArt.Map("LeafUnder", "Albedo");
+            if (!texTop) texTop = Own(PlantLeafShape.BladeTexture(512, true));
+            if (!texUnder) texUnder = Own(PlantLeafShape.BladeTexture(256, false));
             texPetiole = Own(PlantMesh.Tex(32, 128, (u, v) => Fibre(new Color(0.50f, 0.66f, 0.31f), u, v), "Petiole"));
             var texShoot = Own(PlantMesh.Tex(32, 128, (u, v) => Fibre(new Color(0.68f, 0.84f, 0.36f), u, v), "Shoot"));
 
@@ -86,6 +88,8 @@ namespace Photosynthesis
             mPetiole = Pair(MatKind.LitEmissive, Color.white, texPetiole, 0.45f, true);
             mRoot = Pair(MatKind.LitEmissive, new Color(0.86f, 0.78f, 0.62f), null, 0.35f, false);
             mHair = Pair(MatKind.LitEmissive, new Color(0.97f, 0.95f, 0.88f), null, 0.2f, false);
+            SurfaceArt.Apply(mRoot.o, "Root"); SurfaceArt.Apply(mRoot.t, "Root");
+            SurfaceArt.Apply(mHair.o, "Root"); SurfaceArt.Apply(mHair.t, "Root");
             mCorm = Pair(MatKind.LitEmissive, Color.white, Own(PlantMesh.Tex(32, 128, CormPx, "Corm")), 0.3f, false);
             var mShoot = Pair(MatKind.Leaf, Color.white, texShoot, 0.5f, true);
             var mSpathe = Pair(MatKind.Leaf, new Color(0.96f, 0.94f, 0.83f), null, 0.5f, false);
@@ -187,6 +191,8 @@ namespace Photosynthesis
             lf.mesh = Own(sh.Build());
             lf.top = Pair(MatKind.Leaf, Color.white, texTop, 0.62f, true);
             lf.under = Pair(MatKind.Leaf, Color.white, texUnder, 0.3f, true);
+            SurfaceArt.Apply(lf.top.o, "LeafTop"); SurfaceArt.Apply(lf.top.t, "LeafTop");
+            SurfaceArt.Apply(lf.under.o, "LeafUnder"); SurfaceArt.Apply(lf.under.t, "LeafUnder");
             var bl = Fx.MeshObj("Blade Mesh", lf.mesh, null, lf.blade, true);
             Reg(bl, true, lf.top, lf.under, mPetiole);
             bl.AddComponent<MeshCollider>().sharedMesh = lf.mesh;
@@ -356,6 +362,7 @@ namespace Photosynthesis
                 b.Merge(sphere, Matrix4x4.TRS(pos, Quaternion.Euler(0f, Rf(rnd, 0f, 360f), 0f), sc), moss ? 1 : 2);
             }
             var soil = Own(Fx.Mat(MatKind.Lit, Color.white, null, 0.12f)); Fx.SetTexture(soil, Own(PlantMesh.Tex(256, 256, SoilPx, "Soil")));
+            SurfaceArt.Apply(soil, "Soil", true, 1f);
             var ghost = Own(Fx.Mat(MatKind.LitTransparent, new Color(0.25f, 0.17f, 0.11f, 0.22f), Color.black, 0.1f));
             soilSolid = new[] { soil, Own(Fx.Mat(MatKind.Lit, new Color(0.10f, 0.24f, 0.07f), null, 0.15f)), Own(Fx.Mat(MatKind.Lit, new Color(0.46f, 0.43f, 0.39f), null, 0.3f)) };
             soilGhost = new[] { ghost, ghost, ghost };

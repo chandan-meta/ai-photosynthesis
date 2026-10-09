@@ -1,12 +1,19 @@
 # Assets & licences (Scene 2+ module)
 
+## 2026-10-09 visual upgrade provenance
+
+- `Art/Generated/Resources/SurfaceMaps` and `Art/Generated/Sources`: locally authored deterministic NumPy/Pillow PBR recipes (`Tools/GenerateSurfaceMaps.py`), plus exact exports of existing project leaf/epidermis functions and original lab albedo UV atlases. Original imported model/scarf/environment licences below still apply to derived maps. Reference-book screenshots are not used as game assets.
+- `D:\AI unity project\charcter\dr curio.blend` was inspected without saving or overwriting it. The combined 131004-polygon candidate informed comparison; the existing procedural transform rig was remodeled to preserve speech, scan, point and companion callbacks. The user's original scarf mesh/albedo remain in use, with additional locally generated cloth detail.
+- `C:\Users\ADMIN\Downloads\Photosynthesis_Reference_Assets.zip`, `Photosynthesis_Visual_Reference_Book.pdf` and `phooto.mp4` remain visual reference inputs. Staging inspection is under `Logs/ReferenceStudy`, outside game Resources.
+
+
 | Asset | Source | Licence | Use |
 |---|---|---|---|
 | `Art/Environment/Chamber.fbx` + `Textures/` (+ derived `Materials/`, `RoofPieces.asset`) | the user's `C:\Users\ADMIN\Documents\Received Files\Ai Photoshynthesis1.fbx` (2026-10-08) via `Tools/Chamber/build_env.py` (soil cut from the centre planter, floor split, microscopes decimated, textures capped at 2048/1024 px) | supplied by the user, with the textures packed in it (they include third-party sets, e.g. Poly Haven "vintage wooden drawer 01", CC0; the rest are as licensed to the user — not verified here) | Botanical Investigation Chamber: the lab around the hero plant |
 | `Art/Dome/DomeInterior.fbx`, `Art/Dome/DomePieces.asset` | `D:\AI unity project\models\photosyn\dome interior env [1].fbx` (local library) | supplied by client | **no longer used** (replaced by the environment above, 2026-10-08); kept in the repo |
 | `Art/Vegetation/TropicalPlants.glb` | local library · Sketchfab "Tropical Plants Pack M02P" by MozzarellaARC | **CC-BY 4.0** — credit required if used | **no longer used** (the new environment brings its own plants); kept in the repo |
 | `Resources/Models/LeafInside.fbx` | client ZIP `G7_Photosynthesis_VR1.zip` → `Assets/ActivityFolder/Photosynthesis_Leaf_inside.fbx` | supplied by client | Scene 3 prologue: the hidden world inside the leaf (`LeafInteriorWorld`, re-materialled) |
-| `Art/G7/*.fbx` | client ZIP (same) | supplied by client | library copy of every usable module model, inventoried below; not referenced by the scene, so not in builds |
+| `Art/G7/*.fbx` + `Art/G7/Textures/` | client ZIP (same) | supplied by client | all 15 module models in one folder (2026-10-09; index in `Art/G7/README.md`) with every texture they reference, imported with materials so they preview textured; not referenced by the scene, so not in builds. `GardenEnvironment.fbx` (146 MB, over GitHub's 100 MB file limit) and its 27 textures (98 MB) are git-ignored: local + ZIP only |
 | `Resources/Fonts/Inter-*.ttf` | shipped with Unity 6000.3 editor (rsms/Inter) | SIL OFL 1.1 | UI typography |
 | `Resources/Fonts/Cinzel-SemiBold.ttf` (not yet added; Display falls back to Inter SemiBold until it is) | Google Fonts / NDISCOVER Cinzel (static instance) | SIL OFL 1.1 | Display titles |
 | Dr. Curio, hero plant, micro worlds, molecules, icons, SFX, music | generated procedurally in code | project-owned | — |
@@ -41,3 +48,7 @@ part is re-materialled with the module's URP templates; the geometry is what is 
 | `Photosynthesisenviroment.fbx` | outdoor garden: pergola, stone border, pots, fence, one house plant, root/soil/water props | 55k, 146 MB | not used — the storyboard environment is the Botanical Investigation Chamber (Scene 2); removed from Assets, kept in the extracted copy |
 | `Resources/VoiceOvers/{en-GB,hi-IN,mr-IN,as-IN}` | 38 MP3 lines per language for the old VR flow (Inst_*, Desc_*, Quiz*) | — | not used — a different script; could seed localisation later |
 | `Mirza Beig/Particle Systems`, `_Creepy_Cat` weather, `FM_ExhibitionToolPack`, `PicoMobileSDK`, `QWR`, `VRPanorama` | third-party packs | — | not used (licensing unverified, VR/Pico specific) |
+
+### Verified molecular coordinates
+
+`Tools/Chemistry/BetaDGlucose_64689.sdf` is the public [PubChem beta-D-glucose 3D conformer, CID64689](https://pubchem.ncbi.nlm.nih.gov/compound/64689). The source is retained verbatim; `ExportGlucose.py` exports positions/bonds in Unity coordinates to `Resources/Molecules/GlucoseGeometry.json`. Both staged formation and the final glucose use this graph. Supplied reference pictures guide framing/style and are not game textures.

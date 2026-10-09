@@ -36,8 +36,8 @@ namespace Photosynthesis
             // --- materials
             var cuticle = Fx.Mat(MatKind.Glass, new Color(0.92f, 1f, 0.7f, 0.32f), new Color(0.05f, 0.07f, 0.02f), 0.97f);
             var epi = Fx.Mat(MatKind.LitTransparent, new Color(0.78f, 0.96f, 0.86f, 0.2f), new Color(0.02f, 0.05f, 0.04f), 0.85f);
-            var pal = Fx.Mat(MatKind.LitTransparent, new Color(0.46f, 0.86f, 0.42f, 0.26f), new Color(0.02f, 0.07f, 0.02f), 0.7f);
-            var spongy = Fx.Mat(MatKind.LitTransparent, new Color(0.55f, 0.84f, 0.44f, 0.3f), new Color(0.02f, 0.06f, 0.02f), 0.65f);
+            var pal = Fx.Mat(MatKind.LitTransparent, new Color(0.34f, 0.67f, 0.25f, 0.36f), new Color(0.015f, 0.045f, 0.01f), 0.7f);
+            var spongy = Fx.Mat(MatKind.LitTransparent, new Color(0.46f, 0.66f, 0.29f, 0.3f), new Color(0.015f, 0.04f, 0.01f), 0.65f);
             var sheath = Fx.Mat(MatKind.LitTransparent, new Color(0.8f, 0.86f, 0.5f, 0.34f), new Color(0.04f, 0.05f, 0.01f), 0.6f);
             chlEmission = new Color(0.05f, 0.32f, 0.08f);
             chlMat = Fx.Mat(MatKind.LitEmissive, new Color(0.18f, 0.6f, 0.2f), chlEmission, 0.6f);

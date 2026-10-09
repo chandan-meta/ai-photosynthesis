@@ -57,9 +57,10 @@ namespace Photosynthesis
             dynRoot = Fx.Node("Animated", art).transform;
             soilTex = ChamberArt.Soil(); shaftTex = ChamberArt.Shaft(false);
             soilMat = Fx.Mat(MatKind.Lit, Color.white, null, 0.12f, 0f); Fx.SetTexture(soilMat, soilTex);
+            SurfaceArt.Apply(soilMat, "Soil", true, 1f);
             goldTrim = Fx.Mat(MatKind.LitEmissive, new Color(0.85f, 0.64f, 0.3f), new Color(0.55f, 0.36f, 0.1f), 0.8f, 1f);
 
-            BuildPlatform(); BuildOutside(); BuildUnderground(); BuildShafts(); BuildBeam(); BuildSkylight(); BuildFormationFx();
+            BuildPlatform(); BuildUnderground(); BuildShafts(); BuildBeam(); BuildSkylight(); BuildFormationFx();
             InitPieces(); InitEnvironment();
             StaticBatchingUtility.Combine(staticRoot.gameObject);
         }
@@ -101,6 +102,18 @@ namespace Photosynthesis
             Fadeable(Obj("Soil Bed", ChamberArt.Arc(0f, rS, 0, 360, h1 - 0.03f, 96, 0.5f), soilMat, root));
             // gentle mound so the plant base (anchor at PlatformHeight) sits in soil
             Fadeable(Fx.Prim(PrimitiveType.Sphere, root, new Vector3(0f, h1 - 0.03f, 0f), new Vector3(2.6f, 0.13f, 2.6f), soilMat, false, "Soil Mound"));
+            // Real small clods and organic debris give the planter contact depth without adding individual draws.
+            var clods = new MicroKitB.Batch(); var chip = MicroKitB.Super(Vector3.one * .5f, 2f, 2f, 5, 7, false, d => MicroKitB.Noise(d * 3f) * .18f);
+            var earthRandom = new System.Random(4209);
+            for (int i = 0; i < 150; i++)
+            {
+                float angle = (float)earthRandom.NextDouble() * 360f;
+                float radius = Mathf.Lerp(.55f, 2.75f, Mathf.Sqrt((float)earthRandom.NextDouble()));
+                float size = Mathf.Lerp(.045f, .13f, (float)earthRandom.NextDouble());
+                clods.Add(chip, Polar(angle, radius, h1 - .025f), Quaternion.Euler(12f, angle, 7f), new Vector3(size, size * .45f, size * 1.4f));
+            }
+            var debris = clods.Make("Granular planter soil", root, soilMat); debris.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            Fadeable(debris); Destroy(chip);
 
             glassFloorMat = Fx.Mat(MatKind.Glass, new Color(0.75f, 0.95f, 0.92f, 0f));
             glassFloor = Obj("Glass Floor", ChamberArt.Arc(0f, rS, 0, 360, h1 + 0.003f, 96), glassFloorMat, root).GetComponent<Renderer>();
@@ -117,23 +130,6 @@ namespace Photosynthesis
             ringK = new float[ringStages.Length];
         }
 
-        // ================================================================== outside the glass
-        void BuildOutside()
-        {
-            Obj("Outside Ground", ChamberArt.Arc(10.2f, 420f, 0, 360, -0.03f, 96), Fx.Mat(MatKind.Lit, new Color(0.19f, 0.27f, 0.13f), null, 0.08f, 0f));
-            Hills("Mountains", 210f, -2f, 75f, 3, 0.3f, 0.55f, 0f, 0, new Color(0.62f, 0.72f, 0.78f), new Color(0.46f, 0.58f, 0.66f), 2900);
-            Hills("Hills", 95f, -1f, 30f, 5, 0.22f, 0.45f, 0.04f, 160, new Color(0.42f, 0.55f, 0.5f), new Color(0.24f, 0.37f, 0.29f), 2910);
-            Hills("Forest", 36f, -0.5f, 12f, 9, 0.38f, 0.22f, 0.22f, 46, new Color(0.13f, 0.22f, 0.13f), new Color(0.07f, 0.15f, 0.07f), 2920);
-        }
-
-        void Hills(string n, float r, float y0, float h, int seed, float baseH, float amp, float trees, int crowns, Color low, Color high, int queue)
-        {
-            var m = Fx.Mat(MatKind.UnlitTransparent, Color.white); Fx.SetTexture(m, ChamberArt.Hills(seed, baseH, amp, trees, crowns, low, high));
-            m.renderQueue = queue;   // far → near, before the dome glass
-            Obj(n, ChamberArt.Wall(r, r, 0, 360, y0, y0 + h, 128, false), m);
-            daylit.Add(new Glow(m, Color.white, false));
-        }
-
         // ================================================================== underground (visible through the transparent floor)
         void BuildUnderground()
         {
@@ -142,7 +138,9 @@ namespace Photosynthesis
             // near (outward) face stays thin so the roots read through it; the far (inward) face gives the soil context
             var strataTex = ChamberArt.Strata();
             var strataNear = Fx.Mat(MatKind.LitTransparent, new Color(1f, 1f, 1f, 0.38f), null, 0.2f, 0f); Fx.SetTexture(strataNear, strataTex);
+            SurfaceArt.Apply(strataNear, "Soil", false, 1f);
             var strataFar = Fx.Mat(MatKind.LitTransparent, Color.white, null, 0.2f, 0f); Fx.SetTexture(strataFar, strataTex);
+            SurfaceArt.Apply(strataFar, "Soil", false, 1f);
             Obj("Soil Section", ChamberArt.Wall(3.05f, 3.05f, 0, 360, -2.8f, -0.01f, 96, true), strataNear, u);
             Obj("Soil Section Back", ChamberArt.Wall(3.04f, 3.04f, 0, 360, -2.8f, -0.01f, 96, false), strataFar, u);
             Obj("Section Floor", ChamberArt.Arc(0f, 3.05f, 0, 360, -2.79f, 64, 0.5f), soilMat, u);

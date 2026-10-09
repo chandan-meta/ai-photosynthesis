@@ -99,6 +99,16 @@ namespace Photosynthesis
 
         void Start() { if (Module.I) Module.I.BeatChanged += OnBeat; }
 
+        void OnApplicationQuit()
+        {
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            // Tear down the host provider while its window is still alive (Unity 6.3 Windows quit race).
+            UnityEngine.Accessibility.AssistiveSupport.screenReaderStatusOverride = UnityEngine.Accessibility.AssistiveSupport.ScreenReaderStatusOverride.ForceDisabled;
+            UnityEngine.Accessibility.AssistiveSupport.activeHierarchy = null;
+#endif
+            if (doc) doc.enabled = false;
+        }
+
         void OnDestroy()
         {
             if (Module.I) Module.I.BeatChanged -= OnBeat;
@@ -659,6 +669,14 @@ namespace Photosynthesis
                 }
                 c.root.style.visibility = vis ? Visibility.Visible : Visibility.Hidden;
                 if (!vis) continue;
+                if (c.key == "glu")
+                {
+                    // Keep the formula outside the ball-and-stick model during the glucose close-up.
+                    var edge = camera.WorldToScreenPoint(world + camera.transform.right * 1.5f);
+                    var ep = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(edge.x, Screen.height - edge.y));
+                    c.line.style.width = Mathf.Clamp(Vector2.Distance(p, ep) + 16f, 48f, 330f);
+                }
+                else c.line.style.width = 48f;
                 bool flip = c.flip ? p.x > w * 0.56f : p.x > w * 0.64f;   // tag points inward near the right edge
                 if (flip != c.flip) { c.flip = flip; c.root.style.flexDirection = flip ? FlexDirection.RowReverse : FlexDirection.Row; }
                 float cw = c.root.layout.width, ch = c.root.layout.height;

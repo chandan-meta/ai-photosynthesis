@@ -30,6 +30,7 @@ namespace Photosynthesis
         readonly List<(string key, Func<float[]> make)> jobs = new List<(string, Func<float[]>)>();
         readonly ConcurrentQueue<(string key, float[] data)> rendered = new ConcurrentQueue<(string, float[])>();
         volatile bool quitting;
+        Task renderWorker;
         bool inited;
         MusicState musicState = MusicState.None; string bed = "none";
         float duck = 1f, sfxDuck = 1f, voiceSeen = -10f, level, holdUntil;
@@ -109,7 +110,7 @@ namespace Photosynthesis
             Mus(MusicState.Reaction); Mus(MusicState.Resolution); Mus(MusicState.FreeExplore);
             // ponytail: one background Task renders everything (~3–8 s total, all off the main thread). WebGL has no threads —
             // render inline in small chunks there if that platform is ever targeted.
-            Task.Run(Work);
+            renderWorker = Task.Run(Work);
         }
 
         void Work()
@@ -118,8 +119,8 @@ namespace Photosynthesis
             {
                 (string key, Func<float[]> make) job;
                 lock (jobs) { if (jobs.Count == 0) return; job = jobs[0]; jobs.RemoveAt(0); }
-                try { rendered.Enqueue((job.key, job.make())); }
-                catch (Exception e) { Debug.LogWarning($"[Photosynthesis] audio render '{job.key}' failed: {e.Message}"); }
+                try { var data = job.make(); if (!quitting) rendered.Enqueue((job.key, data)); }
+                catch (Exception e) { if (!quitting) Debug.LogWarning($"[Photosynthesis] audio render '{job.key}' failed: {e.Message}"); }
             }
         }
 
@@ -147,7 +148,7 @@ namespace Photosynthesis
 
         void Update()
         {
-            if (!inited) return;
+            if (!inited || quitting) return;
             float dt = Time.unscaledDeltaTime;
             // Clips arrive from the worker: several small SFX per frame, at most one long loop (SetData cost).
             for (int n = 0; n < 4 && rendered.TryDequeue(out var r); n++) { Accept(r.key, r.data); if (!r.key.StartsWith("sfx:", StringComparison.Ordinal)) break; }
@@ -168,17 +169,25 @@ namespace Photosynthesis
             bool speaking = now - voiceSeen < 0.6f;   // release hold: bridges Dialogue's ~0.2 s between lines, so the music no longer swells +2.5 dB per sentence
             duck = Mathf.MoveTowards(duck, speaking ? 0.42f : 1f, dt * (speaking ? 2.2f : 0.7f));
             sfxDuck = Mathf.MoveTowards(sfxDuck, speaking ? 0.55f : 1f, dt * (speaking ? 5f : 0.8f));   // world/feedback cues -5.2 dB under Curio; 0.09 s attack lands before his first word (clips lead ~0.1 s)
-            music.Tick(dt, MusicVolume * duck * 0.9f);
+            music.Tick(dt, MusicVolume * duck * (Module.I && Module.I.AtStartScreen ? 0.32f : 0.9f));
             amb.Tick(dt, SfxVolume * (0.7f + 0.3f * duck) * 0.85f);
             for (int i = 0; i < SfxVoices; i++) if (sfx[i].isPlaying) sfx[i].volume = SfxGain(i);   // also carries SfxVolume changes
         }
 
         void OnDisable() { if (inited) StopVoice(); }
 
+        void OnApplicationQuit()
+        {
+            // Stop producers before native audio/logging shuts down, rather than waiting for OnDestroy.
+            quitting = true; lock (jobs) jobs.Clear();
+            // Finish the current pure-PCM render before Unity tears down its managed/native bridge.
+            if (renderWorker != null && !renderWorker.IsCompleted)
+                try { renderWorker.Wait(1500); } catch (AggregateException) { }
+        }
+
         void OnDestroy()
         {
-            quitting = true;
-            lock (jobs) jobs.Clear();
+            OnApplicationQuit();
             foreach (var c in sfxClips) if (c) Destroy(c);
             foreach (var c in loops.Values) if (c) Destroy(c);
         }

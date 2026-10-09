@@ -71,7 +71,7 @@ namespace Photosynthesis
         public static readonly Color Water = Hex(0x45A8FF), CO2 = Hex(0xA9BACB), Oxygen = Hex(0x9BE7FF), Glucose = Hex(0xFFB547);
         public static readonly Color Xylem = Hex(0x3D9BFF), Phloem = Hex(0xFF9F43), Light = Hex(0xFFD866);
         // Atoms (CPK-ish, softened)
-        public static readonly Color Carbon = Hex(0x3B4048), OxygenAtom = Hex(0xFF5A5A), Hydrogen = Hex(0xF2F6FA);
+        public static readonly Color Carbon = Hex(0x3B4048), OxygenAtom = Hex(0xD92E2E), Hydrogen = Hex(0xF2F6FA);
 
         public static Color Hex(int rgb, float a = 1f) => new Color(((rgb >> 16) & 255) / 255f, ((rgb >> 8) & 255) / 255f, (rgb & 255) / 255f, a);
         public static Color Of(Tone t) => t switch { Tone.Gold => Gold, Tone.Green => GreenBright, Tone.Blue => Water, Tone.Orange => Phloem, _ => Cyan };

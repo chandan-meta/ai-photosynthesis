@@ -578,3 +578,52 @@ namespace Photosynthesis
         public void SetStats(string text) { if (statsLabel.text != text) statsLabel.text = text; }
     }
 }
+
+namespace Photosynthesis
+{
+    public partial class Hud
+    {
+        VisualElement startBanner, startButton;
+        public void ShowStartBanner(Action start)
+        {
+            HideTransient(); HideLine(); SetCinematic(false); SetHudVisible(false); SetProgressVisible(false); SetAskAIVisible(false); SetZoomControlVisible(false);
+            if (startBanner != null) startBanner.RemoveFromHierarchy();
+            startBanner = Layer(overlayLayer); startBanner.name = "Start Investigation banner";
+            startBanner.pickingMode = PickingMode.Position;
+            var shade = new VisualElement { pickingMode = PickingMode.Ignore }; Abs(shade, 0, 0, float.NaN, 0); shade.style.width = Length.Percent(43); Bg(shade, AG(Scene, 0.76f)); startBanner.Add(shade);
+            var col = new FlexBox(false, 22); col.name = "Photosynthesis title and actions";
+            Abs(col, 72, float.NaN); col.style.top = Length.Percent(17); col.style.width = Length.Percent(43); col.style.maxWidth = 760;
+            startBanner.Add(col);
+            var over = Txt("DR. CURIO'S SCIENCE ADVENTURE", TS.Readout, GreenBright); over.style.fontSize = 18; over.style.alignSelf = Align.FlexStart;
+            Pad(over, 9, 16); Radius(over, 20); Border(over, A(GreenBright, .75f), 1); Bg(over, AG(GreenDeep, .7f)); col.Put(over);
+            var title = Txt("PHOTOSYNTHESIS", TS.H1, Text); Font(title, true); title.style.fontSize = 72; title.style.letterSpacing = -1.6f; title.style.whiteSpace = WhiteSpace.Normal; col.Put(title); title.style.marginTop = 76;
+            var sub = Txt("THE HIDDEN FOOD FACTORY", TS.H1, GreenBright); sub.style.fontSize = 30; sub.style.whiteSpace = WhiteSpace.Normal; col.Put(sub);
+            var hook = Txt("Discover how plants make their own food.", TS.Body, TextSecondary); hook.style.fontSize = 23; hook.style.whiteSpace = WhiteSpace.Normal; col.Put(hook);
+            startButton = Btn("START INVESTIGATION", ButtonKind.Primary, IconId.Play, start); startButton.name = "Start Investigation";
+            startButton.style.height = 84; startButton.style.width = 545; startButton.style.maxWidth = Length.Percent(100); startButton.style.minWidth = 360; startButton.style.justifyContent = Justify.Center;
+            var play = startButton.Q<IconElement>(); if (play != null) { play.RemoveFromHierarchy(); play.style.width = 30; play.style.height = 30; play.style.marginLeft = 0; play.style.marginRight = 18; startButton.Insert(1, play); }
+            foreach (var label in startButton.Query<Label>().ToList()) label.style.fontSize = 25;
+            col.Put(startButton);
+            startButton.style.marginTop = 72;
+            var row = col.Put(new FlexBox(true, 16));
+            row.Put(Btn("How to Play", ButtonKind.Secondary, IconId.Help, () => OpenSystem(helpPanel))).style.minHeight = 52;
+            row.Put(Btn("Settings", ButtonKind.Secondary, IconId.Settings, () => OpenSystem(settingsPanel))).style.minHeight = 52;
+            var footer = Txt("A greener world starts with one discovery.", TS.Body, TextSecondary); footer.style.fontSize = 20; Abs(footer, 76, float.NaN, float.NaN, 70); startBanner.Add(footer);
+            FocusSoon(startButton); root.AddToClassList(Kbd);
+        }
+
+        public void DismissStartBanner()
+        {
+            if (startBanner == null) return;
+            startButton.SetEnabled(false); startBanner.pickingMode = PickingMode.Ignore;
+            startBanner.style.opacity = 0; startBanner.style.display = DisplayStyle.None;
+        }
+
+        public void ReviewStartButton()
+        {
+            using (var submit = NavigationSubmitEvent.GetPooled()) { submit.target = startButton; startButton.SendEvent(submit); }
+        }
+        public void ReviewStartSettings(bool help) => OpenSystem(help ? helpPanel : settingsPanel);
+        public void ReviewCloseSystem() => CloseAllSystem();
+    }
+}

@@ -4,9 +4,8 @@ Unity 6000.3.0f1 · URP · Input System · UI Toolkit. Scene 1 (rooftop) is out 
 
 ## Open & play
 1. Open the project in Unity 6000.3.0f1.
-2. Menu **Photosynthesis ▸ Build Scene** (re-runnable; regenerates `Assets/Photosynthesis/Scenes/Scene02_BotanicalChamber.unity`,
-   template materials, UI panel settings, dome + vegetation placement).
-3. Open that scene and press Play. The module starts at **Scene 2 — A New World** (golden particles settle, the
+2. Open the existing `Assets/Photosynthesis/Scenes/Scene02_BotanicalChamber.unity`. **Build Scene regenerates this scene**; it is not needed to play or build the current polished project.
+3. Press Play, then **Start Investigation** on the live greenhouse banner. The original module starts at **Scene 2 — A New World** (golden particles settle, the
    Botanical Investigation Chamber forms) and runs through Scene 15 (Free Explore).
 
 Windows player: **Photosynthesis ▸ Build Windows Player (development)** → `Builds/Win/Photosynthesis.exe`.
@@ -79,6 +78,8 @@ learner needs is at least 44 px (zoom ± 48, dialogue › 48, closes 44, segment
 Windows' delayed mouse echo of a tap is ignored for 0.6 s, so a tap never counts twice.
 
 ## Testing
+Current polish evidence and review results: [Photosynthesis/PLAYTEST_RESULTS.md](Photosynthesis/PLAYTEST_RESULTS.md). Changes and practical limitations: [Photosynthesis/FINAL_REPORT.md](Photosynthesis/FINAL_REPORT.md).
+
 * Compile without Unity: `bash Tools/Compile/check.sh` (Runtime + Editor projects against Unity's DLLs).
 * Full loop: `powershell -File Tools/BuildAndTest.ps1 [-Autoplay] [-SkipBuild]` → builds scene + player, captures a screenshot
   per beat to `Logs/shots`, and (with `-Autoplay`) plays the whole module unattended twice (second run answers wrong first to

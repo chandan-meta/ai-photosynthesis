@@ -207,7 +207,8 @@ namespace Photosynthesis
             {   // Bokeh on the shot's subject during Blend / Arc / Ride / Push only; off under learner control, after cuts and in micro-world flights,
                 // so selectable structures, text and molecules stay sharp. High quality tier only (Performance: no DoF pass).
                 float subj = Vector3.Distance(transform.position, shotLook);
-                bool cine = activeShot != 0 && !Hud.ReduceMotion && QualitySettings.GetQualityLevel() >= 1 && subj > 0.8f;   // a lens almost touching its subject (the dive into the leaf) would blur the frame to a wash
+                bool companion = Module.I && Module.I.curio && Module.I.curio.IsCompanion;
+                bool cine = activeShot != 0 && !companion && !Hud.ReduceMotion && QualitySettings.GetQualityLevel() >= 1 && subj > 0.8f;   // keep the near-lens guide sharp during microscopic explanations
                 if (cine)
                 {
                     float d = subj;

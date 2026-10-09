@@ -108,11 +108,12 @@ namespace Photosynthesis
             mito.Make("Mitochondria", root, Dim(MatKind.LitTransparent, new Color(1f, 0.6f, 0.45f, 0.7f), new Color(0.2f, 0.07f, 0.03f), 0.6f));
 
             // --- chloroplasts: lens + visible grana stacks inside; streaming along four periphery belts
-            skinE = new Color(0.02f, 0.13f, 0.03f); stackE = new Color(0.03f, 0.28f, 0.06f);
+            skinE = new Color(0.012f, 0.05f, 0.01f); stackE = new Color(0.015f, 0.08f, 0.014f);
             skinMat = Fx.Mat(MatKind.LitTransparent, new Color(0.36f, 0.82f, 0.36f, 0.5f), skinE, 0.85f);
             stackMat = Fx.Mat(MatKind.LitEmissive, new Color(0.1f, 0.46f, 0.13f), stackE, 0.7f);
             selSkin = Fx.Mat(MatKind.LitTransparent, new Color(0.4f, 0.9f, 0.4f, 0.55f), skinE, 0.85f);
             selStack = Fx.Mat(MatKind.LitEmissive, new Color(0.12f, 0.52f, 0.15f), stackE, 0.75f);
+            SurfaceArt.Apply(selSkin, "Membrane"); SurfaceArt.Apply(selStack, "Grana");
             var skin = MicroKitB.Super(new Vector3(0.72f, 0.46f, 1.1f), 2, 2.4f, 12, 20);
             var inner = new MicroKitB.Batch(); var disc = MicroKitB.Super(new Vector3(0.17f, 0.028f, 0.17f), 2, 4, 6, 14);
             var grana = new List<Vector3>();
@@ -252,10 +253,10 @@ namespace Photosynthesis
         void ApplyGlow(float t)
         {
             float pulse = glow * (0.75f + 0.25f * Mathf.Sin(t * 3.2f));
-            Fx.SetEmission(stackMat, stackE * (1f + 9f * pulse));
-            Fx.SetEmission(skinMat, skinE * (1f + 6f * pulse));
+            Fx.SetEmission(stackMat, stackE * (1f + 2f * pulse));
+            Fx.SetEmission(skinMat, skinE * (1f + 2.5f * pulse));
             if (selected < 0) return;
-            float s = 1f + 9f * pulse + 4f;
+            float s = 1f + 2f * pulse + 1.5f;
             Fx.SetEmission(selStack, stackE * s); Fx.SetEmission(selSkin, skinE * (s * 0.7f));
         }
 

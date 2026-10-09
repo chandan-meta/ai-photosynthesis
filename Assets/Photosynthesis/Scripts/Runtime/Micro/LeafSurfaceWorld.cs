@@ -23,7 +23,7 @@ namespace Photosynthesis
         static readonly Vector3 L1Pos = new Vector3(2.5f, 17f, -10f), L1Look = new Vector3(0f, 0f, 2f);
         static readonly Vector3 L2Pos = new Vector3(0f, 4.3f, -2.4f), L2Look = new Vector3(0f, -0.35f, 0.05f);
         static readonly Vector3 BowlC = new Vector3(0f, -2.75f, 0f), BowlR = new Vector3(4.4f, 2.6f, 3.8f);
-        static readonly Color Fog = new Color(0.46f, 0.64f, 0.62f), GuardBase = new Color(0.05f, 0.2f, 0.08f), GuardHot = new Color(0.2f, 0.72f, 0.42f);
+        static readonly Color Fog = new Color(0.35f, 0.49f, 0.36f), GuardBase = new Color(0.015f, 0.055f, 0.008f), GuardHot = new Color(0.09f, 0.3f, 0.07f);
         // starts in the upper-left of the 100× frame, threads the pore, settles in the cavity in view of the camera
         static readonly Vector3[] CO2Path =
         {
@@ -378,8 +378,9 @@ namespace Photosynthesis
         Material EpiMat(Texture2D t)
         {
             // Leaf = double-sided lit + emission: a learner orbiting below the surface (min pitch −10°) sees a solid sheet, not a void
-            var m = Own(Fx.Mat(MatKind.Leaf, Color.white, new Color(0.16f, 0.4f, 0.3f), 0.62f));
-            Fx.SetTexture(m, t); m.SetTexture("_EmissionMap", t);   // bright cell walls glow softly
+            var m = Own(Fx.Mat(MatKind.Leaf, Color.white, new Color(0.025f, 0.06f, 0.015f), 0.62f));
+            Fx.SetTexture(m, t); SurfaceArt.Apply(m, t.width == 640 ? "EpidermisPatch" : "Epidermis", true, .25f); m.SetFloat("_Smoothness", .85f);
+            m.SetTexture("_EmissionMap", t);
             return m;
         }
 
@@ -387,9 +388,9 @@ namespace Photosynthesis
         {
             CellAt(x, z, out float e, out float tint);
             float wall = 1f - K.Smooth01(e / 0.07f), dome = Mathf.Clamp01(e / 0.9f);
-            var c = Color.Lerp(new Color(0.47f, 0.66f, 0.49f), new Color(0.58f, 0.77f, 0.57f), tint) * (0.86f + 0.14f * dome);
+            var c = Color.Lerp(new Color(0.23f, 0.40f, 0.13f), new Color(0.42f, 0.59f, 0.21f), tint) * (0.86f + 0.14f * dome);
             c *= 0.97f + 0.03f * Mathf.Sin((x * 1.3f + z * 0.7f) * 12f + Mathf.Sin(z * 3f) * 2f);   // fine cuticle striae
-            c = Color.Lerp(c, new Color(0.88f, 0.99f, 0.9f), wall * 0.8f); c.a = 1f;
+            c = Color.Lerp(c, new Color(0.63f, 0.76f, 0.42f), wall * 0.7f); c.a = 1f;
             return c;
         }
 
@@ -573,7 +574,7 @@ namespace Photosynthesis
 
             // ambient CO₂ fills the air the 100× camera actually sees (it looks steeply down, so a box of air would be mostly
             // out of frame): sample the L2 view frustum (45°, 16:9) at 0.9–2.5 above the surface
-            amb = new Transform[22]; ambHome = new Vector3[amb.Length]; var rl = new List<Renderer>();
+            amb = new Transform[7]; ambHome = new Vector3[amb.Length]; var rl = new List<Renderer>();
             Vector3 vf = (L2Look - L2Pos).normalized, vr = Vector3.Cross(Vector3.up, vf).normalized, vu = Vector3.Cross(vf, vr);
             float tv = Mathf.Tan(22.5f * Mathf.Deg2Rad), th = tv * 16f / 9f;
             for (int i = 0; i < amb.Length; i++)

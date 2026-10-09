@@ -346,8 +346,10 @@ namespace Photosynthesis
                 case ArtId.Curio:
                     Vec.Stroke(p, "M32 13V8", s, o, H(0xBFD3CE), 2.4f * s);
                     Vec.LinearFill(mgc, "M32 9c1-5 6-7 11-6-1 5-6 7-11 6z", s, o, new Vector2(32, 2), new Vector2(43, 10), H(0x8CF5B4), H(0x1F8A55));
-                    Vec.RadialDisc(mgc, new Vector2(32, 36), 22, new Vector2(26.7f, 26.3f), s, o, Color.white, H(0xE9F1EF), H(0xBFD3CE));
+                    Vec.LinearFill(mgc, "M32 9c-1-5-6-7-11-6 1 5 6 7 11 6z", s, o, new Vector2(21, 2), new Vector2(32, 10), H(0x92C65C), H(0x347626));
+                    Vec.RadialDisc(mgc, new Vector2(32, 36), 22, new Vector2(26.7f, 26.3f), s, o, H(0xFFFCF3), H(0xF5EEDF), H(0xE9DFC6));
                     Vec.Fill(p, "R 14.5 26 35 20 10", s, o, H(0x0A1A1F));
+                    Vec.Fill(p, "M23 55L41 55L35 62z", s, o, H(0x347626));
                     Vec.Fill(p, "E 25 36 5.2 6.4;E 39 36 5.2 6.4", s, o, H(0x3DD6E8, 0.22f));
                     if (blink) Vec.Fill(p, "E 25 37 3.6 0.9;E 39 37 3.6 0.9", s, o, H(0x3DD6E8));
                     else

@@ -20,6 +20,8 @@ namespace Photosynthesis
         ProfilerRecorder drawCalls, setPass, tris;
         float fps; int frames; float acc;
         string shotsDir; float quitAfter = -1, filmRate = 3f;
+        void Awake() => Application.logMessageReceived += CountError;
+        void CountError(string msg, string stack, LogType type) { if (type == LogType.Exception || type == LogType.Error) errors++; }
 
         void Start()
         {
@@ -40,6 +42,7 @@ namespace Photosynthesis
                 if (args[i] == "-film" && i + 1 < args.Length) StartCoroutine(Film(args[i + 1]));
                 if (args[i] == "-uishots" && i + 1 < args.Length) StartCoroutine(UiShots(args[i + 1]));
                 if (args[i] == "-touchtest") StartCoroutine(TouchTest());
+                if (args[i] == "-exportmodels" && i + 1 < args.Length) StartCoroutine(ModelExport.Run(args[i + 1]));
                 if (args[i] == "-quitafter" && i + 1 < args.Length) float.TryParse(args[i + 1], out quitAfter);
                 if (args[i] == "-quality" && i + 1 < args.Length)
                 {
@@ -51,6 +54,12 @@ namespace Photosynthesis
             if (Array.IndexOf(args, "-realvoice") >= 0) m.dialogue.SkipVoice = false;   // autoplay at true VO pacing
             if (perfLog) { QualitySettings.vSyncCount = 0; Application.targetFrameRate = -1; }   // measure real headroom
             bool dev = Debug.isDebugBuild || Application.isEditor;
+            int speedArg = Array.IndexOf(args, "-testspeed");
+            if (dev && speedArg >= 0 && speedArg + 1 < args.Length && float.TryParse(args[speedArg + 1], out float speed))
+            {
+                Time.timeScale = Mathf.Clamp(speed, 0.25f, 4f);
+                Debug.Log($"[Polish] test-only simulation speed {Time.timeScale}");
+            }
             if (dev)
                 m.hud.BuildDebug((Beat[])Enum.GetValues(typeof(Beat)), b => m.story.Run(b), on => m.dialogue.SkipVoice = on,
                     s => Time.timeScale = s, () => { m.clues.ResetFor(Beat.Equation); });
@@ -61,15 +70,66 @@ namespace Photosynthesis
                 tris = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Triangles Count");
             }
             if (!string.IsNullOrEmpty(shotsDir)) StartCoroutine(Shots());
+            int bi = Array.IndexOf(args, "-bannertest");
+            if (bi >= 0 && bi + 1 < args.Length) StartCoroutine(BannerTest(args[bi + 1]));
+            if (Array.IndexOf(args, "-sciencecheck") >= 0) CheckMolecules();
             if (Array.IndexOf(args, "-diag") >= 0) StartCoroutine(Diag());
             int hi = Array.IndexOf(args, "-hide"), si = Array.IndexOf(args, "-snap");
             if (hi >= 0 && hi + 1 < args.Length) StartCoroutine(Hide(args[hi + 1].Split(',')));
             if (si >= 0 && si + 1 < args.Length) StartCoroutine(Snap(args[si + 1]));
-            Application.logMessageReceived += (msg, stack, type) => { if (type == LogType.Exception || type == LogType.Error) errors++; };
         }
         int errors; bool perfLog; float nextPerf;
 
-        void OnDestroy() { drawCalls.Dispose(); setPass.Dispose(); tris.Dispose(); }
+        void CheckMolecules()
+        {
+            var expectations = new[] { (Mol.CO2, 1, 0, 2), (Mol.H2O, 0, 2, 1), (Mol.O2, 0, 0, 2), (Mol.Glucose, 6, 12, 6) };
+            foreach (var (kind, carbon, hydrogen, oxygen) in expectations)
+            {
+                var molecule = Fx.Molecule(kind, transform); molecule.SetActive(false);
+                int c = 0, h = 0, o = 0;
+                foreach (var r in molecule.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    if (r.name != "Atom") continue;
+                    Color color = r.sharedMaterial.GetColor("_BaseColor");
+                    if (color == Palette.Carbon) c++; else if (color == Palette.Hydrogen) h++; else if (color == Palette.OxygenAtom) o++;
+                }
+                bool correct = c == carbon && h == hydrogen && o == oxygen;
+                if (!correct) errors++;
+                Debug.Log($"[Science] {kind} C:{c} H:{h} O:{o} {(correct ? "PASS" : "FAIL")}");
+                Destroy(molecule);
+            }
+        }
+
+        IEnumerator BannerTest(string dir)
+        {
+            Directory.CreateDirectory(dir); var m = Module.I;
+            yield return new WaitForSecondsRealtime(4f);
+            bool waiting = m.AtStartScreen && !m.story.Running && !m.dialogue.Speaking;
+            if (!waiting) errors++;
+            Debug.Log($"[Polish] banner gate {(waiting ? "PASS" : "FAIL")}");
+            ScreenCapture.CaptureScreenshot(Path.Combine(dir, "00_banner.png"));
+            m.hud.ReviewStartSettings(true); yield return new WaitForSecondsRealtime(1f);
+            ScreenCapture.CaptureScreenshot(Path.Combine(dir, "01_help.png")); m.hud.ReviewCloseSystem();
+            m.hud.ReviewStartSettings(false); yield return new WaitForSecondsRealtime(1f);
+            ScreenCapture.CaptureScreenshot(Path.Combine(dir, "02_settings.png")); m.hud.ReviewCloseSystem();
+            yield return null; m.hud.ReviewStartButton(); m.hud.ReviewStartButton();
+            yield return new WaitForSecondsRealtime(2f);
+            bool started = !m.AtStartScreen && m.story.Running && m.Beat == Beat.Scene2Start;
+            if (!started) errors++;
+            Debug.Log($"[Polish] start submit / repeated submit {(started ? "PASS" : "FAIL")}");
+            ScreenCapture.CaptureScreenshot(Path.Combine(dir, "03_original_intro.png"));
+            m.ShowStartScreen(); yield return new WaitForSecondsRealtime(1f);
+            if (!m.AtStartScreen || m.story.Running || m.dialogue.Speaking) errors++;
+            ScreenCapture.CaptureScreenshot(Path.Combine(dir, "04_reset_banner.png"));
+            m.story.Run(Beat.Clue1); yield return null;
+            bool jumped = !m.AtStartScreen && m.story.Running;
+            if (!jumped) errors++;
+            Debug.Log($"[Polish] debug jump clears banner {(jumped ? "PASS" : "FAIL")}");
+            Debug.Log($"[Polish] banner review complete, errors={errors}");
+            yield return new WaitForSecondsRealtime(.6f); Application.Quit();
+        }
+
+        void OnDestroy() { Application.logMessageReceived -= CountError; drawCalls.Dispose(); setPass.Dispose(); tris.Dispose(); }
 
         void Update()
         {
