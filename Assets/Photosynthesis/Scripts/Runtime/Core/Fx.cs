@@ -216,34 +216,33 @@ namespace Photosynthesis
         public static GameObject Molecule(Mol kind, Transform parent, float size = 1f, float glow = 0.6f)
         {
             var root = Node(kind.ToString(), parent);
-            if (kind == Mol.Glucose) glow = .08f; // atom colors remain legible; the separate discovery halo provides the gold cue
-            Material C = Shared(MatKind.LitEmissive, Palette.Carbon, Palette.Carbon * 0.2f), O = Shared(MatKind.LitEmissive, Palette.OxygenAtom, Palette.OxygenAtom * glow),
-                H = Shared(MatKind.LitEmissive, Palette.Hydrogen, Palette.Hydrogen * glow * 0.5f), bond = Shared(MatKind.Lit, new Color(0.85f, 0.88f, 0.9f));
-            // glossy, slightly metallic atoms: a soft specular highlight and a rim of reflected sky read as a smooth, premium surface (shared material, set once)
-            foreach (var am in new[] { C, O, H }) { if (am.HasProperty(Smoothness)) am.SetFloat(Smoothness, 0.82f); if (am.HasProperty(Metallic)) am.SetFloat(Metallic, 0.14f); }
-            if (bond.HasProperty(Smoothness)) bond.SetFloat(Smoothness, 0.6f);
+            Material C = SurfaceArt.Upgraded("AtomC"), O = SurfaceArt.Upgraded("AtomO"),
+                H = SurfaceArt.Upgraded("AtomH"), bond = SurfaceArt.Upgraded("Connector");
             void Atom(Vector3 p, float r, Material m)
-            {   // glossy atom + a soft fresnel rim in a lighter tint of its own colour (LDR: an edge light, never a bloom halo)
-                var g = Prim(PrimitiveType.Sphere, root.transform, p * size, Vector3.one * r * size, m, false, "Atom");
-                var rim = Rim(Color.Lerp(m.GetColor(BaseColor), Color.white, 0.55f) * 0.55f);
-                if (rim) g.GetComponent<MeshRenderer>().sharedMaterials = new[] { m, rim };
-            }
-            void Bond(Vector3 a, Vector3 b)
             {
-                var g = Prim(PrimitiveType.Cylinder, root.transform, (a + b) * 0.5f * size, new Vector3(0.12f, Vector3.Distance(a, b) * 0.5f, 0.12f) * size, bond, false, "Bond");
-                g.transform.localRotation = Quaternion.FromToRotation(Vector3.up, b - a);
+                Prim(PrimitiveType.Sphere, root.transform, p * size, Vector3.one * r * size, m, false, "Atom");
+            }
+            void Bond(Vector3 a, Vector3 b, int order = 1)
+            {
+                for (int i = 0; i < order; i++)
+                {
+                    var offset = Vector3.Cross((b - a).normalized, Vector3.forward).normalized * ((i - (order - 1) * .5f) * .14f);
+                    var g = Prim(PrimitiveType.Cylinder, root.transform, ((a + b) * .5f + offset) * size, new Vector3(order > 1 ? .08f : .12f, Vector3.Distance(a, b) * .5f, order > 1 ? .08f : .12f) * size, bond, false, "Bond");
+                    g.transform.localRotation = Quaternion.FromToRotation(Vector3.up, b - a);
+                }
             }
             switch (kind)
             {
                 case Mol.CO2:
                     Atom(Vector3.zero, 0.7f, C); Atom(Vector3.left * 0.75f, 0.6f, O); Atom(Vector3.right * 0.75f, 0.6f, O);
-                    Bond(Vector3.zero, Vector3.left * 0.75f); Bond(Vector3.zero, Vector3.right * 0.75f); break;
+                    Bond(Vector3.zero, Vector3.left * 0.75f, 2); Bond(Vector3.zero, Vector3.right * 0.75f, 2); break;
                 case Mol.H2O:
-                    { Vector3 h1 = Quaternion.Euler(0, 0, 52) * Vector3.up * 0.6f, h2 = Quaternion.Euler(0, 0, -52) * Vector3.up * 0.6f;
+                    { Vector3 h1 = Quaternion.Euler(0, 0, 52.25f) * Vector3.up * 0.6f, h2 = Quaternion.Euler(0, 0, -52.25f) * Vector3.up * 0.6f;
                       Atom(Vector3.zero, 0.75f, O); Atom(h1, 0.45f, H); Atom(h2, 0.45f, H); Bond(Vector3.zero, h1); Bond(Vector3.zero, h2); }
                     break;
                 case Mol.O2:
-                    Atom(Vector3.left * 0.33f, 0.65f, O); Atom(Vector3.right * 0.33f, 0.65f, O); break;
+                    Atom(Vector3.left * 0.38f, 0.65f, O); Atom(Vector3.right * 0.38f, 0.65f, O);
+                    Bond(Vector3.left * .38f, Vector3.right * .38f, 2); break;
                 case Mol.Glucose:
                     {
                         var geometry = GlucoseGeometry.Data;

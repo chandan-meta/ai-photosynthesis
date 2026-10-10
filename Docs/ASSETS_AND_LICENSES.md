@@ -1,5 +1,12 @@
 # Assets & licences (Scene 2+ module)
 
+## 2026-10-10 biological material upgrade provenance
+
+- `Art/Upgraded/Sources/RootEpidermis_AI.png`: AI-generated flat biological surface source produced with the connected image-generation tool; no reference-book pixels were cropped or copied.
+- `Tools/GenerateBiologyMaps.py`: locally authored NumPy/Pillow derivatives matched to existing tube UVs, plus procedural root-hair, vessel, atom, connector and water maps. Saved source maps remain editable under `Art/Upgraded/Textures`; runtime material dependencies are referenced by the eight `Art/Upgraded/Resources/UpgradedMaterials` assets.
+- `Art/Upgraded/Shaders/BiologicalSurface.shader` and `ClearWater.shader`: project-authored HLSL using the installed URP lighting libraries.
+- User-supplied `Art/G7/neww/LeafInside.fbx` and `chloroplast.glb` were inspected read-only and retained as source candidates; neither replaces the active scientific/animated sets. See `Photosynthesis/ROOT_UPGRADE_ASSET_MAP.md`.
+
 ## 2026-10-09 visual upgrade provenance
 
 - `Art/Generated/Resources/SurfaceMaps` and `Art/Generated/Sources`: locally authored deterministic NumPy/Pillow PBR recipes (`Tools/GenerateSurfaceMaps.py`), plus exact exports of existing project leaf/epidermis functions and original lab albedo UV atlases. Original imported model/scarf/environment licences below still apply to derived maps. Reference-book screenshots are not used as game assets.

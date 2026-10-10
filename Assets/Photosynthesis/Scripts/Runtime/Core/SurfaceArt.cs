@@ -6,6 +6,7 @@ namespace Photosynthesis
     public static class SurfaceArt
     {
         public static Texture2D Map(string family, string map) => Resources.Load<Texture2D>("SurfaceMaps/" + family + "_" + map);
+        public static Material Upgraded(string name) => Resources.Load<Material>("UpgradedMaterials/" + name);
 
         public static void Apply(Material material, string family, bool albedo = true, float normalStrength = 0.6f)
         {
@@ -28,7 +29,7 @@ namespace Photosynthesis
             {
                 string family = r.name switch
                 {
-                    "Guard Cells" => "Guard", "Root" or "Root Hairs" or "Root Hair (hero)" or "Vascular Core (stele)" => "Root",
+                    "Guard Cells" => "Guard",
                     "Soil Particles" or "Mineral Grains" => "Soil",
                     "Xylem Vessel" or "Lignin Spiral" or "Neighbour Vessel" or "Main Stem Vessel (continues)" or "Xylem" or "XylemInner" or "Phloem" or "PhloemInner" or "Tube" or "TubeInner" => "Vascular",
                     "Thylakoids" or "Lamellae" or "Grana" or "Chloroplasts" or "DiveChloroplasts" => "Grana",
@@ -40,7 +41,15 @@ namespace Photosynthesis
                 {
                     // Root cell boundaries and imported atlas colors remain useful scientific detail.
                     bool replaceAlbedo = family != "Root" && r.name != "WallOuter" && r.name != "WallInner";
-                    Apply(material, family, replaceAlbedo); assigned++;
+                    if (family == "Vascular")
+                    {
+                        var source = Upgraded("VesselWall");
+                        foreach (var channel in new[] { "_BaseMap", "_BumpMap", "_MetallicGlossMap", "_OcclusionMap" })
+                            material.SetTexture(channel, source.GetTexture(channel));
+                        material.SetFloat("_Smoothness", .85f);
+                    }
+                    else Apply(material, family, replaceAlbedo);
+                    assigned++;
                     if (r.name == "Soil Particles" || r.name == "Mineral Grains") Fx.SetColor(material, new Color(.85f, .85f, .85f));
                 }
             }

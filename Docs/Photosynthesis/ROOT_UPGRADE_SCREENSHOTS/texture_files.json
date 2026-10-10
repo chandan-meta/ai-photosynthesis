@@ -1,0 +1,92 @@
+[
+  {
+    "family": "RootEpidermis",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootEpidermis_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootEpidermis_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootEpidermis_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootEpidermis_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootEpidermis_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootEpidermis_Roughness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootEpidermis_Thickness.png"
+    ]
+  },
+  {
+    "family": "RootHair",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootHair_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootHair_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootHair_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootHair_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootHair_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootHair_Roughness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\RootHair_Thickness.png"
+    ]
+  },
+  {
+    "family": "VesselWall",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\VesselWall_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\VesselWall_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\VesselWall_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\VesselWall_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\VesselWall_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\VesselWall_Roughness.png"
+    ]
+  },
+  {
+    "family": "AtomO",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomO_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomO_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomO_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomO_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomO_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomO_Roughness.png"
+    ]
+  },
+  {
+    "family": "AtomH",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomH_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomH_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomH_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomH_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomH_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomH_Roughness.png"
+    ]
+  },
+  {
+    "family": "AtomC",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomC_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomC_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomC_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomC_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomC_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\AtomC_Roughness.png"
+    ]
+  },
+  {
+    "family": "Connector",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\Connector_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\Connector_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\Connector_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\Connector_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\Connector_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\Connector_Roughness.png"
+    ]
+  },
+  {
+    "family": "WaterFlow",
+    "files": [
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\WaterFlow_Albedo.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\WaterFlow_AO.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\WaterFlow_Height.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\WaterFlow_MetallicSmoothness.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\WaterFlow_Normal.png",
+      "Assets\\Photosynthesis\\Art\\Upgraded\\Textures\\WaterFlow_Roughness.png"
+    ]
+  }
+]

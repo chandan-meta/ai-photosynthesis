@@ -1,0 +1,578 @@
+[
+  {
+    "beat": "Scene2Start",
+    "fps": 2,
+    "draw_calls": 147,
+    "setpass": 54,
+    "triangles_k": 855,
+    "managed_kb": 27572
+  },
+  {
+    "beat": "Scene2Start",
+    "fps": 942,
+    "draw_calls": 388,
+    "setpass": 69,
+    "triangles_k": 1878,
+    "managed_kb": 40984
+  },
+  {
+    "beat": "CurioIntro",
+    "fps": 761,
+    "draw_calls": 584,
+    "setpass": 95,
+    "triangles_k": 3325,
+    "managed_kb": 40124
+  },
+  {
+    "beat": "CurioIntro",
+    "fps": 764,
+    "draw_calls": 486,
+    "setpass": 83,
+    "triangles_k": 1763,
+    "managed_kb": 43640
+  },
+  {
+    "beat": "CurioIntro",
+    "fps": 904,
+    "draw_calls": 478,
+    "setpass": 88,
+    "triangles_k": 1747,
+    "managed_kb": 50740
+  },
+  {
+    "beat": "CurioIntro",
+    "fps": 915,
+    "draw_calls": 145,
+    "setpass": 44,
+    "triangles_k": 290,
+    "managed_kb": 47160
+  },
+  {
+    "beat": "CurioIntro",
+    "fps": 1119,
+    "draw_calls": 506,
+    "setpass": 77,
+    "triangles_k": 2541,
+    "managed_kb": 42144
+  },
+  {
+    "beat": "Clue1",
+    "fps": 749,
+    "draw_calls": 533,
+    "setpass": 84,
+    "triangles_k": 2199,
+    "managed_kb": 42824
+  },
+  {
+    "beat": "Clue1",
+    "fps": 703,
+    "draw_calls": 609,
+    "setpass": 99,
+    "triangles_k": 3318,
+    "managed_kb": 43916
+  },
+  {
+    "beat": "Stomata",
+    "fps": 847,
+    "draw_calls": 154,
+    "setpass": 47,
+    "triangles_k": 393,
+    "managed_kb": 46452
+  },
+  {
+    "beat": "Stomata",
+    "fps": 976,
+    "draw_calls": 137,
+    "setpass": 49,
+    "triangles_k": 346,
+    "managed_kb": 53696
+  },
+  {
+    "beat": "CO2",
+    "fps": 935,
+    "draw_calls": 169,
+    "setpass": 52,
+    "triangles_k": 354,
+    "managed_kb": 55148
+  },
+  {
+    "beat": "CO2",
+    "fps": 499,
+    "draw_calls": 167,
+    "setpass": 50,
+    "triangles_k": 356,
+    "managed_kb": 16352
+  },
+  {
+    "beat": "CO2",
+    "fps": 714,
+    "draw_calls": 177,
+    "setpass": 52,
+    "triangles_k": 357,
+    "managed_kb": 18108
+  },
+  {
+    "beat": "CO2",
+    "fps": 994,
+    "draw_calls": 163,
+    "setpass": 52,
+    "triangles_k": 354,
+    "managed_kb": 20012
+  },
+  {
+    "beat": "Clue2",
+    "fps": 784,
+    "draw_calls": 632,
+    "setpass": 99,
+    "triangles_k": 3331,
+    "managed_kb": 20548
+  },
+  {
+    "beat": "Clue2",
+    "fps": 768,
+    "draw_calls": 648,
+    "setpass": 98,
+    "triangles_k": 3330,
+    "managed_kb": 20424
+  },
+  {
+    "beat": "Roots",
+    "fps": 830,
+    "draw_calls": 502,
+    "setpass": 84,
+    "triangles_k": 2295,
+    "managed_kb": 20500
+  },
+  {
+    "beat": "Water",
+    "fps": 966,
+    "draw_calls": 232,
+    "setpass": 47,
+    "triangles_k": 251,
+    "managed_kb": 21356
+  },
+  {
+    "beat": "Water",
+    "fps": 979,
+    "draw_calls": 233,
+    "setpass": 48,
+    "triangles_k": 254,
+    "managed_kb": 21744
+  },
+  {
+    "beat": "XylemRide",
+    "fps": 1152,
+    "draw_calls": 211,
+    "setpass": 54,
+    "triangles_k": 424,
+    "managed_kb": 22408
+  },
+  {
+    "beat": "XylemRide",
+    "fps": 1051,
+    "draw_calls": 198,
+    "setpass": 48,
+    "triangles_k": 298,
+    "managed_kb": 22580
+  },
+  {
+    "beat": "XylemRide",
+    "fps": 581,
+    "draw_calls": 363,
+    "setpass": 94,
+    "triangles_k": 558,
+    "managed_kb": 22788
+  },
+  {
+    "beat": "XylemRide",
+    "fps": 651,
+    "draw_calls": 633,
+    "setpass": 93,
+    "triangles_k": 3344,
+    "managed_kb": 17880
+  },
+  {
+    "beat": "XylemRide",
+    "fps": 669,
+    "draw_calls": 548,
+    "setpass": 86,
+    "triangles_k": 2121,
+    "managed_kb": 18036
+  },
+  {
+    "beat": "XylemRide",
+    "fps": 668,
+    "draw_calls": 628,
+    "setpass": 94,
+    "triangles_k": 3322,
+    "managed_kb": 18308
+  },
+  {
+    "beat": "XylemRide",
+    "fps": 740,
+    "draw_calls": 572,
+    "setpass": 90,
+    "triangles_k": 2261,
+    "managed_kb": 18436
+  },
+  {
+    "beat": "Clue3",
+    "fps": 690,
+    "draw_calls": 543,
+    "setpass": 79,
+    "triangles_k": 1934,
+    "managed_kb": 18816
+  },
+  {
+    "beat": "Clue3",
+    "fps": 694,
+    "draw_calls": 648,
+    "setpass": 99,
+    "triangles_k": 3246,
+    "managed_kb": 18484
+  },
+  {
+    "beat": "Sunlight",
+    "fps": 638,
+    "draw_calls": 665,
+    "setpass": 98,
+    "triangles_k": 3251,
+    "managed_kb": 19412
+  },
+  {
+    "beat": "Sunlight",
+    "fps": 789,
+    "draw_calls": 621,
+    "setpass": 99,
+    "triangles_k": 3108,
+    "managed_kb": 20036
+  },
+  {
+    "beat": "Sunlight",
+    "fps": 470,
+    "draw_calls": 635,
+    "setpass": 101,
+    "triangles_k": 3108,
+    "managed_kb": 20600
+  },
+  {
+    "beat": "EnterLeaf",
+    "fps": 731,
+    "draw_calls": 126,
+    "setpass": 52,
+    "triangles_k": 663,
+    "managed_kb": 19644
+  },
+  {
+    "beat": "PlantCell",
+    "fps": 977,
+    "draw_calls": 193,
+    "setpass": 41,
+    "triangles_k": 161,
+    "managed_kb": 19996
+  },
+  {
+    "beat": "PlantCell",
+    "fps": 986,
+    "draw_calls": 178,
+    "setpass": 40,
+    "triangles_k": 151,
+    "managed_kb": 21652
+  },
+  {
+    "beat": "PlantCell",
+    "fps": 943,
+    "draw_calls": 178,
+    "setpass": 42,
+    "triangles_k": 160,
+    "managed_kb": 21848
+  },
+  {
+    "beat": "Chloroplast",
+    "fps": 1114,
+    "draw_calls": 194,
+    "setpass": 53,
+    "triangles_k": 166,
+    "managed_kb": 21416
+  },
+  {
+    "beat": "Chloroplast",
+    "fps": 1068,
+    "draw_calls": 187,
+    "setpass": 46,
+    "triangles_k": 154,
+    "managed_kb": 22500
+  },
+  {
+    "beat": "Chloroplast",
+    "fps": 1146,
+    "draw_calls": 202,
+    "setpass": 46,
+    "triangles_k": 157,
+    "managed_kb": 22840
+  },
+  {
+    "beat": "Chloroplast",
+    "fps": 1100,
+    "draw_calls": 239,
+    "setpass": 51,
+    "triangles_k": 178,
+    "managed_kb": 23068
+  },
+  {
+    "beat": "Reaction",
+    "fps": 859,
+    "draw_calls": 284,
+    "setpass": 64,
+    "triangles_k": 191,
+    "managed_kb": 18464
+  },
+  {
+    "beat": "Reaction",
+    "fps": 897,
+    "draw_calls": 269,
+    "setpass": 63,
+    "triangles_k": 196,
+    "managed_kb": 18604
+  },
+  {
+    "beat": "Glucose",
+    "fps": 991,
+    "draw_calls": 259,
+    "setpass": 61,
+    "triangles_k": 174,
+    "managed_kb": 20292
+  },
+  {
+    "beat": "Glucose",
+    "fps": 1036,
+    "draw_calls": 284,
+    "setpass": 60,
+    "triangles_k": 195,
+    "managed_kb": 20988
+  },
+  {
+    "beat": "Glucose",
+    "fps": 1028,
+    "draw_calls": 278,
+    "setpass": 57,
+    "triangles_k": 188,
+    "managed_kb": 21244
+  },
+  {
+    "beat": "Oxygen",
+    "fps": 1054,
+    "draw_calls": 344,
+    "setpass": 76,
+    "triangles_k": 208,
+    "managed_kb": 21428
+  },
+  {
+    "beat": "Oxygen",
+    "fps": 1165,
+    "draw_calls": 140,
+    "setpass": 49,
+    "triangles_k": 90,
+    "managed_kb": 21764
+  },
+  {
+    "beat": "Oxygen",
+    "fps": 1220,
+    "draw_calls": 163,
+    "setpass": 50,
+    "triangles_k": 348,
+    "managed_kb": 22284
+  },
+  {
+    "beat": "Oxygen",
+    "fps": 1053,
+    "draw_calls": 226,
+    "setpass": 58,
+    "triangles_k": 390,
+    "managed_kb": 21908
+  },
+  {
+    "beat": "Phloem",
+    "fps": 1064,
+    "draw_calls": 142,
+    "setpass": 45,
+    "triangles_k": 338,
+    "managed_kb": 22820
+  },
+  {
+    "beat": "Phloem",
+    "fps": 1112,
+    "draw_calls": 575,
+    "setpass": 93,
+    "triangles_k": 3245,
+    "managed_kb": 23232
+  },
+  {
+    "beat": "Phloem",
+    "fps": 708,
+    "draw_calls": 678,
+    "setpass": 109,
+    "triangles_k": 3349,
+    "managed_kb": 23500
+  },
+  {
+    "beat": "Phloem",
+    "fps": 681,
+    "draw_calls": 676,
+    "setpass": 105,
+    "triangles_k": 3284,
+    "managed_kb": 24548
+  },
+  {
+    "beat": "Phloem",
+    "fps": 722,
+    "draw_calls": 591,
+    "setpass": 100,
+    "triangles_k": 3185,
+    "managed_kb": 23792
+  },
+  {
+    "beat": "Phloem",
+    "fps": 679,
+    "draw_calls": 601,
+    "setpass": 100,
+    "triangles_k": 3230,
+    "managed_kb": 24632
+  },
+  {
+    "beat": "Equation",
+    "fps": 763,
+    "draw_calls": 614,
+    "setpass": 97,
+    "triangles_k": 3316,
+    "managed_kb": 24688
+  },
+  {
+    "beat": "Equation",
+    "fps": 714,
+    "draw_calls": 632,
+    "setpass": 97,
+    "triangles_k": 3316,
+    "managed_kb": 20868
+  },
+  {
+    "beat": "Equation",
+    "fps": 787,
+    "draw_calls": 635,
+    "setpass": 94,
+    "triangles_k": 3315,
+    "managed_kb": 21020
+  },
+  {
+    "beat": "Equation",
+    "fps": 794,
+    "draw_calls": 594,
+    "setpass": 96,
+    "triangles_k": 3133,
+    "managed_kb": 21320
+  },
+  {
+    "beat": "FinalPlant",
+    "fps": 732,
+    "draw_calls": 631,
+    "setpass": 94,
+    "triangles_k": 3150,
+    "managed_kb": 21448
+  },
+  {
+    "beat": "FinalPlant",
+    "fps": 808,
+    "draw_calls": 993,
+    "setpass": 125,
+    "triangles_k": 3778,
+    "managed_kb": 21660
+  },
+  {
+    "beat": "FinalPlant",
+    "fps": 633,
+    "draw_calls": 913,
+    "setpass": 134,
+    "triangles_k": 3469,
+    "managed_kb": 21780
+  },
+  {
+    "beat": "FinalPlant",
+    "fps": 638,
+    "draw_calls": 826,
+    "setpass": 120,
+    "triangles_k": 3315,
+    "managed_kb": 22276
+  },
+  {
+    "beat": "FinalPlant",
+    "fps": 771,
+    "draw_calls": 563,
+    "setpass": 99,
+    "triangles_k": 3333,
+    "managed_kb": 22536
+  },
+  {
+    "beat": "FinalPlant",
+    "fps": 830,
+    "draw_calls": 598,
+    "setpass": 91,
+    "triangles_k": 3356,
+    "managed_kb": 22728
+  },
+  {
+    "beat": "FreeExplore",
+    "fps": 634,
+    "draw_calls": 865,
+    "setpass": 122,
+    "triangles_k": 3400,
+    "managed_kb": 22084
+  },
+  {
+    "beat": "FreeExplore",
+    "fps": 638,
+    "draw_calls": 854,
+    "setpass": 124,
+    "triangles_k": 3299,
+    "managed_kb": 22088
+  },
+  {
+    "beat": "FreeExplore",
+    "fps": 933,
+    "draw_calls": 533,
+    "setpass": 84,
+    "triangles_k": 2577,
+    "managed_kb": 22184
+  },
+  {
+    "beat": "FreeExplore",
+    "fps": 555,
+    "draw_calls": 893,
+    "setpass": 123,
+    "triangles_k": 3478,
+    "managed_kb": 23328
+  },
+  {
+    "beat": "FreeExplore",
+    "fps": 621,
+    "draw_calls": 658,
+    "setpass": 110,
+    "triangles_k": 3400,
+    "managed_kb": 23460
+  },
+  {
+    "beat": "FreeExplore",
+    "fps": 717,
+    "draw_calls": 638,
+    "setpass": 108,
+    "triangles_k": 3387,
+    "managed_kb": 23568
+  },
+  {
+    "beat": "FreeExplore",
+    "fps": 523,
+    "draw_calls": 893,
+    "setpass": 124,
+    "triangles_k": 3483,
+    "managed_kb": 23692
+  }
+]

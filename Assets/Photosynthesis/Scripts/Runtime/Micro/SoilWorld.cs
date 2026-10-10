@@ -62,8 +62,8 @@ namespace Photosynthesis
 
         protected override void ApplyMood()
         {
-            K.Mood(Fog, 0.038f, new Color(0.5f, 0.42f, 0.33f), new Color(0.28f, 0.2f, 0.14f), new Color(0.1f, 0.07f, 0.05f));
-            sun.Apply(0.85f, new Color(1f, 0.86f, 0.66f), new Vector3(62f, 25f, 0f));
+            K.Mood(Fog, 0.038f, new Color(0.62f, 0.59f, 0.52f), new Color(0.42f, 0.39f, 0.33f), new Color(0.18f, 0.16f, 0.13f));
+            sun.Apply(1.1f, new Color(0.98f, 0.94f, 0.85f), new Vector3(62f, 25f, 0f));
         }
 
         public override (Vector3 pos, Vector3 look) Pose() => (Origin + CamPos, Origin + CamLook);
@@ -340,16 +340,15 @@ namespace Photosynthesis
         {
             axis = new K.Path(Fx.Smooth(AxisCtrl, 80));
             float L = axis.Length; tiltLook = axis.At(L * 0.86f);
-            var tex = Own(K.Tex(64, 128, RootCellPx, true));
-            var mat = Own(Fx.Mat(MatKind.LitTransparent, Color.white, new Color(0.2f, 0.16f, 0.1f), 0.55f));
-            Fx.SetTexture(mat, tex); mat.SetTexture("_EmissionMap", tex); mat.SetTextureScale("_BaseMap", new Vector2(18f, 1f));
+            var mat = Own(new Material(SurfaceArt.Upgraded("RootEpidermis")));
+            mat.SetTextureScale("_BaseMap", new Vector2(18f, 1f));
             Fx.MeshObj("Root", Own(K.Tube(axis.pts, i => RootR(axis.S(i)), 30, false, i => axis.S(i) / 3f)), mat, transform);
-            steleMat = Own(Fx.Mat(MatKind.LitEmissive, new Color(0.86f, 0.82f, 0.52f), SteleBase, 0.5f));
+            steleMat = Own(new Material(SurfaceArt.Upgraded("VesselWall")));
             var core = axis.pts.GetRange(2, axis.pts.Count - 2);
             Fx.MeshObj("Vascular Core (stele)", Own(K.Tube(core, i => Mathf.Lerp(0.16f, 0.32f, K.Smooth01(axis.S(i + 2) / 8f)), 12)), steleMat, transform);
             axis.Frame(0.3f, out var p, out var t, out _, out _);
             var cap = Fx.Prim(PrimitiveType.Sphere, transform, p - t * 0.15f, new Vector3(1.15f, 1.15f, 1.7f),
-                Own(Fx.Mat(MatKind.LitTransparent, new Color(0.9f, 0.78f, 0.6f, 0.75f), new Color(0.12f, 0.08f, 0.04f), 0.5f)), false, "Root Cap");
+                mat, false, "Root Cap");
             cap.transform.localRotation = Quaternion.LookRotation(t);
 
             // hero root hair: grows toward the camera-left, its tip resting in the film of the hero grain
@@ -425,7 +424,7 @@ namespace Photosynthesis
                 }
                 if (ok) hairs.Add(pts);
             }
-            var mat = Own(Fx.Mat(MatKind.LitTransparent, new Color(0.95f, 0.92f, 0.84f, 0.55f), new Color(0.14f, 0.13f, 0.1f), 0.7f));
+            var mat = Own(new Material(SurfaceArt.Upgraded("RootHair")));
             var tipMesh = K.Sphere(8, 6); var temp = new List<Mesh> { tipMesh }; var parts = new List<CombineInstance>();
             for (int h = 1; h < hairs.Count; h++)
             {
@@ -492,7 +491,7 @@ namespace Photosynthesis
                 Fx.MeshObj("Soil Particles", Own(K.Merge(groups[i], "Soil Particles")), m, transform, true);
             }
             Fx.MeshObj("Water Films", Own(K.Merge(films, "Water Films")),
-                Own(Fx.Mat(MatKind.LitTransparent, new Color(0.5f, 0.78f, 1f, 0.3f), Palette.Water * 0.22f, 0.95f)), transform);
+                Own(new Material(SurfaceArt.Upgraded("ClearWater"))), transform);
 
             // sand: translucent quartz + dark mineral grains in the gaps
             var quartz = new List<CombineInstance>(); var dark = new List<CombineInstance>(); var grain = K.Sphere(8, 6); temp.Add(grain);
@@ -506,7 +505,9 @@ namespace Photosynthesis
                 var part = K.Part(grain, c, Quaternion.Euler(K.Rand(r, 0, 360), K.Rand(r, 0, 360), 0), new Vector3(rad, rad * K.Rand(r, 0.6f, 0.95f), rad * K.Rand(r, 0.8f, 1.2f)));
                 (r.NextDouble() < 0.6 ? quartz : dark).Add(part);
             }
-            Fx.MeshObj("Quartz Grains", Own(K.Merge(quartz, "Quartz")), Own(Fx.Mat(MatKind.Glass, new Color(0.92f, 0.88f, 0.8f, 0.55f), new Color(0.06f, 0.05f, 0.04f))), transform);
+            var quartzMat = Own(Fx.Mat(MatKind.Lit, new Color(0.55f, 0.47f, 0.32f), null, 0.18f));
+            SurfaceArt.Apply(quartzMat, "Soil", false); quartzMat.SetFloat("_Smoothness", .3f);
+            Fx.MeshObj("Quartz Grains", Own(K.Merge(quartz, "Quartz")), quartzMat, transform);
             Fx.MeshObj("Mineral Grains", Own(K.Merge(dark, "Minerals")), Own(Fx.Mat(MatKind.Lit, new Color(0.25f, 0.18f, 0.12f), null, 0.35f)), transform, true);
             foreach (var m in temp) Destroy(m);
 

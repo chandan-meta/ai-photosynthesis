@@ -24,6 +24,8 @@ namespace Photosynthesis.EditorTools
                 {
                     case "sources": ExportSurfaceSources(); break;
                     case "import": ImportSurfaces(); break;
+                    case "biology": ImportBiology(); break;
+                    case "modelaudit": AuditModels(); break;
                     case "build": PhotosynthesisBuild.BuildPlayer(); break;
                     case "release": PhotosynthesisBuild.BuildPlayerRelease(); break;
                     default: throw new ArgumentException("Unknown polish command " + command);
@@ -31,6 +33,83 @@ namespace Photosynthesis.EditorTools
                 File.WriteAllText("Logs/Polish/editor-result.txt", command + " succeeded " + DateTime.UtcNow.ToString("O"));
             }
             catch (Exception e) { Debug.LogException(e); File.WriteAllText("Logs/Polish/editor-result.txt", command + " FAILED " + e); }
+        }
+
+        static void AuditModels()
+        {
+            var lines = new System.Collections.Generic.List<string> { "asset\tpart\tvertices\ttriangles\tuv-count\tclips" };
+            foreach (var path in new[] { "Assets/Photosynthesis/Resources/Models/LeafInside.fbx", "Assets/Photosynthesis/Art/G7/neww/LeafInside.fbx", "Assets/Photosynthesis/Art/G7/neww/chloroplast.glb" })
+            {
+                var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (!model) throw new InvalidOperationException("Model audit cannot load " + path);
+                var clips = AnimationUtility.GetAnimationClips(model).Length;
+                foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    var mesh = filter.sharedMesh;
+                    lines.Add($"{path}\t{filter.name}\t{mesh.vertexCount}\t{mesh.triangles.Length / 3}\t{mesh.uv.Length}\t{clips}");
+                }
+            }
+            File.WriteAllLines("Logs/ReferenceStudy/2026-10-10/unity_model_audit.tsv", lines);
+        }
+
+        [MenuItem("Photosynthesis/Polish/Import biology upgrade")]
+        public static void ImportBiology()
+        {
+            const string textures = "Assets/Photosynthesis/Art/Upgraded/Textures/";
+            const string materials = "Assets/Photosynthesis/Art/Upgraded/Resources/UpgradedMaterials/";
+            Directory.CreateDirectory(materials); AssetDatabase.Refresh();
+            foreach (var path in Directory.GetFiles(textures, "*.png"))
+            {
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path.Replace('\\', '/'));
+                bool normal = path.EndsWith("_Normal.png");
+                importer.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
+                importer.sRGBTexture = path.EndsWith("_Albedo.png"); importer.mipmapEnabled = true;
+                importer.wrapMode = TextureWrapMode.Repeat; importer.anisoLevel = 4; importer.isReadable = false;
+                importer.maxTextureSize = path.Contains("RootEpidermis") ? 2048 : path.Contains("VesselWall") ? 1024 : 512;
+                importer.textureCompression = TextureImporterCompression.CompressedHQ; importer.SaveAndReimport();
+            }
+            Texture2D Tex(string family, string channel) => AssetDatabase.LoadAssetAtPath<Texture2D>(textures + family + "_" + channel + ".png");
+            Material Make(string name, Shader shader)
+            {
+                if (!shader) throw new InvalidOperationException("Missing shader for " + name);
+                var path = materials + name + ".mat";
+                var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (!m) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
+                else m.shader = shader;
+                m.enableInstancing = true; return m;
+            }
+            foreach (var name in new[] { "RootEpidermis", "RootHair", "VesselWall", "AtomC", "AtomO", "AtomH", "Connector" })
+            {
+                bool tissue = name == "RootEpidermis" || name == "RootHair";
+                var m = Make(name, Shader.Find(tissue ? "Photosynthesis/Biological Surface" : "Universal Render Pipeline/Lit"));
+                m.SetTexture("_BaseMap", Tex(name, "Albedo")); m.SetColor("_BaseColor", Color.white);
+                m.SetTexture("_BumpMap", Tex(name, "Normal")); m.SetFloat("_BumpScale", tissue ? .3f : .1f);
+                m.SetTexture("_MetallicGlossMap", Tex(name, "MetallicSmoothness")); m.SetTexture("_OcclusionMap", Tex(name, "AO"));
+                m.SetFloat("_Smoothness", 1); m.renderQueue = name == "RootEpidermis" ? 3000 : 2000;
+                if (tissue)
+                {
+                    m.SetTexture("_ThicknessMap", Tex(name, "Thickness")); m.SetFloat("_Transmission", name == "RootHair" ? .12f : .08f);
+                    m.SetFloat("_SrcBlend", name == "RootEpidermis" ? 5 : 1); m.SetFloat("_DstBlend", name == "RootEpidermis" ? 10 : 0);
+                    m.SetFloat("_ZWrite", name == "RootEpidermis" ? 0 : 1);
+                }
+                else
+                {
+                    m.SetFloat("_Metallic", 0); m.EnableKeyword("_NORMALMAP"); m.EnableKeyword("_METALLICSPECGLOSSMAP"); m.EnableKeyword("_OCCLUSIONMAP");
+                    if (name == "VesselWall") { m.EnableKeyword("_EMISSION"); m.SetColor("_EmissionColor", new Color(.025f, .022f, .012f)); }
+                }
+                EditorUtility.SetDirty(m);
+            }
+            var water = Make("ClearWater", Shader.Find("Photosynthesis/Clear Water"));
+            water.SetTexture("_BumpMap", Tex("WaterFlow", "Normal")); water.SetFloat("_BumpScale", .22f);
+            water.SetColor("_BaseColor", new Color(.08f, .32f, .42f, .08f)); water.renderQueue = 3010; EditorUtility.SetDirty(water);
+            foreach (var shader in new[] { water.shader, SurfaceArt.Upgraded("RootHair").shader })
+            {
+                var messages = ShaderUtil.GetShaderMessages(shader);
+                foreach (var message in messages)
+                    if (message.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error)
+                        throw new InvalidOperationException(shader.name + ": " + message.message);
+            }
+            AssetDatabase.SaveAssets(); Debug.Log("[Biology] Imported 50 maps, 8 materials and 2 URP shaders; existing scene untouched");
         }
 
         [MenuItem("Photosynthesis/Polish/Export surface sources")]

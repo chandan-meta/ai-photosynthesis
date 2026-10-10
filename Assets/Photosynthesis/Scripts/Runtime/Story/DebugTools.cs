@@ -73,6 +73,7 @@ namespace Photosynthesis
             int bi = Array.IndexOf(args, "-bannertest");
             if (bi >= 0 && bi + 1 < args.Length) StartCoroutine(BannerTest(args[bi + 1]));
             if (Array.IndexOf(args, "-sciencecheck") >= 0) CheckMolecules();
+            if (Array.IndexOf(args, "-biologycheck") >= 0) StartCoroutine(CheckBiology());
             if (Array.IndexOf(args, "-diag") >= 0) StartCoroutine(Diag());
             int hi = Array.IndexOf(args, "-hide"), si = Array.IndexOf(args, "-snap");
             if (hi >= 0 && hi + 1 < args.Length) StartCoroutine(Hide(args[hi + 1].Split(',')));
@@ -90,14 +91,47 @@ namespace Photosynthesis
                 foreach (var r in molecule.GetComponentsInChildren<MeshRenderer>(true))
                 {
                     if (r.name != "Atom") continue;
-                    Color color = r.sharedMaterial.GetColor("_BaseColor");
-                    if (color == Palette.Carbon) c++; else if (color == Palette.Hydrogen) h++; else if (color == Palette.OxygenAtom) o++;
+                    var material = r.sharedMaterial;
+                    if (material == SurfaceArt.Upgraded("AtomC")) c++;
+                    else if (material == SurfaceArt.Upgraded("AtomH")) h++;
+                    else if (material == SurfaceArt.Upgraded("AtomO")) o++;
                 }
-                bool correct = c == carbon && h == hydrogen && o == oxygen;
+                int bonds = 0; foreach (var r in molecule.GetComponentsInChildren<MeshRenderer>(true)) if (r.name == "Bond") bonds++;
+                int expectedBonds = kind == Mol.CO2 ? 4 : kind == Mol.Glucose ? 24 : 2;
+                bool correct = c == carbon && h == hydrogen && o == oxygen && bonds == expectedBonds;
+                if (kind == Mol.H2O)
+                {
+                    var atoms = Array.FindAll(molecule.GetComponentsInChildren<MeshRenderer>(true), r => r.name == "Atom");
+                    float angle = Vector3.Angle(atoms[1].transform.localPosition - atoms[0].transform.localPosition, atoms[2].transform.localPosition - atoms[0].transform.localPosition);
+                    correct &= Mathf.Abs(angle - 104.5f) < .01f;
+                    Debug.Log($"[Science] H2O bond angle {angle:0.00} degrees");
+                }
                 if (!correct) errors++;
-                Debug.Log($"[Science] {kind} C:{c} H:{h} O:{o} {(correct ? "PASS" : "FAIL")}");
+                Debug.Log($"[Science] {kind} C:{c} H:{h} O:{o} bond-sticks:{bonds} {(correct ? "PASS" : "FAIL")}");
                 Destroy(molecule);
             }
+        }
+
+        IEnumerator CheckBiology()
+        {
+            while (!Module.I.soil.Built) yield return null;
+            var textures = new System.Collections.Generic.HashSet<Texture>();
+            foreach (var r in Module.I.soil.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                foreach (var m in r.sharedMaterials)
+                {
+                    if (!m || !m.shader.isSupported) { errors++; Debug.LogError("[Biology] Missing/unsupported material " + r.name); continue; }
+                    foreach (var property in m.GetTexturePropertyNames()) { var t = m.GetTexture(property); if (t) textures.Add(t); }
+                }
+                if (r.name != "Root" && r.name != "Root Hairs" && r.name != "Root Hair (hero)" && r.name != "Water Films") continue;
+                var mesh = r.GetComponent<MeshFilter>().sharedMesh; var material = r.sharedMaterial;
+                bool correct = mesh && mesh.uv.Length == mesh.vertexCount && mesh.tangents.Length == mesh.vertexCount && material.GetTexture("_BumpMap");
+                if (r.name != "Water Films") correct &= material.GetTexture("_BaseMap") && material.GetTexture("_OcclusionMap") && material.GetTexture("_MetallicGlossMap");
+                if (!correct) errors++;
+                Debug.Log($"[Biology] {r.name} {material.shader.name} UV/tangent/maps {(correct ? "PASS" : "FAIL")}");
+            }
+            long bytes = 0; foreach (var t in textures) bytes += UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(t);
+            Debug.Log($"[Biology] Soil texture objects={textures.Count}, Unity texture-memory bytes={bytes}; errors={errors}");
         }
 
         IEnumerator BannerTest(string dir)
