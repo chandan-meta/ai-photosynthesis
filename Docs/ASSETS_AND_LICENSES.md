@@ -56,6 +56,10 @@ part is re-materialled with the module's URP templates; the geometry is what is 
 | `Resources/VoiceOvers/{en-GB,hi-IN,mr-IN,as-IN}` | 38 MP3 lines per language for the old VR flow (Inst_*, Desc_*, Quiz*) | — | not used — a different script; could seed localisation later |
 | `Mirza Beig/Particle Systems`, `_Creepy_Cat` weather, `FM_ExhibitionToolPack`, `PicoMobileSDK`, `QWR`, `VRPanorama` | third-party packs | — | not used (licensing unverified, VR/Pico specific) |
 
+### Supplied neww model integration
+
+`Art/G7/neww/LeafInside.fbx` and `chloroplast.glb` are user-supplied sources. `Art/Upgraded/Models` contains extracted native UV atlases and an adapted chloroplast FBX derived by `Tools/PrepareNewwModels.py`; no third-party model was downloaded. `Upgraded/Resources/UpgradedModels` contains prefabs and URP materials referencing these meshes/maps. Original files are preserved. Source ownership/licensing remains the user's supplied-asset responsibility.
+
 ### Verified molecular coordinates
 
 `Tools/Chemistry/BetaDGlucose_64689.sdf` is the public [PubChem beta-D-glucose 3D conformer, CID64689](https://pubchem.ncbi.nlm.nih.gov/compound/64689). The source is retained verbatim; `ExportGlucose.py` exports positions/bonds in Unity coordinates to `Resources/Molecules/GlucoseGeometry.json`. Both staged formation and the final glucose use this graph. Supplied reference pictures guide framing/style and are not game textures.

@@ -1,12 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Photosynthesis
 {
-    /// The hidden world inside the leaf for the Scene 3 prologue: the client's leaf cross-section model (G7 ZIP → Resources/Models/LeafInside)
-    /// re-materialled — translucent cell layers, softly lit chloroplasts inside the cells, xylem / phloem pipes — repeated either side so the
+    /// The hidden world inside the leaf for the Scene 3 prologue: the client's neww leaf cross-section with native UV atlases,
+    /// cell layers and softly lit chloroplasts — repeated either side so the
     /// leaf runs on into green fog, with sun shafts, air motes and a camera glide.
     /// ponytail: a vista, not a lesson set. Story cells and routes stay in LeafTissueWorld; this world only has to look like a living place.
     public class LeafInteriorWorld : MicroWorld
@@ -16,11 +15,11 @@ namespace Photosynthesis
 
         protected override void Build()
         {
-            var prefab = Resources.Load<GameObject>("Models/LeafInside");
+            var prefab = Resources.Load<GameObject>("UpgradedModels/LeafInside");
             MicroKitB.Backdrop(transform, 70f, new Color(0.24f, 0.44f, 0.33f), new Color(0.12f, 0.25f, 0.2f));
-            if (!prefab) { Debug.LogWarning("[Photosynthesis] Resources/Models/LeafInside missing — the prologue interior is empty."); b = new Bounds(Origin, Vector3.one * 20f); ready = true; return; }
+            if (!prefab) throw new System.InvalidOperationException("Integrated neww leaf prefab missing; run Photosynthesis/Polish/Integrate neww models");
             var slab = Fx.Node("Slab", transform).transform;
-            var model = Instantiate(prefab, slab).transform; model.name = "LeafInside";
+            var model = Instantiate(prefab, slab).transform; model.name = "LeafInside (neww)";
             foreach (var a in model.GetComponentsInChildren<Animation>(true)) Destroy(a);
             foreach (var a in model.GetComponentsInChildren<Animator>(true)) Destroy(a);
             var rs = model.GetComponentsInChildren<Renderer>(true);
@@ -33,35 +32,15 @@ namespace Photosynthesis
             model.localScale = Vector3.one * (Length / Mathf.Max(0.01f, Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z))));
             b = All(); model.position += transform.position - b.center; b = All();
 
-            // materials by part name: the file's own textures are flat noise, so the look comes from translucency, emission and the light
-            var epi = Fx.Mat(MatKind.Glass, new Color(0.84f, 1f, 0.76f, 0.18f), new Color(0.04f, 0.07f, 0.02f), 0.96f);   // thin, green-tinted cuticle: not frosted plastic
-            var pal = Fx.Mat(MatKind.LitTransparent, new Color(0.42f, 0.86f, 0.4f, 0.42f), new Color(0.02f, 0.09f, 0.02f), 0.72f);
-            var spongy = Fx.Mat(MatKind.LitTransparent, new Color(0.58f, 0.88f, 0.48f, 0.38f), new Color(0.02f, 0.07f, 0.02f), 0.65f);
-            var sheath = Fx.Mat(MatKind.LitTransparent, new Color(0.84f, 0.9f, 0.5f, 0.4f), new Color(0.05f, 0.06f, 0.01f), 0.6f);
-            var xylem = Fx.Mat(MatKind.LitTransparent, new Color(Palette.Xylem.r, Palette.Xylem.g, Palette.Xylem.b, 0.5f), Palette.Xylem * 0.25f, 0.8f);
-            var phloem = Fx.Mat(MatKind.LitTransparent, new Color(1f, 0.64f, 0.28f, 0.5f), Palette.Phloem * 0.25f, 0.8f);
-            var vein = Fx.Mat(MatKind.LitTransparent, new Color(0.7f, 0.55f, 0.9f, 0.45f), new Color(0.12f, 0.06f, 0.2f), 0.7f);
-            var guard = Fx.Mat(MatKind.LitTransparent, new Color(0.4f, 0.82f, 0.36f, 0.6f), new Color(0.03f, 0.12f, 0.03f), 0.7f);
-            foreach (var m in new[] { epi, pal, spongy, sheath }) SurfaceArt.Apply(m, "Membrane");
-            foreach (var m in new[] { xylem, phloem }) SurfaceArt.Apply(m, "Vascular");
-            SurfaceArt.Apply(guard, "Guard");
-            var water = Fx.Shared(MatKind.LitEmissive, Palette.Water, Palette.Water * 1.6f);
+            // Retain the supplied atlases; semantic prefab names keep cell-host animation bindings explicit.
             var palHosts = new List<Renderer>(); var spongyHosts = new List<Renderer>();
             foreach (var r in rs)
             {
-                string n = r.name.ToLowerInvariant(); Material m = spongy;
-                if (n.Contains("upper_layer") || n.Contains("polysurface")) m = epi;
-                else if (n.Contains("green_brick")) { m = pal; palHosts.Add(r); }
-                else if (n.Contains("box_pipe")) m = xylem;
-                else if (n.Contains("red_pipe")) m = phloem;
-                else if (n.Contains("yellow_rod")) m = sheath;
-                else if (n.Contains("center_purple")) m = vein;
-                else if (n.Contains("stomata")) m = guard;
-                else if (Regex.IsMatch(r.name, @"^(A|B|C|D|AA)_\d")) m = water;
-                else if (n.Contains("loosely_arranged_cell") && !n.Contains("render")) spongyHosts.Add(r);
-                r.sharedMaterials = System.Array.ConvertAll(r.sharedMaterials, _ => m);
+                if (r.name == "ImportedPalisade") palHosts.Add(r);
+                if (r.name == "ImportedSpongy") spongyHosts.Add(r);
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false;
             }
+            if (palHosts.Count == 0 || spongyHosts.Count == 0) throw new System.InvalidOperationException("neww leaf cell hosts missing");
 
             // chloroplasts sit inside the cells: a random point of a palisade (70 %) or spongy cell surface, pushed inward along its normal
             chlMat = Fx.Mat(MatKind.LitEmissive, new Color(0.2f, 0.62f, 0.22f), chlE, 0.6f);

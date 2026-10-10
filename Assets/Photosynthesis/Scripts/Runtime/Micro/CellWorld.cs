@@ -27,7 +27,8 @@ namespace Photosynthesis
         readonly List<GameObject> transient = new List<GameObject>();
         Material skinMat, stackMat, selSkin, selStack, glowO2, trailO2;
         Color skinE, stackE;
-        GameObject selGlow;
+        GameObject selGlow, selectedModel;
+        Material selectedModelGrana;
         int selected = -1; bool driving;
         Vector3 showPos; Quaternion showRot;
         float dim, dimGoal, glow, glowGoal;
@@ -208,10 +209,13 @@ namespace Photosynthesis
 
         void Release()
         {
+            if (selectedModel) Destroy(selectedModel); selectedModel = null;
+            if (selectedModelGrana) Destroy(selectedModelGrana); selectedModelGrana = null;
             if (selected >= 0)
             {
                 var c = chl[selected];
                 c.skin.sharedMaterial = skinMat; c.stacks.sharedMaterial = stackMat;
+                c.skin.enabled = c.stacks.enabled = true;
                 c.t.localScale = Vector3.one * c.scale; PlaceOnBelt(c, Time.time);
             }
             selected = -1; driving = false; selGlow.SetActive(false); selGlow.transform.localScale = Vector3.one * 4f;
@@ -258,6 +262,7 @@ namespace Photosynthesis
             if (selected < 0) return;
             float s = 1f + 2f * pulse + 1.5f;
             Fx.SetEmission(selStack, stackE * s); Fx.SetEmission(selSkin, skinE * (s * 0.7f));
+            if (selectedModelGrana) Fx.SetEmission(selectedModelGrana, stackE * s);
         }
 
         // ================================================================== story API
@@ -290,6 +295,14 @@ namespace Photosynthesis
             if (selected < 0) selected = 0;
             var c = chl[selected];
             c.skin.sharedMaterial = selSkin; c.stacks.sharedMaterial = selStack;
+            // Keep small streaming organelles cheap; the selected/enlarged specimen uses the supplied mesh.
+            var prefab = Resources.Load<GameObject>("UpgradedModels/Chloroplast");
+            if (!prefab) throw new InvalidOperationException("neww chloroplast prefab missing");
+            selectedModel = Instantiate(prefab, c.t); selectedModel.name = "Selected chloroplast (neww)";
+            selectedModel.transform.localScale = Vector3.one * .14f; selectedModel.transform.localRotation = Quaternion.Euler(0, 90, 0);
+            var importedGrana = Array.Find(selectedModel.GetComponentsInChildren<MeshRenderer>(), r => r.name == "ImportedThylakoids");
+            selectedModelGrana = new Material(importedGrana.sharedMaterial); importedGrana.sharedMaterial = selectedModelGrana;
+            c.skin.enabled = c.stacks.enabled = false;
             selGlow.SetActive(true); selGlow.transform.position = c.t.position;
             return c.t;
         }

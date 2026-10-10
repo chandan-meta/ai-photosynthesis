@@ -1,5 +1,7 @@
 # Biological material upgrade — 10 October 2026
 
+Follow-up: the user's subsequent model-replacement request is implemented separately in [MODEL_UPGRADE_REPORT.md](MODEL_UPGRADE_REPORT.md). Its decisions supersede the model retention described in this earlier material-only report.
+
 Project: `D:/AI unity project/AI PHOTOSYNTHESIS`. Working branch: `codex/root-material-upgrade`, based on `8902082`. This report covers the new eight-page Photosynthesis_Reference.pdf and AI_Photosynthesis_Codex_Master_Prompt.md brief, separately from the previous banner/character upgrade.
 
 ## Changes and scope

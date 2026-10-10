@@ -8,15 +8,15 @@ namespace Photosynthesis
 {
     /// Inside one chloroplast: double membrane, grana (thylakoid stacks, chlorophyll-rich), lamellae, stroma.
     /// Hosts the photosynthesis reaction abstraction and glucose / oxygen products.
-    /// Local layout: lens along x (outer half extents E0); the front (−z, camera side) is cut away at z = ZC by Open().
+    /// Supplied neww lens along x; the two upper envelope sections peel away in Open().
     /// Reaction abstraction: light at the thylakoids splits water (O₂ bubbles) and sends golden carriers to a carbon-fixing
     /// cycle wheel in the stroma (Site), which takes in CO₂ and assembles the new sugar ring beside it (GluPos).
     /// ponytail: the cutaway is a pre-split mesh (cap + shell) peeled away, not a shader clip plane; add one if free slicing is needed.
     public class ChloroplastWorld : MicroWorld
     {
         static readonly Vector3 E0 = new Vector3(7.8f, 3.0f, 4.6f), E1 = new Vector3(7.4f, 2.68f, 4.25f);
-        const float ZC = -1.2f, GluSize = 0.75f;
-        static readonly Vector3 Site = new Vector3(1.2f, 0.15f, -2.55f), GluPos = new Vector3(3.1f, 1.05f, -2.85f), StarchPos = new Vector3(-4.6f, -0.7f, 1.6f);
+        const float GluSize = 0.75f;
+        static readonly Vector3 Site = new Vector3(1.2f, 0.15f, -2.55f), GluPos = new Vector3(3.1f, 1.05f, -2.85f);
         static readonly Vector3 LightFrom = new Vector3(-6.5f, 7.5f, -4.5f);
         static readonly Quaternion Facing = Quaternion.Euler(14f, 0f, 0f);   // tilt flat props toward the default camera
 
@@ -27,10 +27,10 @@ namespace Photosynthesis
         Coroutine camMove;
         Transform granaAnchor, stromaAnchor, gluAnchor, capOuter, capInner;
         GameObject rim, energy, glucose, cycle;
-        Material capOuterMat, capInnerMat, rimMat, granaMat, lamMat, beamMat, shaftMat, goldMat, ghostMat, ghostBondMat, unitMat,
+        Material capOuterMat, capInnerMat, rimMat, granaMat, beamMat, shaftMat, goldMat, ghostMat, ghostBondMat, unitMat,
             greenGlow, goldGlow, waterGlow, co2Glow, o2Glow, goldTrail, o2Trail, bubbleMat, vigCellMat, vigWallMat, starchMat,
             bandMat, cycleMat, nodeMat, cycleGlow, outlineMat, fibreMat, co2Trail, waterTrail, feedGlowC, feedGlowW;
-        Color capOuterC, capInnerC, rimC, granaE, lamE;
+        Color capOuterC, capInnerC, rimC, granaE;
         float hl, hlGoal, flash;
         Mesh sphere, starchMesh, outlineMesh, ringMesh;   // ring meshes cached: FormGlucose may run many times
         readonly List<Granum> grana = new List<Granum>();
@@ -46,20 +46,13 @@ namespace Photosynthesis
         // ================================================================== build
         protected override void Build()
         {
-            var rnd = new System.Random(23);
-            float R(float a, float b) => a + (float)rnd.NextDouble() * (b - a);
             var root = transform;
             sphere = MicroKitB.Sphere(8, 12);
 
             // --- materials
-            var outerMat = Fx.Mat(MatKind.LitTransparent, capOuterC = new Color(0.46f, 0.72f, 0.26f, 0.16f), new Color(0.015f, 0.04f, 0.01f), 0.7f);
-            var innerMat = Fx.Mat(MatKind.LitTransparent, capInnerC = new Color(0.62f, 0.82f, 0.42f, 0.11f), new Color(0.015f, 0.045f, 0.01f), 0.66f);
-            capOuterMat = new Material(outerMat); capInnerMat = new Material(innerMat);
             rimC = new Color(0.75f, 1f, 0.7f, 0.85f);
             rimMat = Fx.Mat(MatKind.Glass, rimC, new Color(0.15f, 0.6f, 0.2f), 0.8f);
-            granaE = new Color(0.01f, 0.085f, 0.015f); lamE = new Color(0.01f, 0.06f, 0.012f);
-            granaMat = Fx.Mat(MatKind.LitEmissive, new Color(0.11f, 0.56f, 0.19f), granaE, 0.88f);
-            lamMat = Fx.Mat(MatKind.LitEmissive, new Color(0.22f, 0.64f, 0.28f), lamE, 0.75f);
+            granaE = new Color(0.01f, 0.085f, 0.015f);
             beamMat = Fx.Mat(MatKind.Additive, new Color(2.2f, 1.8f, 0.9f, 0.6f)); Fx.SetTexture(beamMat, MicroKitB.BeamTex);
             shaftMat = Fx.Mat(MatKind.Additive, new Color(1.6f, 1.35f, 0.7f, 0.22f)); Fx.SetTexture(shaftMat, MicroKitB.BeamTex);
             goldMat = Fx.Shared(MatKind.LitEmissive, Palette.Gold, Palette.Gold * 4f);
@@ -88,115 +81,9 @@ namespace Photosynthesis
             outlineMat = Fx.Mat(MatKind.Additive, new Color(2f, 1.5f, 0.6f, 0f));
             fibreMat = Fx.Mat(MatKind.LitEmissive, new Color(0.75f, 1f, 0.65f), new Color(0.2f, 0.45f, 0.15f), 0.6f);
 
-            // --- double membrane (outer + inner envelope), each an ellipsoid split exactly at the cut plane z = ZC:
-            //     back shell (double-sided: the open bowl from the front, the whole lens from behind) + front cap peeled by Open().
-            //     Back shells render first so every stroma content draws over the envelope interior (transparent sort fix).
-            float pc0 = Mathf.Acos(ZC / E0.z), pc1 = Mathf.Acos(ZC / E1.z);
-            outerMat.renderQueue = 2985; innerMat.renderQueue = 2990;
-            Fx.MeshObj("OuterMembrane", MicroKitB.EllipsoidZone(E0, 0f, pc0, true), outerMat, root);
-            Fx.MeshObj("InnerMembrane", MicroKitB.EllipsoidZone(E1, 0f, pc1, true), innerMat, root);
-            capOuter = Fx.MeshObj("OuterCap", MicroKitB.EllipsoidZone(E0, pc0, Mathf.PI, false, 20), capOuterMat, root).transform;
-            capInner = Fx.MeshObj("InnerCap", MicroKitB.EllipsoidZone(E1, pc1, Mathf.PI, false, 20), capInnerMat, root).transform;
-            rim = Fx.Node("CutRim", root).gameObject;
-            float k0 = Mathf.Sin(pc0), k1 = Mathf.Sin(pc1);
-            List<Vector3> Ellipse(Vector3 e, float k)
-            {
-                var l = new List<Vector3>(72);
-                for (int i = 0; i < 72; i++) { float a = i * Mathf.PI * 2f / 72f; l.Add(new Vector3(Mathf.Cos(a) * e.x * k, Mathf.Sin(a) * e.y * k, ZC)); }
-                return l;
-            }
-            List<Vector3> eo = Ellipse(E0, k0), ei = Ellipse(E1, k1);
-            Fx.MeshObj("Outer", MicroKitB.Loop(eo, 0.05f, 6), rimMat, rim.transform);
-            Fx.MeshObj("Inner", MicroKitB.Loop(ei, 0.04f, 6), rimMat, rim.transform);
-            var band = new Mesh { name = "Band" }; var bv = new Vector3[144]; var bn = new Vector3[144]; var bt = new int[72 * 6];
-            for (int i = 0; i < 72; i++)
-            {
-                bv[i] = eo[i]; bv[72 + i] = ei[i]; bn[i] = bn[72 + i] = Vector3.back;
-                int j = (i + 1) % 72;
-                bt[i * 6] = i; bt[i * 6 + 1] = 72 + i; bt[i * 6 + 2] = j; bt[i * 6 + 3] = 72 + i; bt[i * 6 + 4] = 72 + j; bt[i * 6 + 5] = j;
-            }
-            band.vertices = bv; band.normals = bn; band.triangles = bt; band.RecalculateBounds();
-            Fx.MeshObj("IntermembraneSpace", band, bandMat, rim.transform);
-            rim.SetActive(false);
-
-            // --- grana: stacks of glossy thylakoid discs, perpendicular to the lens plane
-            float Sq(float x) => x * x;
-            for (int tries = 0; tries < 900 && grana.Count < 16; tries++)
-            {
-                var c = new Vector3(R(-6.2f, 6.2f), R(-0.3f, 0.3f), R(-3.3f, 3.3f));
-                int n = rnd.Next(6, 11); float r = R(0.58f, 0.74f), hh = n * 0.065f;
-                if (Sq((Mathf.Abs(c.x) + r + 0.15f) / E1.x) + Sq((Mathf.Abs(c.y) + hh + 0.2f) / E1.y) + Sq((Mathf.Abs(c.z) + r + 0.15f) / E1.z) > 1f) continue;
-                if (Vector3.Distance(c, Site) < 2.6f || Vector3.Distance(c, GluPos) < 2.1f || Vector3.Distance(c, StarchPos) < 1.9f) continue;
-                bool ok = true;
-                foreach (var g in grana) if (new Vector2(c.x - g.c.x, c.z - g.c.z).magnitude < 1.85f) { ok = false; break; }
-                if (ok) grana.Add(new Granum { c = c, r = r, hh = hh });
-            }
-            var disc = MicroKitB.Super(new Vector3(1f, 0.052f, 1f), 2, 5, 6, 22);
-            var discs = new MicroKitB.Batch();
-            float best = float.MaxValue; granaAnchor = Fx.Node("GranaAnchor", root).transform;
-            foreach (var g in grana)
-            {
-                var tilt = Quaternion.Euler(R(-6, 6), R(0, 360), R(-6, 6));
-                int n = Mathf.RoundToInt(g.hh / 0.065f);
-                for (int s = 0; s < n; s++)
-                    discs.Add(disc, g.c + tilt * new Vector3(0, -g.hh + 0.065f + s * 0.13f, 0), tilt, new Vector3(g.r * R(0.96f, 1.04f), 1f, g.r * R(0.96f, 1.04f)));
-                g.glow = MicroKitB.Glow(root, g.c, 2.6f, greenGlow).transform; g.glow.gameObject.SetActive(false);
-                float d = Vector3.Distance(g.c, new Vector3(-1.5f, 0.5f, -1.6f));
-                if (d < best) { best = d; granaAnchor.localPosition = g.c + Vector3.up * g.hh; }
-            }
-            discs.Make("Thylakoids", root, granaMat);
-
-            // --- lamellae: stroma thylakoids linking each granum to its nearest neighbours
-            var lam = new MicroKitB.Batch(); var linked = new HashSet<int>();
-            for (int i = 0; i < grana.Count; i++)
-            {
-                var order = new List<int>();
-                for (int j = 0; j < grana.Count; j++) if (j != i) order.Add(j);
-                order.Sort((x, y) => Vector3.Distance(grana[i].c, grana[x].c).CompareTo(Vector3.Distance(grana[i].c, grana[y].c)));
-                for (int q = 0; q < Mathf.Min(2, order.Count); q++)
-                {
-                    int j = order[q], key = Mathf.Min(i, j) * 100 + Mathf.Max(i, j);
-                    if (!linked.Add(key)) continue;
-                    Granum a = grana[i], b = grana[j];
-                    var dir = new Vector3(b.c.x - a.c.x, 0, b.c.z - a.c.z).normalized; var side = Vector3.Cross(dir, Vector3.up);
-                    foreach (float f in new[] { 0.3f, 0.72f })
-                    {
-                        var A = a.c + dir * a.r * 0.85f + Vector3.up * (-a.hh + 2f * a.hh * f);
-                        var B = b.c - dir * b.r * 0.85f + Vector3.up * (-b.hh + 2f * b.hh * f);
-                        var M = (A + B) * 0.5f + Vector3.up * R(-0.18f, 0.18f) + side * R(-0.35f, 0.35f);
-                        var path = Fx.Smooth(new[] { A, M, B }, 9);
-                        lamellae.Add(path);
-                        lam.Add(Fx.Tube(path, 0.045f, 0.045f, 6), Vector3.zero, Quaternion.identity, Vector3.one);
-                    }
-                }
-            }
-            lam.Make("Lamellae", root, lamMat);
-
-            // --- stroma contents: ribosomes, plastoglobuli, cpDNA, starch grain, drifting fluid particles
-            var ribo = new MicroKitB.Batch(); var globules = new MicroKitB.Batch();
-            for (int i = 0, made = 0; i < 2000 && made < 190; i++)
-            {
-                var p = Vector3.Scale(new Vector3(R(-1, 1), R(-1, 1), R(-1, 1)), E1 * 0.88f);
-                if (Sq(p.x / E1.x) + Sq(p.y / E1.y) + Sq(p.z / E1.z) > 0.78f) continue;
-                if (Vector3.Distance(p, Site) < 2.5f || Vector3.Distance(p, GluPos) < 2.5f) continue;   // no pepper on the cycle wheel or the hero sugar
-                made++;
-                if (made % 19 == 0) globules.Add(sphere, p, Quaternion.identity, Vector3.one * R(0.18f, 0.28f));
-                else ribo.Add(sphere, p, Quaternion.identity, Vector3.one * R(0.06f, 0.09f));
-            }
-            ribo.Make("Ribosomes", root, Fx.Mat(MatKind.LitEmissive, new Color(0.45f, 0.62f, 0.4f), new Color(0.04f, 0.08f, 0.04f), 0.4f));
-            globules.Make("Plastoglobuli", root, Fx.Mat(MatKind.Lit, new Color(0.78f, 0.7f, 0.4f), null, 0.7f));   // no glow: gold here means light or glucose
-            var dna = new List<Vector3>();
-            for (int i = 0; i < 26; i++)
-            {
-                float a = i * Mathf.PI * 2f / 26f;
-                dna.Add(new Vector3(-2.4f + Mathf.Cos(a) * 0.95f + R(-0.2f, 0.2f), -0.9f + Mathf.Sin(2 * a) * 0.25f + R(-0.1f, 0.1f), 2.3f + Mathf.Sin(a) * 0.7f + R(-0.2f, 0.2f)));
-            }
-            dna.Add(dna[0]);
-            Fx.MeshObj("cpDNA", Fx.Tube(Fx.Smooth(dna, 90), 0.026f, 0.026f, 5), Fx.Mat(MatKind.LitEmissive, new Color(0.6f, 0.85f, 1f), new Color(0.15f, 0.3f, 0.45f), 0.6f), root);
+            BuildImported(root);
             starchMesh = MicroKitB.Super(new Vector3(0.95f, 0.62f, 0.75f), 2, 2, 14, 20, false, d => MicroKitB.Noise(d * 2.2f) * 0.05f);
-            var starch = Fx.MeshObj("StarchGrain", starchMesh, starchMat, root);
-            starch.transform.localPosition = StarchPos;
-            Fx.MeshObj("StarchShell", MicroKitB.Super(new Vector3(1.08f, 0.72f, 0.86f), 2, 2, 14, 20), Fx.Mat(MatKind.LitTransparent, new Color(1f, 0.97f, 0.88f, 0.22f), new Color(0.06f, 0.06f, 0.05f), 0.9f), starch.transform);
+
             var fluid = Fx.Particles("StromaFluid", root, new Fx.PCfg
             {
                 color = new Color(0.8f, 1f, 0.82f, 0.35f), color2 = new Color(1f, 1f, 0.8f, 0.2f), size = 0.05f, life = 7f, speed = 0.05f,
@@ -208,6 +95,45 @@ namespace Photosynthesis
             gluAnchor = Fx.Node("GlucoseSite", root, GluPos).transform;
             MicroKitB.Backdrop(root, 60f, new Color(0.24f, 0.44f, 0.34f), new Color(0.13f, 0.26f, 0.21f));   // sRGB: see Mood
             ready = true;
+        }
+
+        void BuildImported(Transform root)
+        {
+            var prefab = Resources.Load<GameObject>("UpgradedModels/Chloroplast");
+            if (!prefab) throw new InvalidOperationException("Integrated neww chloroplast missing; run Photosynthesis/Polish/Integrate neww models");
+            var model = Instantiate(prefab, root).transform; model.name = "Chloroplast (neww)";
+            var renderers = model.GetComponentsInChildren<MeshRenderer>(true);
+            MeshRenderer Part(string name) => Array.Find(renderers, r => r.name == "Imported" + name) ?? throw new InvalidOperationException("neww part missing: " + name);
+            Material Bind(string name) { var r = Part(name); var m = new Material(r.sharedMaterial); r.sharedMaterial = m; return m; }
+            capOuter = Fx.Node("OpeningOuterCap", root).transform; capInner = Fx.Node("OpeningInnerCap", root).transform;
+            Part("OuterCap").transform.SetParent(capOuter, true); Part("InnerCap").transform.SetParent(capInner, true);
+            capOuterMat = Bind("OuterCap"); capInnerMat = Bind("InnerCap");
+            capOuterC = capOuterMat.GetColor("_BaseColor"); capInnerC = capInnerMat.GetColor("_BaseColor");
+            granaMat = Bind("Thylakoids"); granaMat.EnableKeyword("_EMISSION");
+            granaAnchor = Fx.Node("GranaAnchor", root).transform;
+            foreach (var anchor in model.GetComponentsInChildren<Transform>())
+            {
+                if (!anchor.name.StartsWith("GranumAnchor_", StringComparison.Ordinal)) continue;
+                var g = new Granum { c = root.InverseTransformPoint(anchor.position), r = Mathf.Abs(anchor.lossyScale.x), hh = Mathf.Abs(anchor.lossyScale.y) };
+                g.glow = MicroKitB.Glow(root, g.c, 2.6f, greenGlow).transform; g.glow.gameObject.SetActive(false); grana.Add(g);
+            }
+            if (grana.Count < 4) throw new InvalidOperationException("neww chloroplast reaction anchors missing");
+            var hero = FrontGrana(1)[0]; granaAnchor.localPosition = hero.c + Vector3.up * hero.hh;
+            for (int i = 0; i < grana.Count; i++)
+            {
+                var a = grana[i]; Granum nearest = null; float distance = float.MaxValue;
+                foreach (var b in grana)
+                {
+                    float d = Vector3.Distance(a.c, b.c);
+                    if (a != b && d < distance) { distance = d; nearest = b; }
+                }
+                if (nearest != null) lamellae.Add(Fx.Smooth(new[] { a.c, (a.c + nearest.c) * .5f + Vector3.down * .15f, nearest.c }, 9));
+            }
+            rim = Fx.Node("CutRim", root).gameObject;
+            var lip = new List<Vector3>();
+            for (int i = 0; i < 72; i++) { float angle = i * Mathf.PI * 2 / 72; lip.Add(new Vector3(Mathf.Cos(angle) * 7.5f, 0, Mathf.Sin(angle) * 4.15f)); }
+            Fx.MeshObj("Envelope cut edge", MicroKitB.Loop(lip, .04f, 6), rimMat, rim.transform); rim.SetActive(false);
+            Debug.Log($"[Models] neww chloroplast active: {renderers.Length} source mesh groups; {grana.Count} bound grana; animated double envelope");
         }
 
         protected override void ApplyMood() =>
@@ -260,7 +186,6 @@ namespace Photosynthesis
             float pulse = on * (0.65f + 0.35f * Mathf.Sin(t * 2.6f));
             var gold = new Color(0.32f, 0.21f, 0.04f) * flash;
             Fx.SetEmission(granaMat, granaE + new Color(0.035f, 0.25f, 0.055f) * pulse + gold);
-            Fx.SetEmission(lamMat, lamE + new Color(0.025f, 0.19f, 0.04f) * pulse + gold * 0.6f);
             foreach (var g in grana)
             {
                 bool vis = on > 0.01f;

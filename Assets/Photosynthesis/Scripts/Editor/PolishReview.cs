@@ -13,6 +13,8 @@ namespace Photosynthesis.EditorTools
     {
         const string Maps = "Assets/Photosynthesis/Art/Generated/Resources/SurfaceMaps/";
         const string Inbox = "Logs/Polish/editor-command.txt";
+        [Serializable] class ModelManifest { public ModelAnchor[] anchors; }
+        [Serializable] class ModelAnchor { public string name; public float[] center; public float radius, half_height; }
         static PolishReview() { EditorApplication.update += Poll; }
         static void Poll()
         {
@@ -26,6 +28,7 @@ namespace Photosynthesis.EditorTools
                     case "import": ImportSurfaces(); break;
                     case "biology": ImportBiology(); break;
                     case "modelaudit": AuditModels(); break;
+                    case "models": ImportModels(); break;
                     case "build": PhotosynthesisBuild.BuildPlayer(); break;
                     case "release": PhotosynthesisBuild.BuildPlayerRelease(); break;
                     default: throw new ArgumentException("Unknown polish command " + command);
@@ -50,6 +53,94 @@ namespace Photosynthesis.EditorTools
                 }
             }
             File.WriteAllLines("Logs/ReferenceStudy/2026-10-10/unity_model_audit.tsv", lines);
+        }
+
+        [MenuItem("Photosynthesis/Polish/Integrate neww models")]
+        public static void ImportModels()
+        {
+            const string art = "Assets/Photosynthesis/Art/Upgraded/Models/";
+            const string output = "Assets/Photosynthesis/Art/Upgraded/Resources/UpgradedModels/";
+            Directory.CreateDirectory(output); AssetDatabase.Refresh();
+            foreach (var path in Directory.GetFiles(art + "Textures", "*.png"))
+            {
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path.Replace('\\', '/'));
+                bool normal = path.Contains("_Normal") || path.Contains("Chloroplast_Image_1");
+                importer.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
+                importer.sRGBTexture = path.Contains("BaseColor") || path.Contains("Chloroplast_Image_0");
+                importer.alphaSource = TextureImporterAlphaSource.FromInput; importer.alphaIsTransparency = false;
+                importer.maxTextureSize = 2048; importer.mipmapEnabled = true; importer.anisoLevel = 4;
+                importer.isReadable = false; importer.textureCompression = TextureImporterCompression.CompressedHQ; importer.SaveAndReimport();
+            }
+            foreach (var path in new[] { "Assets/Photosynthesis/Art/G7/neww/LeafInside.fbx", art + "ChloroplastAnimatedParts.fbx" })
+            {
+                var importer = (ModelImporter)AssetImporter.GetAtPath(path);
+                importer.isReadable = true; importer.importAnimation = false; importer.importCameras = false; importer.importLights = false;
+                importer.importTangents = ModelImporterTangents.CalculateMikk; importer.SaveAndReimport();
+            }
+            Texture2D Tex(string pattern)
+            {
+                var files = Directory.GetFiles(art + "Textures", pattern);
+                if (files.Length != 1) throw new InvalidOperationException("Expected one native map " + pattern);
+                return AssetDatabase.LoadAssetAtPath<Texture2D>(files[0].Replace('\\', '/'));
+            }
+            Material Native(string name, float alpha, Texture2D albedo, Texture2D normal, Texture2D mask = null)
+            {
+                string path = output + name + ".mat";
+                var template = Fx.Mat(alpha < 1 ? MatKind.LitTransparent : MatKind.LitEmissive, new Color(1, 1, 1, alpha), Color.black, .65f, 0);
+                template.SetTexture("_BaseMap", albedo); template.SetTexture("_BumpMap", normal); template.SetFloat("_BumpScale", .35f);
+                if (mask) template.SetTexture("_MetallicGlossMap", mask);
+                template.SetFloat("_Cull", 0); template.enableInstancing = true;
+                var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (material) { EditorUtility.CopySerialized(template, material); UnityEngine.Object.DestroyImmediate(template); }
+                else { material = template; AssetDatabase.CreateAsset(material, path); }
+                EditorUtility.SetDirty(material); return material;
+            }
+            GameObject Copy(string path, string name)
+            {
+                var source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (!source) throw new InvalidOperationException("Cannot load supplied model " + path);
+                var go = UnityEngine.Object.Instantiate(source); go.name = name;
+                foreach (var animator in go.GetComponentsInChildren<Animator>(true)) UnityEngine.Object.DestroyImmediate(animator);
+                foreach (var light in go.GetComponentsInChildren<Light>(true)) UnityEngine.Object.DestroyImmediate(light.gameObject);
+                return go;
+            }
+            var leaf = Copy("Assets/Photosynthesis/Art/G7/neww/LeafInside.fbx", "LeafInside neww");
+            var atlas = new[] { 9, 9, 11, 2, 4, 4, 5, 5, 7, 1, 9 };
+            foreach (var renderer in leaf.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                int part = int.Parse(renderer.name.Substring("_gltfNode_".Length));
+                int id = atlas[part]; float alpha = part == 4 ? .62f : part == 9 ? .75f : 1f;
+                var material = Native("LeafPart" + part, alpha, Tex($"Leaf_*_RGB_{id}_BaseColor.png"), Tex($"Leaf_*_N_{id}_Normal.png"), Tex($"Leaf_*_R_{id}_MetallicSmoothness.png"));
+                renderer.sharedMaterials = Array.ConvertAll(renderer.sharedMaterials, _ => material);
+                renderer.name = part == 4 ? "ImportedPalisade" : part == 9 ? "ImportedSpongy" : "ImportedLeafPart" + part;
+            }
+            PrefabUtility.SaveAsPrefabAsset(leaf, output + "LeafInside.prefab"); UnityEngine.Object.DestroyImmediate(leaf);
+            var chloroplast = Copy(art + "ChloroplastAnimatedParts.fbx", "Chloroplast neww");
+            var manifest = JsonUtility.FromJson<ModelManifest>(File.ReadAllText(art + "model_manifest.json"));
+            foreach (var anchor in manifest.anchors)
+            {
+                var target = Array.Find(chloroplast.GetComponentsInChildren<Transform>(), t => t.name == anchor.name);
+                if (!target) throw new InvalidOperationException("Missing imported stack " + anchor.name);
+                // Keep the FBX importer's handedness conversion; only empty-object scale needs correction.
+                target.localRotation = Quaternion.identity; target.localScale = new Vector3(anchor.radius, anchor.half_height, anchor.radius);
+            }
+            int triangles = 0;
+            Bounds bounds = default; bool hasBounds = false;
+            foreach (var renderer in chloroplast.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                bool envelope = renderer.name.Contains("Membrane") || renderer.name.Contains("Cap");
+                var material = Native("Chloroplast" + renderer.name, envelope ? .55f : 1, Tex("Chloroplast_Image_0.png"), Tex("Chloroplast_Image_1.png"));
+                renderer.sharedMaterials = Array.ConvertAll(renderer.sharedMaterials, _ => material);
+                renderer.name = "Imported" + renderer.name;
+                var mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
+                if (mesh.uv.Length != mesh.vertexCount || mesh.tangents.Length != mesh.vertexCount) throw new InvalidOperationException("Missing UV/tangents " + renderer.name);
+                triangles += mesh.triangles.Length / 3;
+                if (!hasBounds) { bounds = renderer.bounds; hasBounds = true; } else bounds.Encapsulate(renderer.bounds);
+            }
+            if (Mathf.Abs(bounds.size.x - 15.6f) > .2f || Mathf.Abs(bounds.size.y - 6f) > .2f || Mathf.Abs(bounds.size.z - 9.2f) > .2f)
+                throw new InvalidOperationException("Unexpected neww chloroplast scale/orientation " + bounds);
+            PrefabUtility.SaveAsPrefabAsset(chloroplast, output + "Chloroplast.prefab"); UnityEngine.Object.DestroyImmediate(chloroplast);
+            AssetDatabase.SaveAssets(); Debug.Log($"[Models] Supplied leaf integrated; supplied chloroplast split and bound ({triangles} triangles); original sources preserved");
         }
 
         [MenuItem("Photosynthesis/Polish/Import biology upgrade")]

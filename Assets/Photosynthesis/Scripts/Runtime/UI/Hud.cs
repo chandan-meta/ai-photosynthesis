@@ -97,7 +97,29 @@ namespace Photosynthesis
             return ps;
         }
 
-        void Start() { if (Module.I) Module.I.BeatChanged += OnBeat; }
+        void Start()
+        {
+            if (Module.I) Module.I.BeatChanged += OnBeat;
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            Application.wantsToQuit += PrepareQuit;
+#endif
+        }
+
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+        bool quitPending, quitReady;
+        bool PrepareQuit()
+        {
+            if (quitReady) return true;
+            if (!quitPending) { quitPending = true; OnApplicationQuit(); StartCoroutine(FinishQuit()); }
+            return false;
+        }
+        IEnumerator FinishQuit()
+        {
+            // Let Windows process provider-removal events before Unity destroys its native host window.
+            yield return new WaitForSecondsRealtime(.1f);
+            quitReady = true; Application.Quit();
+        }
+#endif
 
         void OnApplicationQuit()
         {
@@ -111,6 +133,9 @@ namespace Photosynthesis
 
         void OnDestroy()
         {
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            Application.wantsToQuit -= PrepareQuit;
+#endif
             if (Module.I) Module.I.BeatChanged -= OnBeat;
             if (sysStack.Count > 0) { Time.timeScale = savedTimeScale; AudioListener.pause = false; }
             if (doc && doc.panelSettings) Destroy(doc.panelSettings);    // the per-run copy made in Awake

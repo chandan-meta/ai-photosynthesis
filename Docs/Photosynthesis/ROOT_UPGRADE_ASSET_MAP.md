@@ -1,5 +1,7 @@
 # Clue 02 material upgrade — working map, 10 October 2026
 
+The subsequent explicit neww model-replacement request is implemented in MODEL_UPGRADE_REPORT.md; its active replacements supersede this earlier material-pass model-retention table.
+
 Branch: `codex/root-material-upgrade`, starting at `8902082`. Source scene, gameplay and character are retained. The complete new master prompt and eight-page Photosynthesis_Reference.pdf were reviewed before editing. Pages 2 and 7 lock the original composition; pages 3–4 provide material targets rather than texture pixels or reliable chemical diagrams.
 
 | Scene / asset | Decision | Source / UV | Maps / material | Animation dependency |

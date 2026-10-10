@@ -1,0 +1,407 @@
+{
+  "source": "Assets/Photosynthesis/Art/G7/neww/chloroplast.glb",
+  "images": {
+    "leaf": [
+      {
+        "original": "01ab3661aa9d49b28f02fb0df15c4d76_RGB_9_BaseColor.png",
+        "file": "Leaf_01ab3661aa9d49b28f02fb0df15c4d76_RGB_9_BaseColor.png"
+      },
+      {
+        "original": "05d59bd0f3da4b588f3cd7642ece3e0e_R_11_Roughness.png",
+        "file": "Leaf_05d59bd0f3da4b588f3cd7642ece3e0e_R_11_Roughness.png"
+      },
+      {
+        "original": "0b747fcbe1fb45f4b4cb3efda686da19_R_4_Roughness.png",
+        "file": "Leaf_0b747fcbe1fb45f4b4cb3efda686da19_R_4_Roughness.png"
+      },
+      {
+        "original": "1daa708b258342a397d7a9870a53aec9_N_2_Normal.png",
+        "file": "Leaf_1daa708b258342a397d7a9870a53aec9_N_2_Normal.png"
+      },
+      {
+        "original": "26efdf7bb765420593118a781a2f59b4_R_9_Roughness.png",
+        "file": "Leaf_26efdf7bb765420593118a781a2f59b4_R_9_Roughness.png"
+      },
+      {
+        "original": "2988f742655d470f99433461ed3e35a8_RGB_2_BaseColor.png",
+        "file": "Leaf_2988f742655d470f99433461ed3e35a8_RGB_2_BaseColor.png"
+      },
+      {
+        "original": "2b396a1f96364bd69de27fe64afdec53_R_4_Metallic.png",
+        "file": "Leaf_2b396a1f96364bd69de27fe64afdec53_R_4_Metallic.png"
+      },
+      {
+        "original": "2df5574e8fde455e8b6e3ef350ada423_R_7_Metallic.png",
+        "file": "Leaf_2df5574e8fde455e8b6e3ef350ada423_R_7_Metallic.png"
+      },
+      {
+        "original": "3bdbded96ee847469c9614ce696d7c17_N_9_Normal.png",
+        "file": "Leaf_3bdbded96ee847469c9614ce696d7c17_N_9_Normal.png"
+      },
+      {
+        "original": "42963942615445e9b2fbd58f70095ffa_R_7_Roughness.png",
+        "file": "Leaf_42963942615445e9b2fbd58f70095ffa_R_7_Roughness.png"
+      },
+      {
+        "original": "439afddbc14047ba90bb8290da827e23_R_1_Metallic.png",
+        "file": "Leaf_439afddbc14047ba90bb8290da827e23_R_1_Metallic.png"
+      },
+      {
+        "original": "675ea2285dc541bca490851cc59311ed_N_7_Normal.png",
+        "file": "Leaf_675ea2285dc541bca490851cc59311ed_N_7_Normal.png"
+      },
+      {
+        "original": "6e687ae5e7924dff997d1688dfa2d5e6_R_9_Metallic.png",
+        "file": "Leaf_6e687ae5e7924dff997d1688dfa2d5e6_R_9_Metallic.png"
+      },
+      {
+        "original": "73466c4cfe174a70880033eebda06829_RGB_1_BaseColor.png",
+        "file": "Leaf_73466c4cfe174a70880033eebda06829_RGB_1_BaseColor.png"
+      },
+      {
+        "original": "7e8ce297bcf9457181419f8bca7a55b8_R_5_Roughness.png",
+        "file": "Leaf_7e8ce297bcf9457181419f8bca7a55b8_R_5_Roughness.png"
+      },
+      {
+        "original": "83734340e6d94f578a9455f4e6749c10_N_5_Normal.png",
+        "file": "Leaf_83734340e6d94f578a9455f4e6749c10_N_5_Normal.png"
+      },
+      {
+        "original": "86a6bcac4137441683da7ce557e8b6a9_R_11_Metallic.png",
+        "file": "Leaf_86a6bcac4137441683da7ce557e8b6a9_R_11_Metallic.png"
+      },
+      {
+        "original": "8ae1e9e0d67a4298bb3e93a53708786b_RGB_4_BaseColor.png",
+        "file": "Leaf_8ae1e9e0d67a4298bb3e93a53708786b_RGB_4_BaseColor.png"
+      },
+      {
+        "original": "8f0d3bce432940e0acd5d347fe3b9e46_R_5_Metallic.png",
+        "file": "Leaf_8f0d3bce432940e0acd5d347fe3b9e46_R_5_Metallic.png"
+      },
+      {
+        "original": "9839e29ca30c4c85810450fb96a0f91f_N_11_Normal.png",
+        "file": "Leaf_9839e29ca30c4c85810450fb96a0f91f_N_11_Normal.png"
+      },
+      {
+        "original": "b81b27ae59694c0eb5f9fed297c768bc_R_1_Roughness.png",
+        "file": "Leaf_b81b27ae59694c0eb5f9fed297c768bc_R_1_Roughness.png"
+      },
+      {
+        "original": "c021f0f64d7043939e0cc6400a92e85d_RGB_5_BaseColor.png",
+        "file": "Leaf_c021f0f64d7043939e0cc6400a92e85d_RGB_5_BaseColor.png"
+      },
+      {
+        "original": "c3530cf8d4584108b90a09e750d08c85_R_2_Roughness.png",
+        "file": "Leaf_c3530cf8d4584108b90a09e750d08c85_R_2_Roughness.png"
+      },
+      {
+        "original": "cc8862ce4459467da530dbdd8ae7234c_RGB_7_BaseColor.png",
+        "file": "Leaf_cc8862ce4459467da530dbdd8ae7234c_RGB_7_BaseColor.png"
+      },
+      {
+        "original": "cd4ae5dc6b1c4b3eaa2345f8d6169789_N_1_Normal.png",
+        "file": "Leaf_cd4ae5dc6b1c4b3eaa2345f8d6169789_N_1_Normal.png"
+      },
+      {
+        "original": "cd9568eb9dbc424cbc924f1dfbc3aba2_RGB_11_BaseColor.png",
+        "file": "Leaf_cd9568eb9dbc424cbc924f1dfbc3aba2_RGB_11_BaseColor.png"
+      },
+      {
+        "original": "d4eeb15029c54fcbad46198af6f297a8_R_2_Metallic.png",
+        "file": "Leaf_d4eeb15029c54fcbad46198af6f297a8_R_2_Metallic.png"
+      },
+      {
+        "original": "f6fdb90901494cab960c1ed95b653f8e_N_4_Normal.png",
+        "file": "Leaf_f6fdb90901494cab960c1ed95b653f8e_N_4_Normal.png"
+      }
+    ],
+    "chloroplast": [
+      {
+        "original": "Image_0",
+        "file": "Chloroplast_Image_0.png"
+      },
+      {
+        "original": "Image_1",
+        "file": "Chloroplast_Image_1.png"
+      }
+    ]
+  },
+  "leaf_bindings": {
+    "_gltfNode_0": "01ab3661aa9d49b28f02fb0df15c4d76_RGB_9_BaseColor.png",
+    "_gltfNode_1": "01ab3661aa9d49b28f02fb0df15c4d76_RGB_9_BaseColor.png",
+    "_gltfNode_10": "01ab3661aa9d49b28f02fb0df15c4d76_RGB_9_BaseColor.png",
+    "_gltfNode_2": "cd9568eb9dbc424cbc924f1dfbc3aba2_RGB_11_BaseColor.png",
+    "_gltfNode_3": "2988f742655d470f99433461ed3e35a8_RGB_2_BaseColor.png",
+    "_gltfNode_4": "8ae1e9e0d67a4298bb3e93a53708786b_RGB_4_BaseColor.png",
+    "_gltfNode_5": "8ae1e9e0d67a4298bb3e93a53708786b_RGB_4_BaseColor.png",
+    "_gltfNode_6": "c021f0f64d7043939e0cc6400a92e85d_RGB_5_BaseColor.png",
+    "_gltfNode_7": "c021f0f64d7043939e0cc6400a92e85d_RGB_5_BaseColor.png",
+    "_gltfNode_8": "cc8862ce4459467da530dbdd8ae7234c_RGB_7_BaseColor.png",
+    "_gltfNode_9": "73466c4cfe174a70880033eebda06829_RGB_1_BaseColor.png"
+  },
+  "anchors": [
+    {
+      "name": "GranumAnchor_00",
+      "center": [
+        4.353525638580322,
+        -0.08363474160432816,
+        0.4231749176979065
+      ],
+      "radius": 0.5015517310729622,
+      "half_height": 1.4038012448117136,
+      "discs": 11
+    },
+    {
+      "name": "GranumAnchor_01",
+      "center": [
+        -0.4699820578098297,
+        -0.009495911188423634,
+        -0.10642977803945541
+      ],
+      "radius": 0.5015431048867106,
+      "half_height": 1.8404313251428306,
+      "discs": 9
+    },
+    {
+      "name": "GranumAnchor_02",
+      "center": [
+        -0.612023651599884,
+        0.43129095435142517,
+        1.8699477910995483
+      ],
+      "radius": 0.5015428995013237,
+      "half_height": 1.9107362362548708,
+      "discs": 9
+    },
+    {
+      "name": "GranumAnchor_03",
+      "center": [
+        2.608917713165283,
+        0.3605005741119385,
+        2.21055006980896
+      ],
+      "radius": 0.5015432075794041,
+      "half_height": 1.1337160997226834,
+      "discs": 8
+    },
+    {
+      "name": "GranumAnchor_04",
+      "center": [
+        0.1907043308019638,
+        0.18467815220355988,
+        1.951699137687683
+      ],
+      "radius": 1.3010234894014894,
+      "half_height": 1.3069922480285168,
+      "discs": 8
+    },
+    {
+      "name": "GranumAnchor_05",
+      "center": [
+        -2.2054882049560547,
+        -0.42837971448898315,
+        1.6999993324279785
+      ],
+      "radius": 0.501542848154977,
+      "half_height": 1.056313494104147,
+      "discs": 8
+    },
+    {
+      "name": "GranumAnchor_06",
+      "center": [
+        5.94476842880249,
+        0.09448080509901047,
+        0.5957071185112
+      ],
+      "radius": 0.5015518851120024,
+      "half_height": 0.8707768269449472,
+      "discs": 8
+    },
+    {
+      "name": "GranumAnchor_07",
+      "center": [
+        1.2038025856018066,
+        0.18647226691246033,
+        -0.8917496800422668
+      ],
+      "radius": 1.3010244136357307,
+      "half_height": 1.3056627882108092,
+      "discs": 8
+    },
+    {
+      "name": "GranumAnchor_08",
+      "center": [
+        -0.40067291259765625,
+        0.1864723563194275,
+        -1.0629581212997437
+      ],
+      "radius": 1.301024002864957,
+      "half_height": 1.3056628707423805,
+      "discs": 8
+    },
+    {
+      "name": "GranumAnchor_09",
+      "center": [
+        0.47153106331825256,
+        0.35527461767196655,
+        -1.9556150436401367
+      ],
+      "radius": 1.3010232840161025,
+      "half_height": 1.3067600867182017,
+      "discs": 8
+    },
+    {
+      "name": "GranumAnchor_10",
+      "center": [
+        1.136496901512146,
+        -0.4342598021030426,
+        0.08296780288219452
+      ],
+      "radius": 0.5015431048867106,
+      "half_height": 1.4117426802054047,
+      "discs": 7
+    },
+    {
+      "name": "GranumAnchor_11",
+      "center": [
+        2.7370684146881104,
+        -0.0783594474196434,
+        0.25754955410957336
+      ],
+      "radius": 0.5015430021940172,
+      "half_height": 1.2261358199447392,
+      "discs": 5
+    },
+    {
+      "name": "GranumAnchor_12",
+      "center": [
+        -3.67075777053833,
+        -0.9536168575286865,
+        -0.4346710741519928
+      ],
+      "radius": 0.5015430535403639,
+      "half_height": 0.7077848964840173,
+      "discs": 5
+    },
+    {
+      "name": "GranumAnchor_13",
+      "center": [
+        -0.5409024357795715,
+        0.5305904150009155,
+        0.8920068144798279
+      ],
+      "radius": 1.3010241055576504,
+      "half_height": 1.4790233663141727,
+      "discs": 5
+    },
+    {
+      "name": "GranumAnchor_14",
+      "center": [
+        1.001860499382019,
+        -0.1694992631673813,
+        2.040964365005493
+      ],
+      "radius": 0.5015430535403639,
+      "half_height": 1.1333499071404338,
+      "discs": 4
+    },
+    {
+      "name": "GranumAnchor_15",
+      "center": [
+        -2.1331417560577393,
+        -0.5103326439857483,
+        0.7191118001937866
+      ],
+      "radius": 1.301024002864957,
+      "half_height": 0.6088582221105695,
+      "discs": 4
+    },
+    {
+      "name": "GranumAnchor_16",
+      "center": [
+        1.7971402406692505,
+        0.18709760904312134,
+        2.1231205463409424
+      ],
+      "radius": 1.301023592094183,
+      "half_height": 1.1337159346595407,
+      "discs": 4
+    },
+    {
+      "name": "GranumAnchor_17",
+      "center": [
+        3.542720079421997,
+        0.35926297307014465,
+        0.34490498900413513
+      ],
+      "radius": 1.301023592094183,
+      "half_height": 1.133715893393755,
+      "discs": 4
+    },
+    {
+      "name": "GranumAnchor_18",
+      "center": [
+        2.6704466342926025,
+        0.5296548008918762,
+        1.2366976737976074
+      ],
+      "radius": 1.3010149659079313,
+      "half_height": 1.1337159346595407,
+      "discs": 4
+    },
+    {
+      "name": "GranumAnchor_19",
+      "center": [
+        1.9350852966308594,
+        0.18528331816196442,
+        0.1704838126897812
+      ],
+      "radius": 1.3010147605225444,
+      "half_height": 1.133716017191112,
+      "discs": 4
+    },
+    {
+      "name": "GranumAnchor_20",
+      "center": [
+        -2.075446367263794,
+        -1.4098647832870483,
+        -0.26356926560401917
+      ],
+      "radius": 0.5015428995013237,
+      "half_height": 0.26082182214930655,
+      "discs": 3
+    },
+    {
+      "name": "GranumAnchor_21",
+      "center": [
+        -5.270567893981934,
+        -1.0425550937652588,
+        -0.6096156239509583
+      ],
+      "radius": 0.5015431048867106,
+      "half_height": 0.2593374712049961,
+      "discs": 3
+    },
+    {
+      "name": "GranumAnchor_22",
+      "center": [
+        5.143913269042969,
+        0.3624981641769409,
+        0.5113311409950256
+      ],
+      "radius": 1.3010151712933182,
+      "half_height": 0.7757403607204556,
+      "discs": 3
+    }
+  ],
+  "parts": [
+    "StromaBase",
+    "Thylakoids",
+    "StromaContents",
+    "Starch",
+    "OuterMembrane",
+    "OuterCap",
+    "InnerMembrane",
+    "InnerCap"
+  ]
+}

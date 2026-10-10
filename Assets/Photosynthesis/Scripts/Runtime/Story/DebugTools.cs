@@ -42,6 +42,7 @@ namespace Photosynthesis
                 if (args[i] == "-film" && i + 1 < args.Length) StartCoroutine(Film(args[i + 1]));
                 if (args[i] == "-uishots" && i + 1 < args.Length) StartCoroutine(UiShots(args[i + 1]));
                 if (args[i] == "-touchtest") StartCoroutine(TouchTest());
+                if (args[i] == "-modelcheck") StartCoroutine(CheckModels());
                 if (args[i] == "-exportmodels" && i + 1 < args.Length) StartCoroutine(ModelExport.Run(args[i + 1]));
                 if (args[i] == "-quitafter" && i + 1 < args.Length) float.TryParse(args[i + 1], out quitAfter);
                 if (args[i] == "-quality" && i + 1 < args.Length)
@@ -110,6 +111,38 @@ namespace Photosynthesis
                 Debug.Log($"[Science] {kind} C:{c} H:{h} O:{o} bond-sticks:{bonds} {(correct ? "PASS" : "FAIL")}");
                 Destroy(molecule);
             }
+        }
+
+        IEnumerator CheckModels()
+        {
+            yield return null;
+            Module.I.interior.Prebuild(); Module.I.chloroplast.Prebuild();
+            foreach (var world in new MicroWorld[] { Module.I.interior, Module.I.chloroplast })
+            {
+                int imported = 0;
+                foreach (var renderer in world.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    if (!renderer.name.StartsWith("Imported", StringComparison.Ordinal)) continue;
+                    imported++; var mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
+                    bool ok = mesh && mesh.uv.Length == mesh.vertexCount && mesh.tangents.Length == mesh.vertexCount;
+                    foreach (var material in renderer.sharedMaterials) ok &= material && material.shader.isSupported && material.GetTexture("_BaseMap") && material.GetTexture("_BumpMap");
+                    if (!ok) { errors++; Debug.LogError("[Models] UV/material binding failed " + renderer.name); }
+                }
+                if (imported == 0) { errors++; Debug.LogError("[Models] Source model not active in " + world.name); }
+                Debug.Log($"[Models] {world.name} imported renderers={imported}, errors={errors}");
+            }
+            var isolated = MicroWorld.Create<ChloroplastWorld>(transform, new Vector3(4000, 0, -4000)); isolated.Prebuild();
+            for (int replay = 0; replay < 2; replay++)
+            {
+                yield return isolated.Open();
+                foreach (string name in new[] { "OpeningOuterCap", "OpeningInnerCap" })
+                {
+                    var cap = isolated.transform.Find(name);
+                    if (!cap || cap.gameObject.activeSelf || cap.localPosition.y <= .5f) { errors++; Debug.LogError("[Models] Envelope peel/replay failed " + name); }
+                }
+                isolated.ResetWorld();
+            }
+            Destroy(isolated.gameObject); Debug.Log($"[Models] source geometry, UVs, native maps and double-envelope replay checked, errors={errors}");
         }
 
         IEnumerator CheckBiology()
