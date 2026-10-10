@@ -475,6 +475,7 @@ namespace Photosynthesis
         IEnumerator CurioIntro()
         {
             ContextTopic = "Dr. Curio, your investigation partner";
+            au.Music(MusicState.Playful); // One existing scanner gag, not every spoken line.
             cam.StopOrbit(); hud.SetCinematic(true);
             var shot = plant.Base + new Vector3(3.3f, 1.9f, -5.5f);
             // character introduction: push in to a medium shot — Curio on the right third, the plant behind him
@@ -496,6 +497,7 @@ namespace Photosynthesis
             yield return Say("s3_good"); hud.HideScanner();
             curio.Emote(CurioEmote.Celebrate);
             yield return Say("s3_intro");
+            au.Music(MusicState.NewWorld);
             // ---- cinematic prologue (one shot per storyboard line): hero plant → sunlight → through the leaf → the hidden world → back out
             int leaf = plant.FocusLeaf; bool calm = Hud.ReduceMotion;
             // SHOT 02 — hero reveal: he turns to the plant; the camera swings low and wide so the crown stands against the roof
@@ -669,7 +671,7 @@ namespace Photosynthesis
             yield return Hub(ClueId.Water);
             ContextTopic = "Clue 02 — the water trail";
             hud.SetInvestigation("CLUE 02 — ???", "Follow the signal to the second ingredient.", IconId.Target);
-            au.Music(MusicState.Investigation);
+            au.Music(MusicState.WaterJourney);
             Parallel(cam.Arc(Establish, PlantFocus, 1.8f, 52f));   // round the plant from wherever the hub left the camera
             yield return Say("s5_second");
             hud.ShowScanner(ScanState.Scanning, "SCANNING…", "Top of plant → leaves → stem → bottom", 0.1f);
@@ -932,6 +934,7 @@ namespace Photosynthesis
         IEnumerator ChloroplastBeat()
         {
             ContextTopic = "inside a chloroplast — chlorophyll capturing light";
+            au.Music(MusicState.Reaction);
             yield return EnsureChloroplast();
             hud.SetInvestigation("THE CHLOROPLAST", "The food factory itself", IconId.Chloroplast);
             var cw = m.chloroplast;
@@ -1007,7 +1010,7 @@ namespace Photosynthesis
             hud.SetInvestigation("GLUCOSE", "The food the plant makes", IconId.Glucose);
             var push = Parallel(GlucoseHero(cw.Glucose.position));   // reveal punch-in on the new sugar, then the slow push under the narration; done before GlucoseUses re-frames
             yield return Say("s10_thereitis");
-            curio.Emote(CurioEmote.Celebrate); au.Music(MusicState.Resolution, 3f);   // the answer lands: the ignition loop resolves under "The answer to Kabir's question"
+            curio.Emote(CurioEmote.Celebrate); au.Music(MusicState.Reaction);
             yield return SayAll("s10_kabir", "s10_glucose");
             hud.HideScanner();
             yield return push;
@@ -1141,7 +1144,7 @@ namespace Photosynthesis
         {
             ContextTopic = "the photosynthesis equation";
             if (place != Place.Chamber) yield return GoTo(Place.Chamber, true);
-            au.Music(MusicState.Resolution);
+            au.Music(MusicState.Investigation);
             hud.SetInvestigation("THE EQUATION", "Now it all makes sense.", IconId.Sparkle);
             curio.Place(CurioSpot, PlantFocus); curio.LookAtCamera();
             yield return cam.Arc(Establish, PlantFocus + Vector3.up * 0.4f, 2.5f, 52f);   // round the plant from the comparison orbit, never through it
@@ -1202,6 +1205,7 @@ namespace Photosynthesis
         IEnumerator Finale()
         {
             ContextTopic = "the end of the investigation";
+            au.Music(MusicState.Resolution); // The normal ending uses Finale; Complete is an optional review beat.
             hud.HideInstruction(); hud.HideLine(); hud.SetCinematic(true); hud.SetAskAIVisible(false);
             restoreFinal = null; cam.AutoSpin = 0f; curio.LookAt(plant.Top);
             // crane from the working-plant orbit up over the crown, looking down across it to the lab. The end pose stays inside the dome bound,

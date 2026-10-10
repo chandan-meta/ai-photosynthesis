@@ -29,6 +29,7 @@ namespace Photosynthesis.EditorTools
                     case "biology": ImportBiology(); break;
                     case "modelaudit": AuditModels(); break;
                     case "models": ImportModels(); break;
+                    case "audio": SoundtrackImport.Import(); break;
                     case "build": PhotosynthesisBuild.BuildPlayer(); break;
                     case "release": PhotosynthesisBuild.BuildPlayerRelease(); break;
                     default: throw new ArgumentException("Unknown polish command " + command);

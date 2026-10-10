@@ -27,6 +27,7 @@ namespace Photosynthesis
         {
             var m = Module.I;
             var args = Environment.GetCommandLineArgs();
+            if (Array.IndexOf(args, "-audiocheck") >= 0 || Array.IndexOf(args, "-audiotest") >= 0) gameObject.AddComponent<AudioReview>();
             int fr = Array.IndexOf(args, "-filmrate");
             if (fr >= 0)
             {

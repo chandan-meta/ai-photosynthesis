@@ -38,7 +38,7 @@ namespace Photosynthesis
         GlucoseDiscover, OxygenRelease, Sparkle, Pop, FinaleCadence
     }
 
-    public enum MusicState { None, NewWorld, Investigation, Microscopic, WaterJourney, SunlightReveal, Reaction, Resolution, FreeExplore }
+    public enum MusicState { None, NewWorld, Investigation, Microscopic, WaterJourney, SunlightReveal, Reaction, Resolution, FreeExplore, Playful }
 
     public enum QType { Recall, Understanding, Prediction, Discovery, Application, Reasoning, Integrated }
     public enum Concept { Stomata, Water, Xylem, Sunlight, Chloroplast, Chlorophyll, Glucose, Oxygen, Phloem, Equation, Integration }

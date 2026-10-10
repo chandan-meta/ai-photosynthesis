@@ -14,7 +14,7 @@ namespace Photosynthesis
         public event Action ResetRequested;
         public event Action ExitRequested;
 
-        VisualElement sysDim, pausePanel, settingsPanel, helpPanel, resetPanel, exitPanel, popup, popupAnchor;
+        VisualElement sysDim, pausePanel, settingsPanel, helpPanel, resetPanel, exitPanel, creditsPanel, popup, popupAnchor;
         readonly List<VisualElement> sysStack = new List<VisualElement>();
         readonly Dictionary<VisualElement, VisualElement> sysFocus = new Dictionary<VisualElement, VisualElement>();   // panel → default control (Enter confirms)
         /// True while any system panel (pause, settings, help, confirms) is open: time is stopped and shortcuts must not advance the story.
@@ -30,7 +30,7 @@ namespace Photosynthesis
         {
             sysDim = Hidden(Layer(systemLayer)); sysDim.AddToClassList(Scrim); sysDim.pickingMode = PickingMode.Position;   // modal: blocks HUD + 3D; full-bleed: fade only
             Bg(sysDim, new Color(0f, 0.02f, 0.01f, GA(0.62f)));
-            BuildPause(); BuildSettings(); BuildHelp(); BuildReset(); BuildExit();
+            BuildPause(); BuildSettings(); BuildHelp(); BuildReset(); BuildExit(); BuildMusicCredits();
 
             popup = Abs(new VisualElement(), 0, 0); popup.style.display = DisplayStyle.None;
             Bg(popup, AG(Raised, 0.98f)); Border(popup, A(GlassStroke, 0.35f), 1); Radius(popup, 10); Pad(popup, 4, 4);
@@ -57,6 +57,7 @@ namespace Photosynthesis
             sysFocus[pausePanel] = col.Put(Wide(Btn("Resume", ButtonKind.Primary, IconId.Play, CloseSystem)));
             col.Put(Wide(Btn("Settings", ButtonKind.Secondary, IconId.Settings, () => OpenSystem(settingsPanel))));
             col.Put(Wide(Btn("Help", ButtonKind.Secondary, IconId.Help, () => OpenSystem(helpPanel))));
+            col.Put(Wide(Btn("Music credits", ButtonKind.Secondary, null, () => OpenSystem(creditsPanel))));
             col.Put(Wide(Btn("Restart investigation", ButtonKind.Secondary, IconId.Reset, () => OpenSystem(resetPanel))));
             col.Put(Wide(Btn("Exit", ButtonKind.Ghost, null, () => OpenSystem(exitPanel))));
             CenterRow(systemLayer, 220).Add(pausePanel);
@@ -116,6 +117,18 @@ namespace Photosynthesis
             sysFocus[settingsPanel] = foot.Put(Btn("Done", ButtonKind.Primary, IconId.Check, CloseSystem));
             SelectTab(0);
             CenterRow(systemLayer, 110).Add(settingsPanel);
+        }
+
+        void BuildMusicCredits()
+        {
+            creditsPanel = Hidden(Panel(20, .95f)); Size(creditsPanel, 720); Pad(creditsPanel, 28, 28, 28, 28);
+            creditsPanel.Add(Txt("Music credits", TS.H1, Text));
+            var scroll = new ScrollView(ScrollViewMode.Vertical); scroll.style.height = 440; scroll.style.marginTop = 16;
+            var credits = Resources.Load<TextAsset>("MusicCredits");
+            scroll.Add(Txt(credits ? credits.text : "Music credits unavailable.", TS.Small, TextSecondary, 640));
+            creditsPanel.Add(scroll);
+            sysFocus[creditsPanel] = Btn("Done", ButtonKind.Primary, IconId.Check, CloseSystem);
+            creditsPanel.Add(sysFocus[creditsPanel]); CenterRow(systemLayer, 120).Add(creditsPanel);
         }
 
         static readonly string[] SubSizes = { "Normal", "Large" };

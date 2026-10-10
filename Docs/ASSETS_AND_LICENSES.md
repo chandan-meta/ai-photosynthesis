@@ -63,3 +63,7 @@ part is re-materialled with the module's URP templates; the geometry is what is 
 ### Verified molecular coordinates
 
 `Tools/Chemistry/BetaDGlucose_64689.sdf` is the public [PubChem beta-D-glucose 3D conformer, CID64689](https://pubchem.ncbi.nlm.nih.gov/compound/64689). The source is retained verbatim; `ExportGlucose.py` exports positions/bonds in Unity coordinates to `Resources/Molecules/GlucoseGeometry.json`. Both staged formation and the final glucose use this graph. Supplied reference pictures guide framing/style and are not game textures.
+
+## Licensed soundtrack replacement
+
+Seven official downloads, original file hashes, prepared playback copies and modifications are documented in [Music credits](../Assets/Photosynthesis/Audio/MUSIC_CREDITS.md) and `Assets/Photosynthesis/Audio/soundtrack_manifest.json`. Six Kevin MacLeod tracks use the official CC BY 4.0 attribution terms; TinyWorlds' Forest Ambience uses CC0 1.0. In-game Menu → Music credits exposes these merged audio credits without replacing existing project documentation.

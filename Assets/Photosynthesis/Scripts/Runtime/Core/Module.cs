@@ -129,7 +129,7 @@ namespace Photosynthesis
             cam.UserControl = false; cam.AutoSpin = 0; cam.Cut(plant.Base + new Vector3(0, 3.2f, -8.2f), plant.Base + new Vector3(-1.3f, 2f, 0), 56f);
             curio.SetVisible(true); curio.Companion(false); curio.Place(plant.Base + new Vector3(3.4f, 1.45f, -1.9f), cam.transform.position); curio.Talking = false; curio.LookAtCamera(); curio.Wave();
             hud.ShowStartBanner(BeginInvestigation);
-            audioDirector.StopVoice(); audioDirector.Music(MusicState.Investigation); audioDirector.Ambience("chamber");
+            audioDirector.StopVoice(); audioDirector.Music(MusicState.NewWorld); audioDirector.Ambience("chamber");
             Debug.Log("[Polish] Start banner ready; story and narration gated");
         }
 

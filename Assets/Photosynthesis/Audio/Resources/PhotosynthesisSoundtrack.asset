@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60968696b81bc1d438c012a835ba19a6, type: 3}
+  m_Name: PhotosynthesisSoundtrack
+  m_EditorClassIdentifier: Assembly-CSharp::Photosynthesis.Soundtrack
+  cinematic: {fileID: 8300000, guid: d9a6b278f6583b548b8707e75a096ca9, type: 3}
+  exploration: {fileID: 8300000, guid: 4ace4645ab599ef4e9709265bc5dbdaa, type: 3}
+  water: {fileID: 8300000, guid: ac71d65207cb31248b7772d213c39d71, type: 3}
+  scientific: {fileID: 8300000, guid: 037cee693e72ff74d8d5fb7b52d5ecb8, type: 3}
+  playful: {fileID: 8300000, guid: 3ad2e612839056a49bd63ce451891f50, type: 3}
+  completion: {fileID: 8300000, guid: 1220d6264e6a25e47815677565983d30, type: 3}
+  forest: {fileID: 8300000, guid: 43ecf4b742e9bd3489f6c58a52a08ff2, type: 3}
+  musicGroup: {fileID: 5718698016199475399, guid: 05fd4d2cd31d28847a541e4091203b62, type: 2}
+  voiceGroup: {fileID: 3375826860251186324, guid: 05fd4d2cd31d28847a541e4091203b62, type: 2}
+  sfxGroup: {fileID: 5615922754912823465, guid: 05fd4d2cd31d28847a541e4091203b62, type: 2}
+  ambienceGroup: {fileID: -1709853365932925140, guid: 05fd4d2cd31d28847a541e4091203b62, type: 2}
+  musicLevel: 0.25
+  ambienceLevel: 0.125
+  crossfade: 2
+  voiceDuckDb: -10
+  duckAttack: 0.2
+  duckRelease: 0.9
