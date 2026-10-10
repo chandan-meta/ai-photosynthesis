@@ -13,6 +13,8 @@ Release player for schools (no watermark, no profiler, no F1 panel): **Photosynt
 `Builds/WinRelease/Photosynthesis.exe` (batch: `-executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildPlayerRelease`).
 Leave the `*_BurstDebugInformation_DoNotShip` folder out of the zip given to schools.
 
+Play it online: **https://chandan-meta.github.io/ai-photosynthesis/** (GitHub Pages, branch `gh-pages`).
+
 Browser player: **Photosynthesis ▸ Build WebGL** → `Builds/WebGL/` (release, no F1 panel). Batch, starting directly on the target so
 textures import once: `-batchmode -buildTarget WebGL -executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildWebGL -quit`; then
 reopen once with `-batchmode -buildTarget StandaloneWindows64 -quit` so the editor is back on Windows. The build uses gzip with the

@@ -32,10 +32,11 @@ while the start banner is up. Not tested: Safari, mobile browsers, low-end GPUs;
 **GitHub Pages.** GitHub refuses files over 100 MB, so `Builds/WebGL-pages/` (made by a one-off script from `Builds/WebGL`) splits the
 214 MB data file into five parts under 45 MB, and its `index.html` downloads and joins them in the browser before starting Unity
 (tested locally: loads to the start banner, no console errors). It is pushed as branch `gh-pages` (`66560b4`, its own history) of
-`chandan-meta/ai-photosynthesis`. Pages did not switch on by itself because the repository is private: enable it under Settings ▸ Pages
-(source `gh-pages`, folder root), which needs a public repository or GitHub Pro; the site would be
-https://chandan-meta.github.io/ai-photosynthesis/. Alternatively push the same branch to a new public repository. Each visit downloads
-about 227 MB, and Pages has a soft limit of 100 GB of traffic a month.
+`chandan-meta/ai-photosynthesis`. **Live at https://chandan-meta.github.io/ai-photosynthesis/**: the user made the repository public
+and set Settings ▸ Pages to `gh-pages`, folder root (2026-10-10); "pages build and deployment" succeeded, and the page loads to the start
+banner with no console errors. To update it: rebuild WebGL, regenerate `Builds/WebGL-pages/`, commit and push from its own git repo to
+`gh-pages`. Each visit downloads about 227 MB, and Pages has a soft limit of 100 GB of traffic a month. `main` was fast-forwarded to the
+same commit as `codex/root-material-upgrade`.
 The 27 art files changed outside this session (eight leaf surface maps, 19 Upgraded materials) were committed afterwards at the
 user's request ("push final change"); the WebGL build already includes them.
 
