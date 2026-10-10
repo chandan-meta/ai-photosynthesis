@@ -426,7 +426,7 @@ namespace Photosynthesis
             {
                 PlantPart.Stem => ("Stem", "Holds the leaves up to the light. Xylem carries water up inside it; phloem carries food.", IconId.Stem),
                 PlantPart.Roots => ("Roots", "Absorb water and minerals from the soil; the corm stores food.", IconId.Root),
-                _ => ("Leaf", m.clues[ClueId.Sunlight] == ClueState.Discovered   // never hand out an undiscovered clue (Q5 follows Scene 8's inspect window)
+                _ => ("Leaf", m.clues[ClueId.Sunlight] == ClueState.Discovered   // never hand out an undiscovered clue (the plant can be tapped in the Clue 3 hub, before Q5)
                         ? "The food factory: chloroplasts in its cells use light energy to make glucose. CO₂ enters through stomata underneath."
                         : m.Beat == Beat.Clue3 ? "The food factory: CO₂ ✓ and water ✓ are both inside, yet nothing is being made. What else could it need?"
                         : "The plant's food factory: this is where its food gets made. How it works is what we're here to find out.", IconId.Leaf)
@@ -630,34 +630,46 @@ namespace Photosynthesis
             while (userZoom < 1f && !Module.Skipping && Time.time - t0 < (AutoPlay ? 1.5f : 20f)) yield return null;
             hud.HideInstruction(); hud.HideScanner();   // the scanner card would cover the GUARD CELLS callout at 100×
             m.leafSurface.SetMagnification(2); au.Play(Sfx.Whoosh, 0.5f);
+            PoreLabel("One stoma · plural: stomata");   // rides the zoom in (screen-space: it never sinks into the leaf)
             yield return cam.Blend(p.pos, p.look, 2.4f, 45f);
             hud.ShowMagnification(2);   // the pill flips when 100× actually lands
+            hud.Callout("guard", "Guard cells", "Open and close the pore", Tone.Cyan, () => m.leafSurface.GuardCells.position);
             yield return Say("s4_found");
-            hud.Callout("stoma", "STOMA", "Plural: STOMATA", Tone.Green, () => m.leafSurface.Stoma.position);
-            hud.Callout("guard", "GUARD CELLS", "Open and close the pore", Tone.Cyan, () => m.leafSurface.GuardCells.position);
+            // reading card (Figma Info Card) in the progress panel's slot, which steps aside: under it the card would cover Dr. Curio's head.
+            // Up through the CO₂ entry; CO2() hides it before the reward card (it would answer Q1), which brings the tracker back
+            hud.ShowInfo("Stomata —\nTiny Gateways of the Leaf", "Stomata are tiny openings on the leaf surface that allow carbon dioxide to enter and regulate gas exchange.", IconId.Stomata, slot: true);
             yield return Say("s4_stomata");
         }
+
+        /// Scene 4's pore label: anchored on the hero stoma's slit 1 m from its centre with the tag pointing outward, so the pore and the
+        /// CO₂ that threads it stay clear (the hero stoma has yaw 0, so ±right is screen right/left at both lenses). Left tip by default;
+        /// the right tip for the Q1/Q2 replay, whose reteach card covers x 40–520 (the left tag's spot on 1600×900 and 1707×960 canvases).
+        void PoreLabel(string sub, bool right = false) =>
+            hud.Callout("stoma", "Stomatal pore", sub, Tone.Green, () => m.leafSurface.Stoma.position + m.leafSurface.Stoma.right * (right ? 1f : -1f), left: !right);
 
         IEnumerator CO2()
         {
             ContextTopic = "carbon dioxide entering the leaf through a stoma";
             if (place != Place.LeafSurface) yield return EnsureLeafSurface(2);
             m.leafSurface.AmbientCO2(true);
-            hud.HideCallout("guard"); hud.HideCallout("stoma");   // the cyan guard rim still marks the pore; the CO₂ tag would sit on the STOMA tag
-            var enter = Parallel(m.leafSurface.CO2Enter());
+            // the pore and guard-cell labels stay up; the CO₂ tag rides the molecule and leaves with the entry, since the resting molecule
+            // sits in the pore's centre (the tag is created first, so a skip that ends the entry at once still removes it)
+            hud.Callout("co2", "CO₂ entering", "Carbon dioxide from the air", Tone.Cyan, () => m.leafSurface.HighlightedMolecule.position);
+            IEnumerator enterThenUntag() { yield return m.leafSurface.CO2Enter(); hud.HideCallout("co2"); }
+            var enter = Parallel(enterThenUntag());
             if (!Hud.ReduceMotion) Parallel(cam.Push(0.7f, 4f));   // travel IN with the CO₂ (4 s = CO2Enter; Scene 11 pulls OUT with the O₂). 0.7 m keeps foreground ambient CO₂ ≥ ~1.4 m from the lens through the Q1/Q2 hold
-            hud.Callout("co2", "CARBON DIOXIDE — CO₂", "From the air", Tone.Cyan, () => m.leafSurface.HighlightedMolecule.position);
             hud.SetInvestigation("CLUE 01 — CARBON DIOXIDE", "CO₂ enters through the stomata.", IconId.CO2);
             yield return Say("s4_entering");   // the hero is highlighted and drifting in as Curio says "look"
             yield return Say("s4_co2");
             yield return enter;
             yield return Say("s4_ingredient");
             m.leafSurface.Freeze(true); curio.Emote(CurioEmote.Celebrate);
+            hud.HideInfo();   // before the reward: the card would answer Q1, and the tracker it hands the slot back to must be up for its pop
             m.clues.Set(ClueId.CO2, ClueState.Discovered);
             yield return hud.ClueUnlocked(ClueId.CO2);
             m.leafSurface.Freeze(false); hud.ClearCallouts();
             hud.SetInvestigation("CLUE 01 — FOUND", "Quick check before we leave the leaf.", IconId.Target);   // the CO₂ title would answer Q1/Q2
-            IEnumerator replay() { hud.Callout("stoma", "STOMA", "CO₂ comes in here", Tone.Green, () => m.leafSurface.Stoma.position); yield return m.leafSurface.CO2Enter(); hud.HideCallout("stoma"); }
+            IEnumerator replay() { PoreLabel("CO₂ comes in here", right: true); yield return m.leafSurface.CO2Enter(); hud.HideCallout("stoma"); }   // right tip: the reteach card is up on the left; the replayed CO₂ rests in the pore's centre, clear of the tag
             yield return Ask("Q1", replay, force: true);
             yield return Ask("Q2", replay);
             hud.SetInvestigation("CLUE 01 — CARBON DIOXIDE", "CO₂ enters through the stomata.", IconId.CO2);   // the Clue 2 hub waits under this title
@@ -799,9 +811,7 @@ namespace Photosynthesis
             yield return SayAll("s8_doing", "s8_nothing");
             yield return Say("s8_missing");
             hud.ClearCallouts();
-            Parallel(Say("s8_inspect"));
-            yield return LookAround("Tap the plant to inspect it — what could be missing?", 7f);
-            yield return Ask("Q5", null, force: true);
+            yield return Ask("Q5", null, force: true);   // straight to the question: the "tap the plant to inspect it" window and its line are gone (2026-10-10)
         }
 
         IEnumerator Sunlight()
@@ -1502,7 +1512,7 @@ namespace Photosynthesis
             {
                 case Intent.ShowCO2:
                 case Intent.ShowStomata:
-                    if (beat == Beat.Stomata || beat == Beat.CO2) { hud.Callout("stoma", "STOMA", "CO₂ enters here", Tone.Green, () => m.leafSurface.Stoma.position); return null; }
+                    if (beat == Beat.Stomata || beat == Beat.CO2) { PoreLabel("CO₂ enters here"); return null; }   // same anchor and side as the beat's own label
                     { var r = Navigate(ClueId.CO2, "Carbon dioxide"); if (r != null) return r; }
                     if (beat >= Beat.FreeExplore) { pick = "Stomata"; return "Here are the stomata."; }
                     return Demo(Concept.Stomata, "Watch the underside of this leaf.");

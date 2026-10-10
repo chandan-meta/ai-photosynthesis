@@ -28,9 +28,10 @@ Leave the `*_BurstDebugInformation_DoNotShip` folder out of the zip given to sch
 
 ## The learning flow (storyboard Scenes 2–15)
 A New World → Meet Dr. Curio (learner scan) → three locked clues →
-**Clue 01 CO₂** (giant leaf, 1×/10×/100× microscope, stomata & guard cells, CO₂ enters) →
+**Clue 01 CO₂** (giant leaf, 1×/10×/100× microscope, stomata & guard cells labelled with a reading card at 100×, CO₂ enters) →
 **Clue 02 Water** (scanner sweep, signal below, transparent floor, roots, soil world, pick a water molecule, **xylem ride**) →
-**Clue 03 Sunlight** (factory won't start, FOOD PRODUCTION 0, darkness, the learner opens the skylight → sunbeam WHOOM) → Enter Leaf
+**Clue 03 Sunlight** (factory won't start, FOOD PRODUCTION 0, darkness, straight into the "what's missing?" question, then the learner
+opens the skylight → sunbeam WHOOM) → Enter Leaf
 (leaf → tissue → cell) → chloroplast (chlorophyll absorbs light; the learner feeds in CO₂ and water) → reaction (unknown molecule →
 glucose C₆H₁₂O₆, uses: energy/growth/storage) →
 oxygen (followed out through the same stoma: CO₂ in / O₂ out) → phloem (food to shoot/roots/flowers/fruits/storage; xylem vs

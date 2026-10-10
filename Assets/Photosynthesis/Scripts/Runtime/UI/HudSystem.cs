@@ -397,8 +397,8 @@ namespace Photosynthesis
         void OpenChat(bool focusField)
         {
             if (chatOpen) return;
-            chatOpen = true; Show(chatPanel, true); RefreshPersistent();
-            infoWrap.style.right = exploreRow.style.right = 40 + 460 + 20;   // the Free Explore bar re-centres left of the chat
+            chatOpen = true; Show(chatPanel, true); RefreshPersistent();   // RefreshPersistent also moves the info card aside
+            exploreRow.style.right = 40 + 460 + 20;   // the Free Explore bar re-centres left of the chat
             ScrollChatToEnd();
             if (focusField) FocusSoon(chatField);
         }
@@ -409,7 +409,7 @@ namespace Photosynthesis
             chatOpen = false; Show(chatPanel, false);
             if (TypingInChat) chatField.Blur();
             StopTalk(); RefreshPersistent();
-            infoWrap.style.right = 40; exploreRow.style.right = 0;
+            exploreRow.style.right = 0;
         }
 
         void SubmitField() { var s = chatField.value; chatField.value = ""; Submit(s); }

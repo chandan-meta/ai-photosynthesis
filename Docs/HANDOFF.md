@@ -1,9 +1,79 @@
-# Handoff — Photosynthesis module, 2026-10-08 (night update)
+# Handoff — Photosynthesis module, 2026-10-10 (stomata UI · Clue 3 · formula sweep)
 
-Read this first. Sections 0a and 0b are the latest work; sections 1–8 (morning) still hold, except where 0a says otherwise.
+Read this first. Section 0c is the latest work (uncommitted on `codex/root-material-upgrade` when written); 0a/0b and 1–8 still hold
+except where 0c says otherwise. The 2026-10-09/10 sessions in between (materials, imported leaf/chloroplast models, licensed soundtrack)
+are documented in `Docs/Photosynthesis/*.md`.
 Project: `D:\AI unity project\AI PHOTOSYNTHESIS` (Unity 6000.3.0f1, URP 17.3, UI Toolkit, Input System).
 Git: local repository, `main` = the module (baseline `daf9bf5`, `85e0b0a` review passes, `ea251e4` the Dr. Curio scarf, then the
-new chamber environment). Branch `feature/tripo-curio` parks the rejected character replacement (0b). **No remote yet** (section 7).
+new chamber environment). Branch `feature/tripo-curio` parks the rejected character replacement (0b). Since 2026-10-10 the remote
+`origin` is https://github.com/chandan-meta/ai-photosynthesis (`main` pushed at `8902082`); section 7 predates it.
+
+## 0c. Stomata reading card, Clue 3 without the plant-inspection step, glucose-formula sweep (2026-10-10)
+
+**Request.** (1) The stomata close-up explained nothing readable; (2) Clue 3's "Tap the plant to inspect it" window and its line were
+unwanted: Clue 3 should go straight from its narration into the question, then the existing Enter Leaf line and camera; (3) the whole
+project had to be checked for wrong glucose formulas (C₆H₁₂O₆; 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂).
+
+**Done.**
+- *Stomata (Story.Stomata / Story.CO2, Hud callouts and info card).* STOMATAL PORE is attached to the hero stoma's slit as the 10× → 100×
+  zoom starts and rides the zoom (screen-space UI Toolkit, so nothing can hide it behind the leaf); GUARD CELLS appears with "Found
+  something."; the Info Card "Stomata — / Tiny Gateways of the Leaf" fades in with "These tiny openings are called stomata." in the
+  progress panel's slot (the tracker steps aside: under it, the 323 px card covered Dr. Curio's head on every 16:9 canvas) and fades out
+  before the reward card, which brings the tracker back in time for its pop; CO₂ ENTERING rides the glowing molecule and leaves when the
+  4 s entry ends, so the pore centre is clear. The Ask-AI "show me CO₂ / stomata" action uses the same pore label (`Story.PoreLabel`);
+  the Q1/Q2 replay mirrors it to the slit's right tip, clear of the reteach card. Both replace a centre-anchored STOMA tag that hid the
+  resting CO₂. Small system additions: `Hud.Callout(..., left:)` forces a tag's side; a new tag's leader draws out from its dot
+  (`.ps-leader` width transition, gated by `CalloutUi.born`); `Hud.ShowInfo(..., slot: true)` puts the card in the tracker's place
+  (`infoInSlot` in `RefreshPersistent`, which now also owns the card's chat-open offset): its × button restores the tracker at once, and
+  it steps aside while the Ask AI chat is open. Design record: `UI_SPEC.md` ▸ Stomata close-up.
+- *Clue 3 (Story.Clue3).* After "We're missing something." the beat calls `Ask("Q5")` at once. Removed: the `s8_inspect` line (from
+  `curio_lines.txt` and `Resources/VO/s8_inspect.wav`) and the `LookAround("Tap the plant to inspect it…")` window. The Sunlight beat
+  (skylight, beam, Q6, recap) and EnterLeaf (ENTER LEAF → "Time to go deeper." → focus/push → tissue) are untouched: on the baseline
+  film they already run focus (1.2 s) → push (1.6 s) → warm flash into the tissue, with the line starting after "…how they become food."
+  ends. The Ask-AI "what should I do" hints for Clue 3 no longer say "inspect the plant" (`CurioKnowledge.Next`); their reply clips were
+  regenerated (`python Tools/GenerateVO.py --kb`: new clip `VO/kb/bcb97796.wav`, the two orphaned clips deleted, manifest rewritten).
+  The chamber tooltip branch for Beat.Clue3 stays: the plant can still be tapped while the Clue 3 hub waits.
+- *Formulas: none wrong, nothing changed.* Checked by hand (the review Workflow's sweep agents hit a usage limit): 1,353 text files
+  token-scanned, including digit-zero look-alikes; 116 colour textures and 69 images embedded in the FBX/GLB files viewed on contact
+  sheets; every story line, all 271 Ask-AI reply sentences and both speech transforms read; the runtime glucose model checked with the
+  player's `-sciencecheck` (Glucose C:6 H:12 O:6, 24 bonds, PASS on the current build). Every glucose formula reads C₆H₁₂O₆ / C6H12O6 and
+  every equation 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂; the lab posters name GLUCOSE without a formula; no line speaks a formula. No Timeline,
+  TextMeshPro or scene/prefab text exists. **Not a glucose formula, but wrong:** the lab's acid/base glassware texture
+  (`Art/Environment/Textures/Acid base_Acid_base_BaseColor.png`, from the user's lab model) has a sticker "ACID pH>7" (acids are below
+  pH 7). Left for the user: it is their art, and `Tools/Chamber/build_env.py` would overwrite a hand edit.
+
+**Review.** An independent Workflow review (3 lenses; 3 adversarial verifiers per finding) confirmed 11 findings and refuted 1. Fixed:
+the card covering Dr. Curio's head (major), the CO₂ tag staying on the resting molecule after the entry, the replay / Ask-AI pore label
+on the pore centre, GUARD CELLS timing against the docs, doc wording. A second review of those fixes (2 lenses, 2 verifiers each)
+confirmed 2 more, both fixed: the replay's left-side label sat under the reteach card on 1280×720 and 1366×768 screens, and with the
+chat open the shifted card covered GUARD CELLS. Left as is: the pore tag overlaps the thin pinch where the two guard
+cells meet at the slit tip (inherent to a left-side tag; the old tag covered the pore itself); the card names carbon dioxide about 3 s
+before "And look what's entering" (user-supplied text); Q5's lead now follows straight on "We're missing something." and repeats the
+four facts just narrated (a shorter lead would need a new clip); pre-existing: Ask-AI Help replies that embed a hint use the device
+voice, because the runtime sentence split keeps "try “Show me water.” Select…" together.
+
+**Verification and its limit.** `bash Tools/Compile/check.sh "Runtime Editor" 60` → no errors or warnings. **No Play Mode / player run
+of the final code was possible:** the user's Unity editor held this project until about 17:35 (`Temp/UnityLockfile`, Unity.exe with
+`-projectpath "…AI PHOTOSYNTHESIS"`), which blocks batch builds, and both drives were down to about 1 GB free, so a project copy could
+not be built either. Run instead: the existing dev player (`Builds/Win`, built 2026-10-10 13:37, before this change) with
+`-beat Stomata -autoplay -realvoice -film … -filmrate 1` and `-beat Clue3 … -filmrate 1.5` as the baseline (frames and contact sheets in
+the session scratchpad, not kept), `-sciencecheck`, and static review. The open editor itself (driven from outside this session)
+recompiled the first version of these changes with no errors and entered Play Mode; `Editor.log` shows that session running Clue 1 into
+the Stomata beat with no exceptions. That is partial evidence only: it predates the review fixes and nothing confirms what was on screen.
+**Not part of this work:** while this session ran, other activity changed project files (an OpenAI Codex session was active on the
+machine). At 16:56 the eight `Art/Generated/Resources/SurfaceMaps/LeafTop_*` / `LeafUnder_*` maps were rewritten and imported; at 17:35,
+as the editor closed, it re-saved 19 materials under `Art/Upgraded/Resources/` (`UpgradedModels/LeafPart*`, `Chloroplast*`,
+`UpgradedMaterials/VesselWall.mat`: `m_DoubleSidedGI` 0 → 1 and a `_MainTex` assigned, which looks like Play Mode writes to shared
+material assets). All were left as they are; review them separately before committing. The editor holding this project closed at about
+17:35, after which batch builds were possible again, but D: was down to about 1 GB free (a dev build stages about 600 MB under `Temp`)
+and another Unity project was open and had just run out of memory, so no build was started. **First thing to do in the editor:** Play → F1 → jump to
+`Stomata` (the pore label riding the zoom, GUARD CELLS on "Found something.", the card replacing the tracker, the CO₂ tag leaving as the
+molecule settles, the card leaving before the reward) and to `Clue3` (narration → Q5 card with no instruction pill → skylight), then
+rebuild the dev player and run `bash Docs/handoff/fulltest.sh`.
+
+**Not changed, by design.** The ENTER LEAF button, the skylight tap and Q6 stay: the request said to remove only the inspection
+instruction and its voice-over. If "Clue 3 → question → Enter Leaf" was meant to skip the skylight discovery too, that is a separate
+decision, since it would remove the clue's unlock, Q6 and the sunbeam reveal.
 
 ## 0a. New chamber environment: the user's lab model (2026-10-08, night)
 

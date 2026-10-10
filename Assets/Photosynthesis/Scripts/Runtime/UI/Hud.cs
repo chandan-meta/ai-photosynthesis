@@ -341,7 +341,11 @@ namespace Photosynthesis
         {
             Show(investigation, hudOn); Show(topActions, hudOn); Show(ccToggle, hudOn);
             // an equation shifted beside the reteach card (or the 984-wide row on a narrow canvas) needs the right side
-            Show(progressPanel, progressOn && !chatOpen && !qSpoils && !(IsShown(eqLayer) && (eqBeside || root.layout.width < 1700f)));   // qSpoils: the tracker row would answer the open card
+            Show(progressPanel, progressOn && !chatOpen && !qSpoils && !infoInSlot && !(IsShown(eqLayer) && (eqBeside || root.layout.width < 1700f)));   // qSpoils: the tracker row would answer the open card; infoInSlot: an info card stands in its place
+            // a card in the tracker's slot steps aside for the chat as the tracker does (shifted beside the chat it would cover the stoma's
+            // labels); other cards move left of the chat. Set here, in the same refresh, so a card never slides while it fades
+            if (infoInSlot) Show(infoCard, !chatOpen);
+            infoWrap.style.right = chatOpen && !infoInSlot ? 40 + 460 + 20 : 40;
             Show(orbCluster, askOn);
             RefreshZoom();
             PlaceScanner();
@@ -622,7 +626,7 @@ namespace Photosynthesis
         public void HideMagnification() { Show(magPill, false); }
 
         // ================================================================== world callouts
-        class CalloutUi { public string key; public VisualElement root, dot, ring, line, tag; public Label title, sub; public GlowElement glow; public Func<Vector3> anchor; public bool flip; }
+        class CalloutUi { public string key; public VisualElement root, dot, ring, line, tag; public Label title, sub; public GlowElement glow; public Func<Vector3> anchor; public bool flip; public bool? side; public float born; }
         readonly List<CalloutUi> callouts = new List<CalloutUi>();
         readonly Stack<CalloutUi> calloutPool = new Stack<CalloutUi>();
 
@@ -633,7 +637,7 @@ namespace Photosynthesis
             c.root.AddToClassList("ps-fade"); c.root.AddToClassList(Off); c.root.style.display = DisplayStyle.None;
             c.dot = Circle(12, Cyan, Cyan, 0);
             c.ring = Abs(new VisualElement(), -6, -6); Size(c.ring, 24, 24); Radius(c.ring, 12); Border(c.ring, Cyan, 1.5f); c.dot.Add(c.ring);
-            c.line = new VisualElement(); Size(c.line, 48, 2);
+            c.line = new VisualElement(); Size(c.line, 48, 2); c.line.AddToClassList("ps-leader");   // the leader draws out from the dot (USS width transition)
             c.tag = new VisualElement(); Pad(c.tag, 8, 14); Radius(c.tag, 12); Bg(c.tag, AG(Sunken, 0.85f)); Border(c.tag, Cyan, 1.5f);
             c.glow = Glow(c.tag, Cyan, 12, 14, 0.35f);
             c.tag.Add(c.title = Txt("", TS.Readout, Cyan));
@@ -645,13 +649,15 @@ namespace Photosynthesis
         }
 
         /// Screen-space label anchored to a moving world point (leader line + tag). Key replaces existing.
-        public void Callout(string key, string title, string sub, Tone tone, Func<Vector3> worldAnchor)
+        /// left: force the tag to the anchor's left (true) or right (false); null = the usual edge-aware choice.
+        public void Callout(string key, string title, string sub, Tone tone, Func<Vector3> worldAnchor, bool? left = null)
         {
             CalloutUi c = null;
             foreach (var x in callouts) if (x.key == key) { c = x; break; }
-            if (c == null) { c = calloutPool.Count > 0 ? calloutPool.Pop() : MakeCallout(); c.key = key; callouts.Add(c); }
+            if (c == null) { c = calloutPool.Count > 0 ? calloutPool.Pop() : MakeCallout(); c.key = key; callouts.Add(c); c.born = Time.unscaledTime; c.line.style.width = 0f; }   // new tag: the leader draws out once displayed
+            c.line.EnableInClassList("ps-leader", key != "glu");   // the glucose leader is re-measured every frame: no easing there
             var col = Palette.Of(tone);
-            c.anchor = worldAnchor;
+            c.anchor = worldAnchor; c.side = left;
             Set(c.title, title); c.title.style.color = col;
             Set(c.sub, sub); c.sub.style.display = string.IsNullOrEmpty(sub) ? DisplayStyle.None : DisplayStyle.Flex;
             c.dot.style.backgroundColor = col; BorderColor(c.ring, col); c.line.style.backgroundColor = A(col, 0.8f);
@@ -701,8 +707,8 @@ namespace Photosynthesis
                     var ep = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(edge.x, Screen.height - edge.y));
                     c.line.style.width = Mathf.Clamp(Vector2.Distance(p, ep) + 16f, 48f, 330f);
                 }
-                else c.line.style.width = 48f;
-                bool flip = c.flip ? p.x > w * 0.56f : p.x > w * 0.64f;   // tag points inward near the right edge
+                else if (t - c.born > 0.05f) c.line.style.width = 48f;   // a few frames after display, so the .ps-leader transition draws it from 0
+                bool flip = c.side ?? (c.flip ? p.x > w * 0.56f : p.x > w * 0.64f);   // tag points inward near the right edge, unless a side was asked for
                 if (flip != c.flip) { c.flip = flip; c.root.style.flexDirection = flip ? FlexDirection.RowReverse : FlexDirection.Row; }
                 float cw = c.root.layout.width, ch = c.root.layout.height;
                 if (float.IsNaN(cw)) { cw = 0; ch = 0; }
@@ -792,14 +798,19 @@ namespace Photosynthesis
             overlayLayer.Add(tooltip);
         }
 
+        bool infoInSlot;   // the info card stands in the progress panel's place (RefreshPersistent keeps the panel hidden meanwhile)
+
         /// title: Title Case — H2/H3 have no uppercase rule; caps are for Readout/Label only.
-        public void ShowInfo(string title, string body, IconId icon)
+        /// slot: take the progress panel's place (top 140) instead of sitting under it (top 380); the panel steps aside until HideInfo,
+        /// which keeps a tall card clear of Dr. Curio's companion pose in the micro worlds.
+        public void ShowInfo(string title, string body, IconId icon, bool slot = false)
         {
+            infoInSlot = slot; infoWrap.style.top = slot ? 140f : 380f;
             infoTitle.text = title; Set(infoBody, Prose(body)); infoIcon.Id = icon;
-            Show(infoCard, true); PlaceScanner();
+            Show(infoCard, true); RefreshPersistent();   // ends in PlaceScanner
         }
 
-        public void HideInfo() { Show(infoCard, false); PlaceScanner(); }
+        public void HideInfo() { Show(infoCard, false); infoInSlot = false; RefreshPersistent(); }   // also the card's × button: the tracker comes straight back
 
         /// title: Title Case — H2/H3 have no uppercase rule; caps are for Readout/Label only.
         public void ShowTooltip(string title, string body, IconId icon, Vector2 screenPos)

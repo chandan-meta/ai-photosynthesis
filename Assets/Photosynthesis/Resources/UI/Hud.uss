@@ -230,3 +230,6 @@
     transition-duration: 0.25s, 0.3s;
     transition-timing-function: ease-out-cubic, ease-out-back;
 }
+/* a new callout's leader line draws out from its anchor dot (Hud.Callout starts it at width 0) */
+.ps-leader { transition-property: width; transition-duration: 0.45s; transition-timing-function: ease-out-cubic; }
+.ps-reduce .ps-leader { transition-duration: 0s; }

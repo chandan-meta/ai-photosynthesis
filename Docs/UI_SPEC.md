@@ -69,7 +69,7 @@ Glows (cyan/green/gold/red): 0/0/18 colour @55% — emulate with a 2–4px borde
 * **Question Card** 620 wide, padding 24, gap 16 at x120 y170: header ("QUESTION n OF m" Label + gold pill e.g. "RECALL · ADAPTIVE"), Curio lead (Small cyan with 32px avatar), question H2 (572 wide), options A–D, footer (Ghost "Ask Dr. Curio for a hint" + Primary "Submit answer ›").
 * **Feedback — Correct** 580 wide, padding 28, correct stroke 2 + green glow, in the question card's slot (x120 y170): 56px check ring + "Correct!" H1 green + Small; Body; visual recap 524×128 (the concept's 3-step path, last step gold); buttons (Secondary "See the journey again" + Primary "Continue ›").
 * **Feedback — Reteach** 480 wide at x40 y260, red stroke 2 + red glow: replay ring + "Not quite — watch again" H2 red; Small; step pills (done ✓ green, current cyan ▶, todo muted); progress bar; Secondary "Watch again" + Primary "Try again". After a second miss: answer card (Feedback, red) with letter title ("The answer is B"), answer body, recap strip, Secondary "See it again" + Primary "Continue".
-* **World Callout**: 12px anchor dot + 48×2 leader + tag (sunken @85%, stroke tone 1.5, radius 12, padding 8×14): Readout title + Small sub. Tones cyan/gold/green/blue/orange.
+* **World Callout**: 12px anchor dot + 48×2 leader + tag (sunken @85%, stroke tone 1.5, radius 12, padding 8×14): Readout title + Small sub. Tones cyan/gold/green/blue/orange. The ring on the dot pulses; a new tag's leader draws out from the dot (0 → 48 px, 0.45 s ease-out-cubic, `.ps-leader`; instant under Reduce motion). The tag sits to the right of the dot and flips inward past 0.64 of the width, unless the caller forces a side (`Hud.Callout(..., left: true/false)`).
 * **Magnification** segmented pill (1× · 10× · 100×), selected segment cyan @22% + cyan stroke, top-centre y40.
 * **Zoom Path** breadcrumb: Whole Plant › Leaf › Cell › Chloroplast; current step green @90%.
 * **Zoom Control** left x40 y420: glass radius 16, zoom icon, + and − 36px circles, "Zoom" caption.
@@ -118,6 +118,27 @@ leaf sprout antenna (green gradient), gold-rimmed lens r6.5 at (47,44).
   reads "Back to the plant").
 * **Prologue** (Scene 3): cinematic HUD mode from the dive through the leaf until the clue cards appear; no new elements.
 * **Hub button**: after ~22 s in a clue hub, the standard big Gold button (bottom slot) "OPEN CLUE 0N" with the Target icon.
+
+## Stomata close-up (2026-10-10; Figma still View-only, so this is the design record)
+Scene 4 at 100×: the learner must be able to read what is being explained while the stoma fills the frame, with the centre of the
+screen left to the anatomy.
+* **Reading card**: the standard Info Card (380 wide, padding 20) in the progress panel's slot (right 40, top 140): H2 "Stomata —" /
+  "Tiny Gateways of the Leaf" (an explicit break after the dash), Stomata icon in the 340×150 visual, Body "Stomata are tiny openings on
+  the leaf surface that allow carbon dioxide to enter and regulate gas exchange." About 323 px tall, so it ends near y 463: under the
+  progress panel (top 380) it would end near 703 and cover Dr. Curio's head in companion mode (head top ≈ 0.634 of the canvas height:
+  685 at 1080, 571 on the 1600×900 floor). The progress panel steps aside while the card is up (`Hud.ShowInfo(..., slot: true)`) and
+  slides back when it goes. The card fades in (`.ps-anim`, from the right) as Dr. Curio says "These tiny openings are called stomata."
+  and fades out just before the CLUE 01 UNLOCKED reward card (it would otherwise answer Q1); the tracker is back in time for the clue's
+  pop. The learner may close it earlier with its × button, which brings the tracker straight back. While the Ask AI chat is open the
+  card steps aside like the tracker it replaces (moved beside the chat it would cover the stoma's labels) and returns when the chat closes.
+* **Labels** (World Callouts on the hero stoma): STOMATAL PORE (green, sub "One stoma · plural: stomata") anchored 1 m along the slit at
+  its left tip with the tag forced to the LEFT, shown as the 10× → 100× zoom begins so it rides the zoom and points at the pore throughout
+  (the Ask-AI "show me CO₂ / stomata" action uses the same anchor and side; the Q1/Q2 replay mirrors it to the slit's right tip with the
+  tag to the right, because the reteach card is up on the left, x 40–520); GUARD CELLS (cyan, "Open and close the
+  pore") on the far guard cell's crest, tag to the right, as Dr. Curio says "Found something."; CO₂ ENTERING (cyan, "Carbon dioxide from
+  the air") riding the highlighted molecule from the air, through the pore, into the cavity, gone when the 4 s entry ends so the pore
+  centre stays clear. The pore and guard-cell labels clear with the reward card.
+* The glowing CO₂ (halo + trail), the pulsing guard-cell rim and the ambient CO₂ are the existing Scene 4 effects, unchanged.
 
 ## Touch sizes (2026-10-08)
 Zoom ± 48 (icon 22) · dialogue › 48 · close buttons 44 · `.ps-seg` padding 13×18 (~44 tall; the breadcrumb sits at top 44 and the

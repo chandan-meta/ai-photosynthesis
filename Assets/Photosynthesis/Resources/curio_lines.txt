@@ -46,7 +46,6 @@ s8_water|We've brought in water.
 s8_doing|And our food factory is doing…
 s8_nothing|…absolutely nothing.
 s8_missing|We're missing something.
-s8_inspect|Take a look around the plant. What could be missing?
 s8_thereyou|There you are!
 s8_light|Light provides the energy that drives photosynthesis.
 s8_everything|We've got everything.
