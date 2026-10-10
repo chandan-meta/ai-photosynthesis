@@ -114,20 +114,23 @@ namespace Photosynthesis
             foreach (Sfx s in Enum.GetValues(typeof(Sfx))) { var k = s; jobs.Add(("sfx:" + (int)k, () => Synth.MakeSfx(k))); }
             void Amb(string b) => jobs.Add(("amb:" + b, () => Synth.MakeAmbience(b)));
             Amb("micro"); Amb("soil"); Amb("xylem"); Amb("dark"); Amb("cell");
-            // ponytail: one background Task renders everything (~3–8 s total, all off the main thread). WebGL has no threads —
-            // render inline in small chunks there if that platform is ever targeted.
+            // ponytail: one background Task renders everything (~3–8 s total, all off the main thread). WebGL has no threads, so there
+            // Update renders one clip per frame on the main thread instead (short hitches while the start banner is up).
+#if !UNITY_WEBGL || UNITY_EDITOR
             renderWorker = Task.Run(Work);
+#endif
         }
 
-        void Work()
+        void Work() { while (!quitting && RenderNext()) { } }
+
+        /// Renders the next queued clip into `rendered`; false once the queue is empty.
+        bool RenderNext()
         {
-            while (!quitting)
-            {
-                (string key, Func<float[]> make) job;
-                lock (jobs) { if (jobs.Count == 0) return; job = jobs[0]; jobs.RemoveAt(0); }
-                try { var data = job.make(); if (!quitting) rendered.Enqueue((job.key, data)); }
-                catch (Exception e) { if (!quitting) Debug.LogWarning($"[Photosynthesis] audio render '{job.key}' failed: {e.Message}"); }
-            }
+            (string key, Func<float[]> make) job;
+            lock (jobs) { if (jobs.Count == 0) return false; job = jobs[0]; jobs.RemoveAt(0); }
+            try { var data = job.make(); if (!quitting) rendered.Enqueue((job.key, data)); }
+            catch (Exception e) { if (!quitting) Debug.LogWarning($"[Photosynthesis] audio render '{job.key}' failed: {e.Message}"); }
+            return true;
         }
 
         void Prioritise(string key)
@@ -156,6 +159,9 @@ namespace Photosynthesis
         {
             if (!inited || quitting) return;
             float dt = AudioListener.pause ? 0f : Time.unscaledDeltaTime;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            RenderNext();   // no threads in the browser: the worker's job, one clip per frame
+#endif
             // Clips arrive from the worker: several small SFX per frame, at most one long loop (SetData cost).
             for (int n = 0; n < 4 && rendered.TryDequeue(out var r); n++) { Accept(r.key, r.data); if (!r.key.StartsWith("sfx:", StringComparison.Ordinal)) break; }
 

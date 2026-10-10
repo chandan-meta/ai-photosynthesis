@@ -1,12 +1,33 @@
 # Handoff — Photosynthesis module, 2026-10-10 (stomata UI · Clue 3 · formula sweep)
 
-Read this first. Section 0c is the latest work (uncommitted on `codex/root-material-upgrade` when written); 0a/0b and 1–8 still hold
-except where 0c says otherwise. The 2026-10-09/10 sessions in between (materials, imported leaf/chloroplast models, licensed soundtrack)
+Read this first. Sections 0d and 0c are the latest work (branch `codex/root-material-upgrade`); 0a/0b and 1–8 still hold except where
+0c/0d say otherwise. The 2026-10-09/10 sessions in between (materials, imported leaf/chloroplast models, licensed soundtrack)
 are documented in `Docs/Photosynthesis/*.md`.
 Project: `D:\AI unity project\AI PHOTOSYNTHESIS` (Unity 6000.3.0f1, URP 17.3, UI Toolkit, Input System).
 Git: local repository, `main` = the module (baseline `daf9bf5`, `85e0b0a` review passes, `ea251e4` the Dr. Curio scarf, then the
 new chamber environment). Branch `feature/tripo-curio` parks the rejected character replacement (0b). Since 2026-10-10 the remote
 `origin` is https://github.com/chandan-meta/ai-photosynthesis (`main` pushed at `8902082`); section 7 predates it.
+
+## 0d. WebGL build (2026-10-10, evening)
+
+**Request.** "make webgl build and give me zip, after push on git".
+
+**Done.** `Photosynthesis ▸ Build WebGL` (`PhotosynthesisBuild.BuildWebGL`) → `Builds/WebGL/`, release, 216 MB (214 MB data, 12.5 MB wasm).
+It sets gzip with the decompression fallback (any static host works, no server headers needed) and a 4 GB memory ceiling, and after
+building it injects CSS into `index.html` so the canvas fills the window: the Default template draws 960×600 on desktop, which would
+shrink the HUD below its 1600×900 floor. `AudioDirector` rendered the procedural SFX and ambience on `Task.Run`, which never runs in a
+single-threaded browser; on WebGL, `Update` now renders one clip per frame on the main thread instead. Hosting zip:
+`Builds/Photosynthesis_WebGL.zip` (226.5 MB, `index.html` at the root, `README.txt` with hosting notes). Batch build: start directly
+on the target (`-buildTarget WebGL`, about 20 min including the one-time WebGL import), then reopen with
+`-buildTarget StandaloneWindows64 -quit` so the editor is back on Windows (both done).
+
+**Tested in a browser** (the Claude desktop app's browser, local `http.server`, 1280×720 viewport): it loads and runs. Played from Start
+Investigation through the intro, Clue 1 (pore label riding the zoom, GUARD CELLS, the card in the tracker's slot, CO₂ ENTERING leaving
+at entry, reward with the tracker back), Q1/Q2, Clue 2 (roots, soil pick, xylem ride), Clue 3 (narration straight into the Q5 card, no
+inspect step), skylight, Q6, and Enter Leaf ("Time to go deeper." with the push into the tissue). Console: no errors, exceptions or audio
+render failures; only URP's usual start-up notices that `Hidden/CoreSRP/CoreCopy`, `StencilDitherMaskSeed` and `HDRDebugView` are not
+supported. **Limits:** voice questions are Windows-only (the Ask AI mic says so); SFX render on the main thread during the first seconds,
+while the start banner is up. Not tested: Safari, mobile browsers, low-end GPUs; frame rate not measured.
 
 ## 0c. Stomata reading card, Clue 3 without the plant-inspection step, glucose-formula sweep (2026-10-10)
 
@@ -52,7 +73,9 @@ before "And look what's entering" (user-supplied text); Q5's lead now follows st
 four facts just narrated (a shorter lead would need a new clip); pre-existing: Ask-AI Help replies that embed a hint use the device
 voice, because the runtime sentence split keeps "try “Show me water.” Select…" together.
 
-**Verification and its limit.** `bash Tools/Compile/check.sh "Runtime Editor" 60` → no errors or warnings. **No Play Mode / player run
+**Verification and its limit.** Update, same evening: the final code was then played through both sequences in the WebGL build (0d),
+which supersedes the "not run" below; a Windows player rebuild and `fulltest.sh` are still to do.
+`bash Tools/Compile/check.sh "Runtime Editor" 60` → no errors or warnings. **No Play Mode / player run
 of the final code was possible:** the user's Unity editor held this project until about 17:35 (`Temp/UnityLockfile`, Unity.exe with
 `-projectpath "…AI PHOTOSYNTHESIS"`), which blocks batch builds, and both drives were down to about 1 GB free, so a project copy could
 not be built either. Run instead: the existing dev player (`Builds/Win`, built 2026-10-10 13:37, before this change) with

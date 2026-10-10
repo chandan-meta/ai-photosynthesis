@@ -13,6 +13,14 @@ Release player for schools (no watermark, no profiler, no F1 panel): **Photosynt
 `Builds/WinRelease/Photosynthesis.exe` (batch: `-executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildPlayerRelease`).
 Leave the `*_BurstDebugInformation_DoNotShip` folder out of the zip given to schools.
 
+Browser player: **Photosynthesis ▸ Build WebGL** → `Builds/WebGL/` (release, no F1 panel). Batch, starting directly on the target so
+textures import once: `-batchmode -buildTarget WebGL -executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildWebGL -quit`; then
+reopen once with `-batchmode -buildTarget StandaloneWindows64 -quit` so the editor is back on Windows. The build uses gzip with the
+decompression fallback (any static host works, no server headers needed) and the page fills the browser window. It must be served over
+HTTP, not opened as a file: upload the folder (itch.io, GitHub Pages, a school server) or run `python -m http.server 8000` inside it and
+open http://localhost:8000. In the browser, voice questions are off (typed questions and every narrated line work), and the procedural
+sound effects render on the main thread during the first seconds after loading, so the start banner can stutter briefly.
+
 ## Controls
 | Action | Input |
 |---|---|
