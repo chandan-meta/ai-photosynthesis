@@ -1,6 +1,6 @@
 # Reference implementation map
 
-Entry scene remains `Assets/Photosynthesis/Scenes/Scene02_BotanicalChamber.unity`. Every microscopic view is an existing runtime world, not an added gameplay scene. Existing Beat order, clues, questions, callbacks, narration text, camera destinations, picking anchors and finale remain intact.
+Entry scene is `Assets/Photosynthesis/Scenes/BotanicalChamber.unity`. Every microscopic view is an existing runtime world, not an added gameplay scene. Existing Beat order, clues, questions, callbacks, narration text, camera destinations, picking anchors and finale remain intact.
 
 | PDF page / target | Updated Unity source / assets | Camera and comparison state |
 |---|---|---|

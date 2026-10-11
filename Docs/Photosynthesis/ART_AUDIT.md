@@ -5,7 +5,7 @@ Inspected the complete supplied master prompt, 30-page PDF in page order, refere
 ## Existing project
 
 - Unity 6000.3.0f1, URP 17.3, linear color, Windows x64 builds; Input System and UI Toolkit. No pipeline migration needed.
-- Entry: Assets/Photosynthesis/Scenes/Scene02_BotanicalChamber.unity. Module.cs creates HeroPlant, Curio and seven MicroWorlds at runtime. Story.cs owns the established 24 Beat values, clue ordering, adaptive questions, narration, finale and optional review. Preserve these values and all interactions.
+- Entry: Assets/Photosynthesis/Scenes/BotanicalChamber.unity. Module.cs creates HeroPlant, Curio and seven MicroWorlds at runtime. Story.cs owns the established 24 Beat values, clue ordering, adaptive questions, narration, finale and optional review. Preserve these values and all interactions.
 - The open scene had unsaved user edits (including the panorama); saved them before implementation. Existing dirty asset/import/license changes captured in Logs/Polish/preexisting_changes.patch; pre-save scene backed up. Do not regenerate the greenhouse with BuildAll.
 - Greenhouse: Art/Environment/Chamber.fbx, ChamberBuilder.cs, Chamber.cs/ChamberBuild.cs, imported material/texture sets. Preserve the model, placement, screens and central planter.
 - Plant: PlantBuild.cs, PlantLeafShape.cs, PlantMesh.cs, HeroPlant.cs, PlantFlows.cs. Existing blade UV uses u=0.5+x, v=(s+0.30)/1.30. Preserve silhouettes and interaction queries.

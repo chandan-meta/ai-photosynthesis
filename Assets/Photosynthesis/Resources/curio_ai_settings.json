@@ -1,0 +1,6 @@
+{
+  "backendUrl": "http://localhost:8787",
+  "mock": false,
+  "language": "en",
+  "sessionSeconds": 180
+}

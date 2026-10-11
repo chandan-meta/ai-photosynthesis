@@ -13,11 +13,11 @@ namespace Photosynthesis.EditorTools
     /// One-click (or batch-mode) construction of the Scene 2+ module scene and its shared assets.
     ///   Menu: Photosynthesis ▸ Build Scene / Build Windows Player
     ///   Batch: Unity.exe -batchmode -projectPath . -executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildAll -quit
-    /// Scene 1 is never touched: this only writes Assets/Photosynthesis/Scenes/Scene02_BotanicalChamber.unity.
+    /// Scene 1 is never touched: this only writes Assets/Photosynthesis/Scenes/BotanicalChamber.unity.
     public static partial class PhotosynthesisBuild
     {
         public const string Root = "Assets/Photosynthesis";
-        public const string ScenePath = Root + "/Scenes/Scene02_BotanicalChamber.unity";
+        public const string ScenePath = Root + "/Scenes/BotanicalChamber.unity";
         const string MatDir = Root + "/Materials/Templates";
 
         /// Implemented in ChamberBuilder.cs: place the environment model under the chamber and assign refs.

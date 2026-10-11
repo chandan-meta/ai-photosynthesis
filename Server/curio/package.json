@@ -1,0 +1,13 @@
+{
+  "name": "photosynthesis-curio",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.ts",
+    "test": "node --test test/*.test.mjs",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": { "ws": "^8.18.3" },
+  "devDependencies": { "typescript": "^5.9.3", "@types/node": "^24.10.0", "@types/ws": "^8.18.1" }
+}

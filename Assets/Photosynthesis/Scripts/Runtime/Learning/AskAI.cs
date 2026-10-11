@@ -4,12 +4,9 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 
 namespace Photosynthesis
 {
-    /// What the learner wants. Mapped to safe predefined world actions by Story.WorldAction.
-    /// Order matters: everything from ShowCO2 on is a world action (Hint stays below it; new Show* go at the end).
     public enum Intent
     {
         None, Greeting, WhatIsThis, ExplainAgain, WhyNeed, WhatNext, Help, Hint,
@@ -18,281 +15,210 @@ namespace Photosynthesis
         ShowLeaf, ShowCell, ShowStem
     }
 
-    /// Ask Dr. Curio: typed or spoken questions → intent → reply (+ optional backend) → world action.
-    /// Flow: Hud.ChatSubmitted / chips / voice → Ask(text) → IntentRouter → CurioKnowledge (offline, context-aware)
-    /// → Story.WorldAction(intent) → chat bubble + "WORLD ACTION" tag → Dr. Curio speaks. The backend (if configured)
-    /// only words free-form (Intent.None) replies; it can never change scores or progression.
+    /// Owns one conversation and borrows the existing lesson, audio, UI and character systems.
     public class AskAI : MonoBehaviour
     {
-        [Tooltip("Optional chat backend (same JSON contract as the Ohm's Law Wattson proxy). Empty = offline replies.")]
-        public string endpoint = "";
-        [Tooltip("Microphone device for voice questions. Empty = system default.")]
         public string micDevice = "";
-
-        /// 0..1 live microphone level while the learner holds the mic (drives the HUD meter).
-        public float MicLevel => voice.Level;
-
         [Serializable] public class Turn { public string role, text; }
-        /// Last 12 chat turns (in memory only), oldest first. Roles: "user" / "assistant".
+        [Serializable] class Request { public string message; public CurioLessonContextProvider context; public List<Turn> history; }
+        [Serializable] class Reply { public string reply; }
         public IReadOnlyList<Turn> History => history;
-
-        const int HistoryMax = 12, TimeoutSeconds = 20;
+        public float MicLevel => realtime && live ? realtime.MicLevel : voice.Level;
+        public bool ConversationHeld { get; private set; }
+        public bool LiveSpeaking { get; private set; }
+        public float LiveLevel => LiveSpeaking && !muted ? realtime.Level : 0;
+        public bool BrowserVoice => live;
         readonly List<Turn> history = new List<Turn>();
         readonly CurioVoice voice = new CurioVoice();
-        Hud hud; Coroutine answering; UnityWebRequest web; string spokenReply;
-        CurioVoice.Phase phase; bool chatWasOpen, wired;
-        VoiceState answerState = VoiceState.Idle;   // Thinking / Speaking while an answer runs; the mic state wins over it
+        CurioAISettings settings;
+        CurioRealtimeClient realtime;
+        Hud hud;
+        Coroutine answer;
+        UnityWebRequest request;
+        bool wired, wasOpen, live, muted, savedCamera;
+        float savedScale, openedAt;
+        Beat heldBeat;
+        string pending, streamText = "";
 
-        void Start() => Wire();
-
-        void Wire()
+        void Start()
         {
-            if (wired || !Module.I || !Module.I.hud) return;
-            wired = true; hud = Module.I.hud;
-            hud.ChatSubmitted += Ask; hud.MicDown += MicDown; hud.MicUp += MicUp; hud.ResetRequested += DropAnswer;
-            voice.Heard += Ask;
-            voice.Failed += msg => { hud.AddChat(false, msg); ShowState(); };
+            settings = CurioAISettings.Load(); hud = Module.I.hud;
+            realtime = Module.Ensure<CurioRealtimeClient>(gameObject);
+            realtime.Received += OnRealtime;
+            hud.ChatSubmitted += Ask; hud.MicDown += MicDown; hud.MicUp += MicUp;
+            hud.ResetRequested += ResetConversation; hud.ChatClosed += Close;
+            hud.VoiceToggled += ToggleMute;
+            voice.Heard += Ask; voice.Failed += Notice;
+            wired = true;
         }
 
         void Update()
         {
+            if (!wired) return;
             voice.Tick();
-            if (!hud) return;
-            if (voice.State != phase) { phase = voice.State; ShowState(); }   // recording → transcribing can also happen on the 15 s auto-stop
-            bool open = hud.ChatOpen;
-            if (chatWasOpen && !open && voice.State != CurioVoice.Phase.Idle) { voice.Cancel(); ShowState(); }
-            chatWasOpen = open;
+            if (!hud.ChatOpen) { if (wasOpen) Close(); wasOpen = false; return; }
+            if (!wasOpen)
+            {
+                wasOpen = true;
+                // A submitted question or a dialogue boundary can acquire the pause before Update runs.
+                if (!ConversationHeld) hud.SetAIStatus("Waiting for a safe pause in the lesson…");
+            }
+            if (hud.Paused || Module.I.AtStartScreen) { if (ConversationHeld) hud.CloseChat(); return; }
+            if (!ConversationHeld)
+            {
+                if (hud.Cinematic) hud.SetAIStatus("A story moment is in progress. Curio will be ready afterward.");
+                else TryHold();
+            }
+            if (ConversationHeld && (Module.I.Beat != heldBeat || Time.unscaledTime - openedAt > Mathf.Clamp(settings.sessionSeconds, 30, 300)))
+            { hud.CloseChat(); return; }
+            if (voice.State == CurioVoice.Phase.Recording) hud.SetVoiceState(VoiceState.Listening);
+            else if (voice.State == CurioVoice.Phase.Transcribing) { hud.SetVoiceState(VoiceState.Transcribing); hud.SetAIStatus("Recognizing your question…"); }
         }
 
-        void OnApplicationFocus(bool focus)
+        public bool TryHold()
         {
-            if (!focus && voice.State == CurioVoice.Phase.Recording) { voice.Cancel(); ShowState(); }
+            if (!wired || !hud.ChatOpen || hud.Paused || hud.Cinematic || Module.I.AtStartScreen) return false;
+            if (ConversationHeld) return true;
+            if (Module.I.dialogue.Speaking) return false;
+            ConversationHeld = true; heldBeat = Module.I.Beat; openedAt = Time.unscaledTime;
+            savedScale = Time.timeScale; savedCamera = Module.I.cam.UserControl;
+            Time.timeScale = 0; Module.I.cam.UserControl = false;
+            live = !settings.mock && settings.Configured && CurioRealtimeClient.Supported;
+            Module.I.curio.LookAtCamera();
+            hud.SetAIStatus(settings.mock ? "Offline practice · ready to ask" : "Ready to ask");
+            if (live) { hud.SetAIStatus("Connecting… typed questions remain available"); realtime.Connect(settings, CurioLessonContextProvider.Capture(settings.language)); }
+            if (pending != null && !live) { var text = pending; pending = null; Ask(text); }
+            return true;
         }
 
-        void OnDisable()
-        {
-            voice.Cancel(); CancelAnswer(); ShowState();
-        }
-
-        /// One owner for the HUD voice indicator: Listening/Transcribing while the mic is busy, else the answer's state.
-        void ShowState()
-        {
-            if (!hud) return;
-            hud.SetVoiceState(voice.State == CurioVoice.Phase.Recording ? VoiceState.Listening
-                : voice.State == CurioVoice.Phase.Transcribing ? VoiceState.Transcribing : answerState);
-        }
-
-        void SetAnswerState(VoiceState s) { answerState = s; ShowState(); }
-
-        void OnDestroy()
-        {
-            if (hud) { hud.ChatSubmitted -= Ask; hud.MicDown -= MicDown; hud.MicUp -= MicUp; hud.ResetRequested -= DropAnswer; }
-            voice.Dispose(); CancelWeb();
-        }
-
-        // ------------------------------------------------------------------ voice
-        void MicDown()
-        {
-            Wire();
-            if (voice.State != CurioVoice.Phase.Idle || !isActiveAndEnabled) return;
-            if (MineSpeaking) Module.I.audioDirector.StopVoice();   // the learner wants to talk — Curio stops mid-answer
-            voice.Begin(micDevice);
-        }
-
-        void MicUp() => voice.End();
-
-        // ------------------------------------------------------------------ questions
         public void Ask(string text)
         {
-            Wire();
-            if (!hud || !isActiveAndEnabled || string.IsNullOrWhiteSpace(text)) return;
-            text = text.Trim();
-            if (text.Length > 300) text = text.Substring(0, 300);
-            CancelAnswer();   // the newest question wins
-            answering = StartCoroutine(Answer(text));
+            if (!wired || string.IsNullOrWhiteSpace(text)) return;
+            if (!hud.ChatOpen) hud.OpenChat();
+            text = text.Trim(); if (text.Length > 500) text = text.Substring(0, 500);
+            hud.AddChat(true, text);
+            if (!TryHold()) { pending = text; return; }
+            CancelAnswer();
+            if (Module.I.story.OpenQuestion != null) Module.I.story.NoteHelp();
+            if (live)
+            {
+                if (!realtime.Ready) { pending = text; return; }
+                Remember("user", text); realtime.Command("ask", text); return;
+            }
+            answer = StartCoroutine(Answer(text));
         }
 
         IEnumerator Answer(string text)
         {
-            var m = Module.I; var dlg = m.dialogue;
-            hud.AddChat(true, text);
-            SetAnswerState(VoiceState.Thinking);
-            Emote(CurioEmote.Think);
-            var past = new List<Turn>(history);   // backend history excludes the current message
-            Remember("user", text);
-
-            var q = IntentRouter.Parse(text);
-            // Anything but a greeting asked while a question card is open counts as help: a correct answer then earns no credit.
-            if (m.story.OpenQuestion != null && q.intent != Intent.Greeting) m.story.NoteHelp();
-            // Hint-only mode (final assessment / an open card): Dr. Curio nudges instead of answering, and the backend stays out of it.
-            bool hintOnly = m.Beat == Beat.Assessment || m.story.OpenQuestion != null;
-            float t0 = Time.unscaledTime;
-            string remote = null;
-            if (q.intent == Intent.None && !hintOnly && ValidEndpoint) yield return Remote(text, past, r => remote = r);   // free-form questions only
-            while (Time.unscaledTime - t0 < 0.45f) yield return null;   // a visible beat of "thinking"
-            while (hud.Paused && !m.story.AutoPlay) yield return null;   // never act or speak behind the pause menu: the world is read below, once play resumes
-
-            // Read the world after the wait: the story may have moved on while we were thinking.
-            bool hub = m.HubOpen; var beat = m.Beat; var open = m.story.OpenQuestion;   // Question is a plain class, so ?. is safe on it
-            hintOnly = beat == Beat.Assessment || open != null;
-            if (hintOnly) remote = null;   // a card opened while the backend was answering: no spoilers
-            string task = hintOnly || hub ? null : hud.CurrentTask;   // the story is waiting on the learner: say exactly that (hub and question cards keep their own nudges)
-            string reply = !string.IsNullOrWhiteSpace(remote) ? Clean(remote) : CurioKnowledge.Reply(q, beat, hub, m.story.ContextTopic, m.clues, hintOnly, open?.concept, task);
-            // "Show me / take me to / where ..." acts anywhere; a plain "what is X?" only acts where navigating is harmless (hub / free explore).
-            // While a card is open only "explain again" may act: no demo or callout is allowed to answer the question.
-            bool act = q.intent == Intent.ExplainAgain || open == null && q.intent >= Intent.ShowCO2 && (q.show || hub);
-            bool wasSpeaking = dlg.Speaking;
-            string extra = null;
-            if (act)
-            {
-                try { extra = m.story.WorldAction(q.intent); }
-                catch (Exception e) { Debug.LogException(e); act = false; }   // a world glitch must not leave Curio stuck "thinking"
-            }
-            bool replay = q.intent == Intent.ExplainAgain && !wasSpeaking && dlg.Speaking;   // Story re-says its last scripted line
-            if (replay) reply = "Of course — listen again.";
-            if (!string.IsNullOrEmpty(extra)) reply += " " + extra;
-            hud.AddChat(false, reply);
-            Remember("assistant", reply);
-            var action = act ? Describe(q.intent, extra, hub, beat, replay) : null;
-            if (action != null) hud.ShowWorldAction("WORLD ACTION · " + action);
-            Emote(CurioEmote.Nod);
-
-            if (replay) { SetAnswerState(VoiceState.Speaking); var line = dlg.LastLine; while (dlg.Speaking && dlg.LastLine == line) yield return null; }
-            else yield return Speak(CurioKnowledge.Spoken(reply));
-            answering = null;
-            SetAnswerState(VoiceState.Idle);
-        }
-
-        /// Speaks through Dialogue (subtitles + device TTS) without trampling scripted narration: waits up to 6 s for a pause
-        /// (longer for our own previous reply, which ends by itself). Never runs two Dialogue lines at once.
-        /// ponytail: if the story keeps talking the chat bubble carries the answer; upgrade path = a Dialogue queue with priorities.
-        IEnumerator Speak(string text)
-        {
-            var m = Module.I; var dlg = m.dialogue;
-            if (voice.State != CurioVoice.Phase.Idle) yield break;   // the learner is already asking something new: chat carries this one
-            bool mine = MineSpeaking;
-            if (mine) m.audioDirector.StopVoice();   // a newer answer replaces an older one; its line closes after a short hold
-            for (float t0 = Time.unscaledTime, limit = mine ? 16f : 6f; dlg.Speaking && Time.unscaledTime - t0 < limit;) yield return null;
-            if (dlg.Speaking || voice.State != CurioVoice.Phase.Idle) yield break;
-            SetAnswerState(VoiceState.Speaking);
-            spokenReply = text;
-            dlg.StartCoroutine(dlg.SayText(text));   // runs on Dialogue so cancelling this answer can't leave it stuck mid-line
-            while (dlg.Speaking && dlg.LastLine == text) yield return null;
-        }
-
-        bool MineSpeaking => spokenReply != null && Module.I.dialogue.Speaking && Module.I.dialogue.LastLine == spokenReply;
-
-        void Emote(CurioEmote e) { var c = Module.I.curio; if (c && c.isActiveAndEnabled) c.Emote(e); }
-
-        void Remember(string role, string text)
-        {
-            history.Add(new Turn { role = role, text = text });
-            while (history.Count > HistoryMax) history.RemoveAt(0);
-        }
-
-        /// Short label for the HUD "WORLD ACTION" tag, or null when Story.WorldAction did nothing / deferred.
-        /// ponytail: mirrors Story.WorldAction's branches; upgrade path = WorldAction reports what it did.
-        static string Describe(Intent i, string extra, bool hub, Beat beat, bool replay)
-        {
-            if (i == Intent.ExplainAgain) return replay ? "Replaying Dr. Curio's last explanation" : null;
-            if (extra != null && (extra.Contains("later") || extra.Contains("finish") || extra.Contains("soon") || extra.Contains("first") || extra.Contains("finale"))) return null;
-            if (beat == Beat.Reaction && (i == Intent.ShowCO2 || i == Intent.ShowWater)) return "Sending CO₂ and water into the chloroplast";   // Scene 10 feed assist (every other Reaction path for these says "finish…")
-            bool launch = extra != null && extra.Contains("Follow me"), explore = beat >= Beat.FreeExplore;
-            switch (i)
-            {
-                case Intent.ShowCO2:
-                case Intent.ShowStomata:
-                    if (launch) return "Opening Clue 01 · Carbon dioxide";
-                    return beat == Beat.Stomata || beat == Beat.CO2 ? "Highlighting the stoma where CO₂ enters" : "Zooming to the stomata · CO₂ in";
-                case Intent.ShowWater:
-                case Intent.ShowRoots:
-                case Intent.ShowXylem:
-                    if (launch) return "Opening Clue 02 · Water";
-                    if (beat == Beat.Water && i != Intent.ShowXylem) return extra == null ? "Picking a water molecule for the root to absorb" : null;   // a reply means no pick was forced
-                    return explore && i == Intent.ShowRoots ? "Flying down to the roots" : "Showing water rising from the roots through the xylem";
-                case Intent.ShowSunlight:
-                    return launch ? "Opening Clue 03 · Sunlight" : "Beaming sunlight onto the leaf";
-                case Intent.WherePhotosynthesis:
-                case Intent.ShowChloroplast:
-                case Intent.ShowChlorophyll:
-                    if (launch) return "Diving into the leaf";   // Story pressed ENTER LEAF for the learner
-                    if (explore) return i == Intent.WherePhotosynthesis ? "Zooming into a leaf" : "Diving into a chloroplast";
-                    return beat < Beat.EnterLeaf ? "Highlighting the leaf where food is made" : null;   // hubs before EnterLeaf only highlight: no spoilers
-                case Intent.ShowLeaf:
-                case Intent.ShowCell:
-                case Intent.ShowStem:
-                    if (launch) return "Diving into the leaf";
-                    if (explore) return i == Intent.ShowLeaf ? "Showing the leaf" : i == Intent.ShowCell ? "Entering a plant cell" : "Showing the stem";
-                    return i == Intent.ShowLeaf && beat < Beat.EnterLeaf ? "Highlighting the leaf where food is made" : null;
-                case Intent.ShowOxygen:
-                    return explore ? "Following oxygen out through a stoma" : hub ? "Showing oxygen leaving through the stomata" : null;
-                case Intent.ShowGlucose:
-                case Intent.ShowPhloem:
-                    if (explore) return i == Intent.ShowGlucose ? "Following food through the phloem" : "Showing the phloem highway";
-                    return hub ? "Showing food travelling through the phloem" : null;
-                case Intent.ShowEquation:
-                    return hub ? "Building the photosynthesis equation" : null;
-            }
-            return null;
-        }
-
-        // ------------------------------------------------------------------ optional backend (Wattson contract)
-        [Serializable] class Ctx { public string scene, beat, topic; public string[] clues; }
-        [Serializable] class Req { public string message; public Ctx context; public List<Turn> history; }
-        [Serializable] class Res { public string reply = ""; }
-
-        bool ValidEndpoint => !string.IsNullOrWhiteSpace(endpoint) && Uri.TryCreate(endpoint.Trim(), UriKind.Absolute, out var u)
-                              && (u.Scheme == Uri.UriSchemeHttps || u.Scheme == Uri.UriSchemeHttp && u.IsLoopback);
-
-        IEnumerator Remote(string message, List<Turn> past, Action<string> done)
-        {
-            var m = Module.I; var c = m.clues;
-            var body = new Req
-            {
-                message = message, history = past,
-                context = new Ctx
-                {
-                    scene = SceneManager.GetActiveScene().name, beat = m.Beat.ToString(), topic = m.story.ContextTopic,
-                    clues = new[] { "CO2:" + c[ClueId.CO2], "Water:" + c[ClueId.Water], "Sunlight:" + c[ClueId.Sunlight] }
-                }
-            };
-            web = new UnityWebRequest(endpoint.Trim(), UnityWebRequest.kHttpVerbPOST)
-            {
-                uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(body))),
-                downloadHandler = new DownloadHandlerBuffer(), timeout = TimeoutSeconds
-            };
-            web.SetRequestHeader("Content-Type", "application/json");
-            yield return web.SendWebRequest();
+            hud.SetAIStatus("Finding a lesson answer…");
+            hud.SetVoiceState(VoiceState.Thinking); Module.I.curio.Emote(CurioEmote.Think);
             string reply = null;
-            if (web.result == UnityWebRequest.Result.Success && web.downloadHandler.data != null && web.downloadHandler.data.Length < 64000)
+            var context = CurioLessonContextProvider.Capture(settings.language);
+            var past = new List<Turn>(history); Remember("user", text);
+            string url = settings.backendUrl.TrimEnd('/') + "/chat";
+            if (!settings.mock && settings.Configured && !context.hintOnly)
             {
-                try { reply = JsonUtility.FromJson<Res>(web.downloadHandler.text)?.reply; }
-                catch (ArgumentException) { }
+                request = new UnityWebRequest(url, "POST") {
+                    uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(JsonUtility.ToJson(new Request { message = text, context = context, history = past }))),
+                    downloadHandler = new DownloadHandlerBuffer(), timeout = 25
+                };
+                request.SetRequestHeader("Content-Type", "application/json");
+                yield return request.SendWebRequest();
+                if (request.result == UnityWebRequest.Result.Success && request.downloadHandler.data.Length < 32000)
+                    try { reply = JsonUtility.FromJson<Reply>(request.downloadHandler.text)?.reply; } catch (ArgumentException) { }
+                request.Dispose(); request = null;
+                if (string.IsNullOrWhiteSpace(reply)) Notice("Connection unavailable. Here is an offline lesson answer; try again when connected.");
             }
-            else Debug.LogWarning($"[AskAI] Backend unavailable ({web.error}) — using Dr. Curio's offline reply.");
-            CancelWeb();
-            done(reply);
+            if (string.IsNullOrWhiteSpace(reply))
+            {
+                var m = Module.I;
+                reply = CurioKnowledge.Reply(IntentRouter.Parse(text), m.Beat, m.HubOpen, m.story.ContextTopic, m.clues,
+                    context.hintOnly, m.story.OpenQuestion?.concept, hud.CurrentTask);
+            }
+            reply = Plain(reply); Remember("assistant", reply); hud.AddChat(false, reply);
+            Module.I.curio.Emote(CurioEmote.Nod);
+            if (!muted)
+            {
+                var clip = Dialogue.KbClip(CurioKnowledge.Spoken(reply));
+                if (clip) Module.I.audioDirector.PlayVoice(clip); else Module.I.audioDirector.Speak(CurioKnowledge.Spoken(reply));
+                hud.SetVoiceState(VoiceState.Speaking); Module.I.curio.Talking = true;
+                while (Module.I.audioDirector.VoicePlaying) yield return null;
+            }
+            Module.I.curio.Talking = false; hud.SetVoiceState(VoiceState.Idle); answer = null;
+            hud.SetAIStatus(settings.mock ? "Offline practice · ready to ask" : "Ready to ask");
         }
 
-        /// Plain text only (no UI rich-text tags), kept short.
-        static string Clean(string s)
+        void MicDown()
         {
-            s = s.Replace("<", "").Replace(">", "").Trim();
-            return s.Length > 700 ? s.Substring(0, 700).TrimEnd() + "…" : s;
+            if (!TryHold()) { Notice("I'll listen after this explanation. You can type your question now."); return; }
+            CancelAnswer();
+            if (live) { if (realtime.Ready) realtime.Command("mic", "on"); else Notice("Connecting — hold the microphone again when ready."); }
+            else { voice.Begin(micDevice); if (voice.State == CurioVoice.Phase.Recording) hud.SetAIStatus("Listening… hold the microphone while you speak, then release."); }
         }
-
-        void DropAnswer() { voice.Cancel(); CancelAnswer(); ShowState(); }   // Restart: a held or in-flight answer belongs to the old run
-
+        void MicUp() { if (live) realtime.Command("mic", "off"); else voice.End(); }
+        void ToggleMute(bool value)
+        {
+            muted = value; if (live) realtime.Command("mute", value ? "on" : "off");
+            else if (value) Module.I.audioDirector.StopVoice();
+        }
+        void OnRealtime(CurioRealtimeClient.Event e)
+        {
+            if (!ConversationHeld) return;
+            switch (e.type)
+            {
+                case "ready":
+                    hud.SetAIStatus("Ready to ask · hold the microphone or type");
+                    realtime.Command("mute", muted ? "on" : "off");
+                    if (pending != null) { var text = pending; pending = null; Ask(text); }
+                    break;
+                case "listening": hud.SetVoiceState(VoiceState.Listening); hud.SetAIStatus("Listening… release to send"); Module.I.curio.Emote(CurioEmote.Nod); break;
+                case "thinking": hud.SetVoiceState(VoiceState.Thinking); hud.SetAIStatus("Finding a lesson answer…"); Module.I.curio.Emote(CurioEmote.Think); streamText = ""; break;
+                case "question": hud.AddChat(true, Plain(e.text)); Remember("user", Plain(e.text)); if (Module.I.story.OpenQuestion != null) Module.I.story.NoteHelp(); break;
+                case "delta": streamText = Plain(e.text); hud.SetAITranscript(streamText); break;
+                case "answer": hud.AddChat(false, Plain(e.text)); Remember("assistant", Plain(e.text)); hud.SetAITranscript(""); break;
+                case "speaking": LiveSpeaking = true; hud.SetVoiceState(VoiceState.Speaking); hud.SetAIStatus("Dr. Curio is speaking"); break;
+                case "stopped": LiveSpeaking = false; hud.SetVoiceState(VoiceState.Idle); hud.SetAIStatus("Ready to ask"); break;
+                case "notice": Notice(e.text); break;
+                case "error":
+                    LiveSpeaking = false; live = false; hud.SetVoiceState(VoiceState.Idle);
+                    Notice("Live voice is unavailable. Type a question to retry using text, or close and reopen to reconnect.");
+                    if (pending != null) { var text = pending; pending = null; Ask(text); }
+                    break;
+                case "closed": hud.CloseChat(); break;
+                case "latency": Debug.Log($"[Curio] First audible response: {e.firstAudioMs:0} ms; total answer: {e.totalMs:0} ms"); break;
+            }
+        }
+        static string Plain(string text) { text = (text ?? "").Replace("<", "").Replace(">", ""); return text.Length > 4000 ? text.Substring(0, 4000) : text; }
+        void Remember(string role, string text) { history.Add(new Turn { role = role, text = text }); while (history.Count > 12) history.RemoveAt(0); }
+        void Notice(string text) { if (hud) hud.SetAIStatus(text); }
         void CancelAnswer()
         {
-            if (answering != null) StopCoroutine(answering);
-            answering = null; answerState = VoiceState.Idle; CancelWeb();
+            if (answer != null) StopCoroutine(answer); answer = null;
+            if (request != null) { request.Abort(); request.Dispose(); request = null; }
+            if (ConversationHeld) { Module.I.audioDirector.StopVoice(); Module.I.curio.Talking = false; }
         }
-
-        void CancelWeb()
+        void ResetConversation() { if (hud) hud.CloseChat(); Close(); history.Clear(); }
+        void Close()
         {
-            if (web == null) return;
-            web.Abort(); web.Dispose(); web = null;
+            wasOpen = false;
+            pending = null; voice.Cancel(); CancelAnswer();
+            if (realtime) realtime.Close(); live = false; LiveSpeaking = false;
+            if (ConversationHeld)
+            {
+                ConversationHeld = false;
+                if (Module.I && Module.I.cam) Module.I.cam.UserControl = savedCamera;
+                // A pause menu owns timeScale until it closes; tell it the original lesson speed.
+                if (hud && hud.Paused) hud.RestoreLessonSpeed(savedScale); else Time.timeScale = savedScale;
+            }
+            if (hud) { hud.SetVoiceState(VoiceState.Idle); hud.SetAITranscript(""); }
+        }
+        void OnApplicationFocus(bool focus) { if (!focus && hud && hud.ChatOpen) hud.CloseChat(); }
+        void OnDisable() { if (wired) Close(); }
+        void OnDestroy()
+        {
+            if (hud) { hud.ChatSubmitted -= Ask; hud.MicDown -= MicDown; hud.MicUp -= MicUp; hud.ResetRequested -= ResetConversation; hud.ChatClosed -= Close; hud.VoiceToggled -= ToggleMute; }
+            if (realtime) realtime.Received -= OnRealtime;
+            voice.Dispose();
         }
     }
 }

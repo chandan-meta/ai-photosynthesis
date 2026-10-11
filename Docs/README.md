@@ -4,7 +4,7 @@ Unity 6000.3.0f1 · URP · Input System · UI Toolkit. Scene 1 (rooftop) is out 
 
 ## Open & play
 1. Open the project in Unity 6000.3.0f1.
-2. Open the existing `Assets/Photosynthesis/Scenes/Scene02_BotanicalChamber.unity`. **Build Scene regenerates this scene**; it is not needed to play or build the current polished project.
+2. Open the existing `Assets/Photosynthesis/Scenes/BotanicalChamber.unity`. **Build Scene regenerates this scene**; it is not needed to play or build the current polished project.
 3. Press Play, then **Start Investigation** on the live greenhouse banner. The original module starts at **Scene 2 — A New World** (golden particles settle, the
    Botanical Investigation Chamber forms) and runs through Scene 15 (Free Explore).
 
@@ -20,8 +20,9 @@ textures import once: `-batchmode -buildTarget WebGL -executeMethod Photosynthes
 reopen once with `-batchmode -buildTarget StandaloneWindows64 -quit` so the editor is back on Windows. The build uses gzip with the
 decompression fallback (any static host works, no server headers needed) and the page fills the browser window. It must be served over
 HTTP, not opened as a file: upload the folder (itch.io, GitHub Pages, a school server) or run `python -m http.server 8000` inside it and
-open http://localhost:8000. In the browser, voice questions are off (typed questions and every narrated line work), and the procedural
-sound effects render on the main thread during the first seconds after loading, so the start banner can stutter briefly.
+open http://localhost:8000. The optional Curio service adds WebRTC voice and contextual AI replies. Offline lesson answers and the
+Windows speech fallback remain available when it is not configured. See [Server/curio/README.md](../Server/curio/README.md)
+before enabling live API access. A real API connection is required to measure voice latency.
 
 ## Controls
 | Action | Input |
@@ -65,13 +66,14 @@ cross-section model, continuing into green fog) lights up on "food is being made
 trigger a 3D reteach (e.g. plant turns transparent and water replays root → xylem → leaf) and a retry; predictions never fail.
 The final set (~5) is chosen from Q14–Q20 plus re-checks of missed concepts and re-plans if the level changes mid-set.
 
-**Ask Dr. Curio (AI):** `Learning/AskAI.cs` + `IntentRouter` + `CurioKnowledge` (offline, context-aware) →
-`Story.WorldAction(intent)` performs safe predefined world actions ("Show me water" → water investigation / xylem demo,
-"Where does CO₂ enter?" → leaf underside + CO₂ flow, "Take me to the chloroplast", …) without ever breaking clue order.
-Optional backend: set `AskAI.endpoint` (same JSON contract as the Ohm's Law Wattson proxy); keys never live in Unity.
-Voice: hold-to-talk → offline Windows speech recognition (`StreamingAssets/CurioSpeech/Recognize.ps1`). Replies are spoken in the same neural
-child voice as the story (pre-generated per sentence, `Resources/VO/kb`); a reply with any sentence that has no clip (backend answers,
-composed text) falls back to the device voice.
+**Ask Dr. Curio (AI):** `Learning/AskAI.cs` reuses `IntentRouter` + `CurioKnowledge` for safe offline lesson-aware replies.
+Model answers never call `Story.WorldAction`; the existing suggestion chips keep their own preapproved lesson actions. Optional OpenAI
+Realtime WebRTC runs on WebGL through a server-negotiated service with a private sideband connection and usage
+limits. Typed questions fall back to `/chat`, which uses the same lesson context and hint-only policy. See
+[`Server/curio/README.md`](../Server/curio/README.md) and `.env.example`; credentials do not belong in Unity.
+Windows retains its local push-to-talk recognizer and Curio voice clips, and can use the configured text endpoint on a private
+gateway configured for origin-less desktop clients. Mic and network
+errors keep text entry available. Live voice needs deployment credentials and a browser test.
 
 ## Voice-over
 Lines: `Assets/Photosynthesis/Resources/curio_lines.txt` (id|text — single source for subtitles and VO).

@@ -94,7 +94,13 @@ namespace Photosynthesis
                 {
                     var d = MicDevices(); MicDevice = i > 0 && i <= d.Length ? d[i - 1] : null;
                     var m = Module.I; if (m && m.ai) m.ai.micDevice = MicDevice ?? "";   // Ask AI records from its own field
+#if UNITY_WEBGL && !UNITY_EDITOR
+                    CurioSelectMicrophone(MicDevice ?? "");
+#endif
                 }, out micValue));
+#if UNITY_WEBGL && !UNITY_EDITOR
+            audio.Put(Btn("Allow / refresh microphones", ButtonKind.Secondary, IconId.Mic, () => { micValue.text = "Checking microphone access…"; CurioMicrophones(gameObject.name); }));
+#endif
 
             var display = settingsTabs[1];
             SettingRow(display, "Graphics quality", Drop(() => QualitySettings.names, QualitySettings.GetQualityLevel,
@@ -132,16 +138,32 @@ namespace Photosynthesis
         }
 
         static readonly string[] SubSizes = { "Normal", "Large" };
-        // Microphone does not exist on WebGL.
 #if UNITY_WEBGL && !UNITY_EDITOR
-        static string[] MicDevices() => Array.Empty<string>();
+        [System.Runtime.InteropServices.DllImport("__Internal")] static extern void CurioMicrophones(string target);
+        [System.Runtime.InteropServices.DllImport("__Internal")] static extern void CurioSelectMicrophone(string device);
+        [Serializable] public class BrowserMic { public string id, label; }
+        [Serializable] public class BrowserMics { public BrowserMic[] devices; public string error; }
+        static BrowserMic[] browserMics = Array.Empty<BrowserMic>();
+        static string[] MicDevices() => Array.ConvertAll(browserMics, d => d.id);
+        public void OnBrowserMicrophones(string json)
+        {
+            var result = JsonUtility.FromJson<BrowserMics>(json);
+            browserMics = result.devices ?? Array.Empty<BrowserMic>();
+            micValue.text = !string.IsNullOrEmpty(result.error) ? result.error : browserMics.Length > 0 ? "Choose microphone below" : "No microphone found";
+            if (!string.IsNullOrEmpty(result.error)) Debug.LogWarning("[Curio] " + result.error);
+        }
 #else
         static string[] MicDevices() => Microphone.devices;
 #endif
         static string[] MicOptions()
         {
             var d = MicDevices(); var o = new string[d.Length + 1]; o[0] = "Default microphone";
-            Array.Copy(d, 0, o, 1, d.Length); return o;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            for (int i = 0; i < d.Length; i++) o[i + 1] = browserMics[i].label;
+#else
+            Array.Copy(d, 0, o, 1, d.Length);
+#endif
+            return o;
         }
 
         static void SettingRow(FlexBox tab, string label, VisualElement control)
@@ -175,6 +197,10 @@ namespace Photosynthesis
             var q = QualitySettings.names; int qi = QualitySettings.GetQualityLevel();
             qualityValue.text = qi >= 0 && qi < q.Length ? q[qi] : "—";
             micValue.text = string.IsNullOrEmpty(MicDevice) ? "Default microphone" : MicDevice;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            var selectedMic = Array.Find(browserMics, d => d.id == MicDevice);
+            if (selectedMic != null) micValue.text = selectedMic.label;
+#endif
             subSizeValue.text = SubSizes[largeSubs ? 1 : 0];
         }
 
@@ -332,14 +358,22 @@ namespace Photosynthesis
         VisualElement chatPanel, voiceStrip, micBtn; ScrollView chatScroll; TextField chatField; Label voiceLabel; ArtElement chatAvatar;
         readonly VisualElement[] bars = new VisualElement[16];
         bool chatOpen, micHeld; VoiceState voice; string lastLearner; float lastLearnerTime;
-        static readonly string[] Suggestions = { "What am I looking at?", "Show me water.", "Where is photosynthesis happening?", "Explain this again.", "Take me to the chloroplast.", "What is xylem?", "Where does oxygen go?" };
+        static readonly string[] Suggestions = { "What am I looking at?", "How does water reach leaves?", "Explain this again." };
 
         public event Action<string> ChatSubmitted;
-        public event Action MicDown, MicUp;
+        public event Action MicDown, MicUp, ChatClosed;
+        public event Action<bool> VoiceToggled;
+        Label aiStatus, aiTranscript;
+        VisualElement chatBlocker;
+        public void SetAIStatus(string text) { if (aiStatus != null) aiStatus.text = text; }
+        public string AIStatus => aiStatus?.text ?? "";
+        public void SetAITranscript(string text) { if (aiTranscript != null) { aiTranscript.text = text; aiTranscript.style.display = string.IsNullOrEmpty(text) ? DisplayStyle.None : DisplayStyle.Flex; } }
+        public void RestoreLessonSpeed(float speed) { savedTimeScale = speed; }
         public bool ChatOpen => chatOpen;
 
         void BuildChat()
         {
+            chatBlocker = Abs(new VisualElement(), 0, 0, 0, 0); chatBlocker.style.display = DisplayStyle.None; chatLayer.Add(chatBlocker);
             chatPanel = Hidden(Abs(Panel(20, 0.92f), float.NaN, float.NaN, 40, 180)); Size(chatPanel, 460); Pad(chatPanel, 18, 18, 18, 18);
             var col = new FlexBox(false, 14); chatPanel.Add(col);
 
@@ -350,7 +384,7 @@ namespace Photosynthesis
             head.Put(Round(44, IconId.Close, 18, TextSecondary, CloseChat, "ps-round--ghost"));
 
             chatScroll = col.Put(new ScrollView(ScrollViewMode.Vertical));
-            chatScroll.style.maxHeight = 300; chatScroll.style.flexShrink = 1;
+            chatScroll.style.maxHeight = 200; chatScroll.style.flexShrink = 1;
             chatScroll.verticalScrollerVisibility = ScrollerVisibility.Hidden; chatScroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
 
             voiceStrip = col.Put(new FlexBox(true, 12)); Pad(voiceStrip, 8, 14); Radius(voiceStrip, 14); Bg(voiceStrip, AG(Sunken, 0.75f));
@@ -359,6 +393,12 @@ namespace Photosynthesis
             for (int i = 0; i < bars.Length; i++) { var b = bars[i] = barBox.Put(new VisualElement()); Size(b, 5, 8); Radius(b, 2.5f); Bg(b, Cyan); }
             voiceLabel = ((FlexBox)voiceStrip).Put(Txt("", TS.Small, TextSecondary));
 
+            aiStatus = col.Put(WrapText(Txt("Ready to ask", TS.Small, TextSecondary))); aiStatus.enableRichText = false;
+            aiTranscript = col.Put(WrapText(Txt("", TS.Body, Text))); aiTranscript.enableRichText = false;
+            aiTranscript.style.maxHeight = 110; aiTranscript.style.overflow = Overflow.Hidden;
+            aiTranscript.style.display = DisplayStyle.None;
+            var voiceToggle = col.Put(new Toggle("Mute AI voice")); voiceToggle.style.minHeight = 44;
+            voiceToggle.RegisterValueChangedCallback(e => VoiceToggled?.Invoke(e.newValue));
             var chips = col.Put(new VisualElement { pickingMode = PickingMode.Ignore });
             chips.style.flexDirection = FlexDirection.Row; chips.style.flexWrap = Wrap.Wrap; chips.style.marginBottom = -8;
             foreach (var q in Suggestions)
@@ -369,7 +409,7 @@ namespace Photosynthesis
             }
 
             var input = col.Put(new FlexBox(true, 10));
-            chatField = new TextField { maxLength = 240 }; chatField.AddToClassList("ps-field");
+            chatField = new TextField { maxLength = 500, tooltip = "Ask Mr. Curio a question" }; chatField.AddToClassList("ps-field");
             chatField.textEdition.placeholder = "Type your question, or hold the mic…";
             chatField.textEdition.hidePlaceholderOnFocus = false;            // the field is focused on open: keep its affordance text
             chatField.textSelection.cursorColor = Cyan; chatField.textSelection.selectionColor = A(Cyan, 0.35f);
@@ -388,7 +428,7 @@ namespace Photosynthesis
             input.Put(Round(44, IconId.Send, 20, Scene, SubmitField, "ps-round--send"));
 
             chatLayer.Add(chatPanel);
-            AddChat(false, "Hi! I'm Dr. Curio. Ask me anything about photosynthesis — or ask me to show you something!");
+            AddChat(false, "Hi! I'm Dr. Curio. Ask me about photosynthesis! Your lesson will wait while we talk.");
         }
 
         public void OpenChat() => OpenChat(true);
@@ -396,8 +436,8 @@ namespace Photosynthesis
         /// focusField: the learner opened it to type (orb click); the hint button and the M talk key keep the keyboard free.
         void OpenChat(bool focusField)
         {
-            if (chatOpen) return;
-            chatOpen = true; Show(chatPanel, true); RefreshPersistent();   // RefreshPersistent also moves the info card aside
+            if (chatOpen || !askOn || Paused) return;
+            chatOpen = true; chatBlocker.style.display = DisplayStyle.Flex; Show(chatPanel, true); RefreshPersistent();   // RefreshPersistent also moves the info card aside
             exploreRow.style.right = 40 + 460 + 20;   // the Free Explore bar re-centres left of the chat
             ScrollChatToEnd();
             if (focusField) FocusSoon(chatField);
@@ -406,9 +446,9 @@ namespace Photosynthesis
         public void CloseChat()
         {
             if (!chatOpen) return;
-            chatOpen = false; Show(chatPanel, false);
+            chatOpen = false; chatBlocker.style.display = DisplayStyle.None; Show(chatPanel, false);
             if (TypingInChat) chatField.Blur();
-            StopTalk(); RefreshPersistent();
+            StopTalk(); ChatClosed?.Invoke(); RefreshPersistent();
             exploreRow.style.right = 0;
         }
 

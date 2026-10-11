@@ -96,7 +96,11 @@ namespace Photosynthesis
 
         IEnumerator Speak(string text, AudioClip clip, float hold, bool tts)
         {
-            var m = Module.I; int my = ++gen; LastLine = text; next = false; Speaking = true;
+            var m = Module.I;
+            // Acquire only between complete scripted lines; preserve the waiting story coroutine.
+            if (m.ai) m.ai.TryHold();
+            while (m.ai && m.ai.ConversationHeld) yield return null;
+            int my = ++gen; LastLine = text; next = false; Speaking = true;
             m.hud.ShowLine("Dr. Curio", text);
             if (m.curio) m.curio.Talking = true;
             float dur = Mathf.Clamp(text.Length * 0.052f, 1.4f, 9f);

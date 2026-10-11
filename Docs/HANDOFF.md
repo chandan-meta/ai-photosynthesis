@@ -1,5 +1,13 @@
 # Handoff — Photosynthesis module, 2026-10-10 (stomata UI · Clue 3 · formula sweep)
 
+## 0e. Mr. Curio AI (2026-10-11)
+
+Integrated the existing Ask AI panel, offline lesson knowledge, the current `BotanicalChamber.unity` scene and procedural Dr. Curio rig. Typed and hold-to-talk questions share panel status and transcript. Opening chat waits for a safe narration boundary, then pauses the exact beat/camera; close, pause, restart, focus loss and session limits clean up audio and microphone. Dynamic answers use the existing VO cache/SAPI path. WebGL live audio drives the existing mouth animation and music ducking. Model answers cannot trigger story actions.
+
+Added the optional `Server/curio` service: server-only OpenAI credentials, server-negotiated WebRTC, a private sideband connection for time/turn/output limits and session shutdown, bounded lesson context, exact-origin CORS, rate/size caps, text `/chat` with storage disabled and a minimal daily request ledger. Unity remains in offline/mock mode by default. Configure `.env` from `.env.example`, host behind HTTPS with a persistent single-instance ledger, and set the exact browser origin before enabling. Never commit `.env`. OpenAI documents `gpt-realtime-2.1`, but account availability and actual API connections still need verification.
+
+**Verification:** Five backend/bridge tests and strict TypeScript check passed; Unity runtime and editor sources compiled against installed 6000.3 assemblies. A separate Windows player copy using the updated runtime assembly passed the offline hold/resume, answer, narration, cinematic, pause and restart smoke checks. The original Unity editor remained open, so no fresh project/player build was made. Live credentials, WebRTC browser audio and latency remain untested. Player log: `Logs/CurioAI/runtime.log`.
+
 Read this first. Sections 0d and 0c are the latest work (branch `codex/root-material-upgrade`); 0a/0b and 1–8 still hold except where
 0c/0d say otherwise. The 2026-10-09/10 sessions in between (materials, imported leaf/chloroplast models, licensed soundtrack)
 are documented in `Docs/Photosynthesis/*.md`.

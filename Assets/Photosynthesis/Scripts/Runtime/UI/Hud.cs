@@ -221,6 +221,7 @@ namespace Photosynthesis
             if (typing || sysStack.Count > 0) return;
             if (k.cKey.wasPressedThisFrame) { Subtitles = !Subtitles; Play(Sfx.UiSelect, 0.6f); }
             if (k.mKey.wasPressedThisFrame && askOn) { OpenChat(false); StartTalk(); }
+            if (chatOpen) return;
             // the lettered answer badges are real shortcuts: 1–4 pick A–D (Enter then submits from the focused Submit button)
             if (IsShown(qCard) && !qLocked)
                 for (int i = 0; i < qOpts.Count && i < 4; i++)
@@ -359,6 +360,7 @@ namespace Photosynthesis
 
         const string CineHide = "ps-cine-hide", CineDim = "ps-cine-dim";
         bool cinematic; int cineGen;
+        public bool Cinematic => cinematic;
 
         /// Cinematic shot: investigation, progress, zoom, CC and the magnification / zoom-path pills fade out (0.4 s) and stop
         /// taking clicks; Menu/Reset/Help and ASK AI recede to 80% / 0.92 scale, full on hover or while Ask AI is live, and stay

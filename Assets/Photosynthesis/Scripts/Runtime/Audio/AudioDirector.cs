@@ -177,7 +177,7 @@ namespace Photosynthesis
             voice.volume = VoiceVolume;
 
             float now = Time.unscaledTime;
-            if (VoicePlaying) voiceSeen = now;
+            if (VoicePlaying || Module.I && Module.I.ai && Module.I.ai.LiveSpeaking) voiceSeen = now;
             bool speaking = now - voiceSeen < 0.6f;   // release hold: bridges Dialogue's ~0.2 s between lines, so the music no longer swells +2.5 dB per sentence
             float duckGain = soundtrack ? Mathf.Pow(10f, soundtrack.voiceDuckDb / 20f) : .316f;
             float duckTime = soundtrack ? (speaking ? soundtrack.duckAttack : soundtrack.duckRelease) : (speaking ? .2f : .9f);

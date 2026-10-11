@@ -58,7 +58,7 @@ namespace Photosynthesis
         /// Set by Dialogue while a line is up. The talking pulse follows the real voice level; with no voice audio
         /// (subtitles only) a fake rhythm runs for at most a line's reading time, so a line cut off by a beat jump
         /// (Story.StopAllCoroutines never reaches Dialogue's `Talking = false`) can't leave him chattering.
-        public bool Talking { get => talking; set { talking = value; if (value) talkT0 = Time.time; } }
+        public bool Talking { get => talking; set { talking = value; if (value) talkT0 = MotionTime; } }
         bool talking; float talkT0;
         Look look = Look.Face; Vector3 placePos, faceTarget, lookPoint, tempLook, pointTarget;
         float tempLookUntil, pointUntil;
@@ -71,7 +71,7 @@ namespace Photosynthesis
         Camera viewCam;
         float waveUntil;
         Transform scarf;
-        public void Wave() => waveUntil = Time.time + 2.8f;
+        public void Wave() => waveUntil = MotionTime + 2.8f;
 
         bool Visible => gameObject.activeInHierarchy;
         float Scale => Mathf.Max(1e-4f, transform.lossyScale.x);
@@ -134,7 +134,7 @@ namespace Photosynthesis
         {
             int id = BeginScan(duration); scanTarget = target; sweeping = false;
             var au = Audio; if (au && Visible) au.Play(Sfx.Scan, 0.8f);
-            while (scanId == id && Time.time < scanUntil) { if (Module.Skipping) { scanUntil = Time.time; break; } yield return null; }
+            while (scanId == id && MotionTime < scanUntil) { if (Module.Skipping) { scanUntil = MotionTime; break; } yield return null; }
         }
 
         /// Beam sweeps from one point to another (top → bottom search).
@@ -143,18 +143,18 @@ namespace Photosynthesis
             int id = BeginScan(duration); sweeping = true; sweepFrom = from; sweepTo = to; scanTarget = from;
             sweepT0 = scanStart + 0.15f; sweepDur = Mathf.Max(0.1f, duration - 0.15f); nextTick = scanStart + 0.4f;
             var au = Audio; if (au && Visible) au.Play(Sfx.Scan, 0.7f);
-            while (scanId == id && Time.time < scanUntil) { if (Module.Skipping) { scanUntil = Time.time; break; } yield return null; }
+            while (scanId == id && MotionTime < scanUntil) { if (Module.Skipping) { scanUntil = MotionTime; break; } yield return null; }
         }
 
         public void Point(Vector3 target)
         {
-            float t = Time.time;
+            float t = MotionTime;
             pointTarget = target; pointUntil = t + 3.2f; tempLook = target; tempLookUntil = t + 1.4f;
         }
 
         public void Emote(CurioEmote e)
         {
-            float t = Time.time;
+            float t = MotionTime;
             if (e == CurioEmote.Point)
             {
                 if (t >= pointUntil) Point(transform.TransformPoint(new Vector3(0.6f, 0.2f, 2f)));
@@ -197,7 +197,7 @@ namespace Photosynthesis
         public IEnumerator ShutScanner()
         {
             if (!built) yield break;
-            scanId++; scanUntil = 0f; sweeping = false; scannerClosed = true; shutT0 = Time.time;
+            scanId++; scanUntil = 0f; sweeping = false; scannerClosed = true; shutT0 = MotionTime;
             var au = Audio;
             if (au && Visible) au.Play(Sfx.Whoosh, 0.35f, 1.7f);
             yield return Fx.Wait(0.72f);
@@ -214,7 +214,7 @@ namespace Photosynthesis
         // ================================================================== state helpers
         int BeginScan(float duration)
         {
-            scanId++; scanStart = Time.time; scanUntil = scanStart + Mathf.Max(0.2f, duration);
+            scanId++; scanStart = MotionTime; scanUntil = scanStart + Mathf.Max(0.2f, duration);
             scannerClosed = false; shutT0 = -99f;
             return scanId;
         }
@@ -259,21 +259,26 @@ namespace Photosynthesis
         }
 
         // ================================================================== per-frame animation
+        float motionOffset;
+        float MotionTime => Time.time + motionOffset;
         void LateUpdate()
         {
-            float dt = Time.deltaTime, t = Time.time;
+            bool conversation = Module.I && Module.I.ai && Module.I.ai.ConversationHeld;
+            if (conversation) motionOffset += Time.unscaledDeltaTime;
+            float dt = conversation ? Time.unscaledDeltaTime : Time.deltaTime, t = MotionTime;
             if (!built || dt <= 0f) return;
             var cam = ViewCam;
             if (companion && cam) CompanionPose(cam);
             Vector3 camPos = cam ? cam.transform.position : transform.position + transform.forward * 4f;
             var au = Audio;
 
-            // voice level (real VO/TTS loudness · still while TTS synthesises · lively fake when subtitles run without audio)
-            bool talk = talking && ((au && au.VoicePlaying) || t - talkT0 < 10f);
+            // Mouth motion follows audible audio only; silent captions keep the mouth closed.
+            bool liveTalk = Module.I && Module.I.ai && Module.I.ai.LiveSpeaking;
+            bool talk = liveTalk || talking && au && au.VoiceAudible;
             float vt = 0f;
-            if (talk) vt = au && au.VoiceAudible ? au.VoiceLevel : au && au.VoiceSynthesizing ? 0f
-                : 0.3f + 0.45f * Mathf.PerlinNoise(t * 7f, 0.37f) * Mathf.PerlinNoise(t * 2.3f, 3.1f);
-            voice = Mathf.Lerp(voice, vt, 1f - Mathf.Exp(-dt * (vt > voice ? 22f : 9f)));
+            if (liveTalk) vt = Module.I.ai.LiveLevel;
+            else if (talk) vt = au.VoiceLevel;
+            voice = !talk ? 0 : Mathf.Lerp(voice, vt, 1f - Mathf.Exp(-dt * (vt > voice ? 22f : 9f)));
 
             // blinks & idle glances
             if (t >= nextBlink) { blinkT0 = t; nextBlink = t + (Random.value < 0.18f ? 0.3f : Random.Range(2.4f, 5.5f)); }

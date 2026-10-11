@@ -51,7 +51,7 @@ namespace Photosynthesis
         // ================================================================== control
         public void Run(Beat from)
         {
-            Start();
+            Start(); hud.CloseChat();
             m.LeaveStartScreen();
             hud.DismissStartBanner();
             StopAllCoroutines();
@@ -60,7 +60,7 @@ namespace Photosynthesis
 
         public void StopForBanner()
         {
-            Start(); StopAllCoroutines(); runner = null; dlg.Cancel(); au.StopVoice();
+            Start(); hud.CloseChat(); StopAllCoroutines(); runner = null; dlg.Cancel(); au.StopVoice();
             hud.CancelWaits(); hud.HideTransient(); hud.HideLine();
         }
 
