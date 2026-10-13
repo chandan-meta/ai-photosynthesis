@@ -44,6 +44,13 @@
       .loader .tip { display: inline-block; transition: opacity .3s, transform .3s; }
       .loader .tip.swap { opacity: 0; transform: translateY(4px); }
       .loader .pct { margin-left: .6em; color: #a7ec70; font-variant-numeric: tabular-nums; }
+      .loader .note { margin: -6px 0 0; min-height: 1.3em; font-size: 12px; letter-spacing: .04em; color: rgba(222, 242, 214, .52);
+        font-variant-numeric: tabular-nums; }
+      .loader .play { margin-top: 2px; padding: 10px 26px; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600;
+        letter-spacing: .06em; color: #06240f; background: linear-gradient(90deg, #66cf47, #c9f78a); box-shadow: 0 0 18px rgba(140, 230, 90, .45); }
+      .loader .play:hover, .loader .play:focus-visible { outline: none; filter: brightness(1.08);
+        box-shadow: 0 0 0 3px rgba(201, 247, 138, .5), 0 0 22px rgba(140, 230, 90, .6); }
+      .loader .play[hidden] { display: none; }
       .loader.err .tip { color: #ffb8a6; }
       .loader.err .fill { background: linear-gradient(90deg, #8a3a2a, #c8664a); }
 
@@ -85,7 +92,7 @@
   <body>
     <canvas id="unity-canvas" tabindex="-1"></canvas>
 
-    <div class="loader" role="status" aria-live="polite">
+    <div class="loader">
       <div class="motes"></div>
       <div class="stage">
         <svg class="emblem" viewBox="0 0 320 260" aria-hidden="true">
@@ -167,6 +174,8 @@
         <h1>Loading <span>Photosynthesis</span> Module</h1>
         <div class="bar" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill"></div></div>
         <p class="status"><span class="tip">Warming up the sunlight…</span><span class="pct">0%</span></p>
+        <p class="note"></p>
+        <a class="play" href="./" hidden>▶ Play the module</a>
       </div>
     </div>
     <div class="warn"></div>
@@ -177,7 +186,7 @@
         var canvas = document.getElementById("unity-canvas");
         var loader = document.querySelector(".loader");
         var fill = loader.querySelector(".fill"), bar = loader.querySelector(".bar");
-        var tip = loader.querySelector(".tip"), pct = loader.querySelector(".pct");
+        var tip = loader.querySelector(".tip"), pct = loader.querySelector(".pct"), note = loader.querySelector(".note");
 
         // the big blurred leaves behind the emblem, one midrib and its side veins
         function leaf(cls) {
@@ -222,7 +231,8 @@
         }
         function done() { clearInterval(tipTimer); setProgress(1); loader.classList.add("out"); setTimeout(function () { loader.remove(); }, 1000); }
         function fail(e) {
-          clearInterval(tipTimer); loader.classList.add("err");
+          clearInterval(tipTimer); loader.classList.add("err"); note.textContent = "";
+          tip.setAttribute("role", "alert");
           tip.textContent = "The module could not load: " + (e && e.message ? e.message : e) + ". Please reload the page.";
         }
         function unityShowBanner(msg, type) {
@@ -232,9 +242,14 @@
           if (type !== "error") setTimeout(function () { d.remove(); if (!box.children.length) box.style.display = "none"; }, 5000);
         }
 
-        // ?loader shows the loading screen alone, for design checks
+        // ?loader shows the loading screen alone, for design checks: one pass of the bar, marked as a preview, with a way into the game
         if (/[?&]loader\b/.test(location.search)) {
-          var demo = 0; setInterval(function () { demo = demo >= 1.05 ? 0 : demo + .004; setProgress(demo); }, 60);
+          note.textContent = "Preview of the loading screen only: the module does not load on this page.";
+          loader.querySelector(".play").hidden = false;
+          var demo = 0, demoTimer = setInterval(function () {
+            demo = Math.min(1, demo + .006); setProgress(demo);
+            if (demo >= 1) { clearInterval(demoTimer); clearInterval(tipTimer); tip.textContent = "Ready!"; }
+          }, 60);
           return;
         }
 
@@ -270,7 +285,7 @@
               function pump() {
                 return reader.read().then(function (s) {
                   if (s.done) return new Blob(chunks);
-                  chunks.push(s.value); received += s.value.length; onProgress(Math.min(1, received / dataBytes));
+                  chunks.push(s.value); received += s.value.length; onProgress(received);
                   return pump();
                 });
               }
@@ -279,16 +294,26 @@
           })).then(function (blobs) { return URL.createObjectURL(new Blob(blobs)); });
         }
 
+        // the note under the bar shows that a slow download is still moving, and that the last step (Unity starting up) is not a hang
+        var starting = "Starting the module, this can take a moment…", shownMB = -1;
         var base = dataParts ? .9 : 0;
         var ready = dataParts
-          ? joinParts(function (p) { setProgress(base * p); }).then(function (url) {
+          ? joinParts(function (received) {
+              setProgress(base * Math.min(1, received / dataBytes));
+              var m = Math.round(received / 1e6);
+              if (m !== shownMB) { shownMB = m; note.textContent = "Downloading " + m + " of " + Math.round(dataBytes / 1e6) + " MB"; }
+            }).then(function (url) {
               config.dataUrl = url;
               config.cacheControl = function (u) { return u.indexOf("blob:") === 0 ? "no-store" : "must-revalidate"; };
+              note.textContent = starting;
             })
           : Promise.resolve();
         ready.then(function () {
           if (typeof createUnityInstance !== "function") throw new Error("the game loader is missing");
-          return createUnityInstance(canvas, config, function (p) { setProgress(base + (1 - base) * p); });
+          return createUnityInstance(canvas, config, function (p) {
+            setProgress(base + (1 - base) * p);
+            if (p >= .9 && note.textContent !== starting) note.textContent = starting;
+          });
         }).then(done).catch(fail);
       })();
     </script>
