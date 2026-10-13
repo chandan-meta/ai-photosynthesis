@@ -1,157 +1,288 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Photosynthesis — The Hidden Food Factory</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06120E}#unity-container.unity-desktop{position:fixed;left:0;top:0;width:100%;height:100%;transform:none}#unity-canvas{width:100%!important;height:100%!important;display:block}#unity-footer{display:none}</style></head>
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <title>Photosynthesis — The Hidden Food Factory</title>
+    <meta name="description" content="Dr. Curio's interactive investigation: follow carbon dioxide, water and sunlight into a leaf and catch it making food.">
+    <meta name="theme-color" content="#04140a">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M10 54C8 30 24 12 56 8c2 30-16 48-46 46z' fill='%2357c43a'/%3E%3Cpath d='M12 52C26 38 38 26 52 12' stroke='%23d8ffb0' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+    <style>
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #04140a; }
+      body > canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #04140a; outline: none; }
+
+      /* ---------- loading screen ---------- */
+      .loader { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow: hidden;
+        background: radial-gradient(ellipse at 50% 42%, #11391b 0%, #0a2513 38%, #04140a 76%, #020a05 100%);
+        font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif; color: #e9f5e6;
+        transition: opacity .9s ease, visibility .9s; }
+      .loader.out { opacity: 0; visibility: hidden; pointer-events: none; }
+      .loader .vein { position: absolute; width: 80vmax; height: 54vmax; opacity: .6; filter: blur(1.6px);
+        animation: drift 24s ease-in-out infinite alternate; }
+      .loader .vein.a { left: -30vmax; top: -24vmax; --r: 24deg; }
+      .loader .vein.b { right: -32vmax; bottom: -26vmax; --r: 204deg; animation-duration: 28s; }
+      .loader .motes { position: absolute; inset: 0; pointer-events: none; }
+      .loader .motes i { position: absolute; bottom: -8vh; border-radius: 50%;
+        background: radial-gradient(circle, rgba(220, 255, 150, .95) 0%, rgba(175, 240, 95, .5) 35%, rgba(120, 220, 70, 0) 70%);
+        animation-name: rise, twinkle; animation-timing-function: linear, ease-in-out;
+        animation-iteration-count: infinite, infinite; animation-direction: normal, alternate; }
+      .loader .stage { position: relative; display: flex; flex-direction: column; align-items: center;
+        gap: clamp(12px, 2.2vh, 22px); padding: 24px; text-align: center; }
+      .loader .emblem { width: min(330px, 64vw); height: auto; overflow: visible; filter: drop-shadow(0 0 24px rgba(150, 235, 90, .22)); }
+      .loader h1 { margin: 4px 0 0; font-weight: 300; font-size: clamp(17px, 2.3vw, 27px); letter-spacing: .14em;
+        color: #e9f5e6; text-shadow: 0 0 18px rgba(150, 235, 90, .25); }
+      .loader h1 span { color: #a7ec70; font-weight: 400; }
+      .loader .bar { position: relative; width: min(400px, 74vw); height: 20px; border-radius: 999px; overflow: hidden;
+        background: rgba(8, 34, 16, .85); border: 1px solid rgba(167, 236, 112, .28); box-shadow: inset 0 1px 6px rgba(0, 0, 0, .5); }
+      .loader .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 4%; border-radius: inherit; overflow: hidden;
+        background: linear-gradient(90deg, #26a338, #66cf47 55%, #c9f78a); box-shadow: 0 0 14px rgba(140, 230, 90, .6);
+        transition: width .45s ease; }
+      .loader .fill::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+        background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%);
+        animation: shine 2.2s ease-in-out infinite; }
+      .loader .status { margin: 0; min-height: 1.4em; font-size: 13px; letter-spacing: .04em; color: rgba(222, 242, 214, .74); }
+      .loader .tip { display: inline-block; transition: opacity .3s, transform .3s; }
+      .loader .tip.swap { opacity: 0; transform: translateY(4px); }
+      .loader .pct { margin-left: .6em; color: #a7ec70; font-variant-numeric: tabular-nums; }
+      .loader.err .tip { color: #ffb8a6; }
+      .loader.err .fill { background: linear-gradient(90deg, #8a3a2a, #c8664a); }
+
+      .emblem .halo { animation: halo 3.2s ease-in-out infinite alternate; transform-origin: 160px 150px; }
+      .emblem .sun { animation: pulse 2.6s ease-in-out infinite alternate; transform-origin: 208px 74px; }
+      .emblem .rays { animation: swing 5s ease-in-out infinite alternate; transform-origin: 208px 74px; }
+      .emblem .rays line { animation: glint 1.8s ease-in-out infinite alternate; }
+      .emblem .rays line:nth-child(2n) { animation-delay: -.9s; }
+      .emblem .plast { animation: breathe 3.6s ease-in-out infinite alternate; transform-origin: 124px 150px; }
+      .emblem .stack { animation: bob 2.4s ease-in-out infinite alternate; }
+      .emblem .stack.s2 { animation-delay: -.8s; }
+      .emblem .stack.s3 { animation-delay: -1.6s; }
+      .emblem .leaf { animation: sway 4.2s ease-in-out infinite alternate; transform-origin: 176px 236px; }
+      .emblem .spark { animation: spark 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+      .emblem .spark.k2 { animation-delay: -.7s; }
+      .emblem .spark.k3 { animation-delay: -1.4s; }
+      .emblem .spark.k4 { animation-delay: -2s; }
+
+      @keyframes drift { from { transform: rotate(var(--r)) translate(0, 0); } to { transform: rotate(calc(var(--r) + 3deg)) translate(1.6vmax, 1.1vmax); } }
+      @keyframes rise { from { transform: translate(0, 0); } to { transform: translate(var(--dx, 3vw), -118vh); } }
+      @keyframes twinkle { from { opacity: .2; } to { opacity: var(--o, 1); } }
+      @keyframes halo { from { opacity: .55; transform: scale(.96); } to { opacity: 1; transform: scale(1.04); } }
+      @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.07); } }
+      @keyframes swing { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+      @keyframes glint { from { opacity: .75; } to { opacity: 1; } }
+      @keyframes breathe { from { transform: scale(1); } to { transform: scale(1.025); } }
+      @keyframes bob { from { transform: translateY(-1.6px); } to { transform: translateY(1.6px); } }
+      @keyframes sway { from { transform: rotate(-3.5deg); } to { transform: rotate(3deg); } }
+      @keyframes spark { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
+      @keyframes shine { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(160%); } }
+      @media (prefers-reduced-motion: reduce) { .loader *, .loader *::after { animation: none !important; } }
+
+      .warn { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 20; display: none;
+        font: 13px "Segoe UI", system-ui, sans-serif; max-width: 90vw; }
+      .warn div { margin: 4px 0; padding: 8px 12px; border-radius: 8px; background: #f5d76e; color: #1e1505; }
+      .warn div.e { background: #c0392b; color: #fff; }
+    </style>
+  </head>
   <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">Photosynthesis — The Hidden Food Factory</div>
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+    <div class="loader" role="status" aria-live="polite">
+      <div class="motes"></div>
+      <div class="stage">
+        <svg class="emblem" viewBox="0 0 320 260" aria-hidden="true">
+          <defs>
+            <radialGradient id="g-halo" cx="50%" cy="55%" r="50%">
+              <stop offset="0" stop-color="#9be36a" stop-opacity=".36"/><stop offset=".55" stop-color="#5cc23a" stop-opacity=".1"/><stop offset="1" stop-color="#5cc23a" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="g-sunglow">
+              <stop offset="0" stop-color="#ffe680" stop-opacity=".8"/><stop offset=".5" stop-color="#ffc93c" stop-opacity=".25"/><stop offset="1" stop-color="#ffc93c" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="g-sun" cx="40%" cy="38%" r="70%">
+              <stop offset="0" stop-color="#fffbe2"/><stop offset=".45" stop-color="#ffe372"/><stop offset=".85" stop-color="#ffc233"/><stop offset="1" stop-color="#f5a524"/>
+            </radialGradient>
+            <linearGradient id="g-memb" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#dcffa8"/><stop offset=".45" stop-color="#78d34b"/><stop offset="1" stop-color="#2f8a26"/>
+            </linearGradient>
+            <radialGradient id="g-stroma" cx="45%" cy="40%" r="70%">
+              <stop offset="0" stop-color="#4fb534"/><stop offset="1" stop-color="#1d5a17"/>
+            </radialGradient>
+            <linearGradient id="g-disc" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#c6fa90"/><stop offset=".55" stop-color="#6fd247"/><stop offset="1" stop-color="#379629"/>
+            </linearGradient>
+            <linearGradient id="g-leaf" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stop-color="#26862c"/><stop offset=".6" stop-color="#5cc23a"/><stop offset="1" stop-color="#abec74"/>
+            </linearGradient>
+          </defs>
+
+          <ellipse class="halo" cx="160" cy="150" rx="150" ry="112" fill="url(#g-halo)"/>
+
+          <circle cx="208" cy="74" r="64" fill="url(#g-sunglow)"/>
+          <g class="rays" stroke="#ffd23f" stroke-width="7" stroke-linecap="round">
+            <line x1="167" y1="58" x2="152" y2="52"/>
+            <line x1="183" y1="38" x2="174" y2="25"/>
+            <line x1="208" y1="30" x2="208" y2="14"/>
+            <line x1="233" y1="38" x2="242" y2="25"/>
+            <line x1="249" y1="58" x2="264" y2="52"/>
+          </g>
+          <g class="sun">
+            <circle cx="208" cy="74" r="31" fill="url(#g-sun)"/>
+            <ellipse cx="198" cy="62" rx="11" ry="7" fill="#fff" opacity=".55"/>
+          </g>
+
+          <g class="plast">
+            <path d="M124 64C172 62 202 104 198 160C194 214 152 240 116 232C72 222 46 182 50 136C54 92 84 66 124 64Z"
+                  fill="url(#g-memb)" stroke="#d8ffa0" stroke-opacity=".75" stroke-width="2"/>
+            <path d="M124 80C164 79 188 114 184 160C181 204 148 224 118 218C82 210 62 178 65 140C68 104 92 82 124 80Z" fill="url(#g-stroma)"/>
+            <path d="M80 160H92M110 152H142M160 158H174" stroke="#9fe06a" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round"/>
+            <g class="stack s1" fill="url(#g-disc)" stroke="#24651a" stroke-width="1.2">
+              <ellipse cx="96" cy="184" rx="15" ry="6"/><ellipse cx="96" cy="173" rx="15" ry="6"/><ellipse cx="96" cy="162" rx="15" ry="6"/>
+              <ellipse cx="96" cy="151" rx="15" ry="6"/><ellipse cx="96" cy="140" rx="15" ry="6"/>
+            </g>
+            <g class="stack s2" fill="url(#g-disc)" stroke="#24651a" stroke-width="1.2">
+              <ellipse cx="126" cy="178" rx="16" ry="6.5"/><ellipse cx="126" cy="166" rx="16" ry="6.5"/><ellipse cx="126" cy="154" rx="16" ry="6.5"/>
+              <ellipse cx="126" cy="142" rx="16" ry="6.5"/><ellipse cx="126" cy="130" rx="16" ry="6.5"/><ellipse cx="126" cy="118" rx="16" ry="6.5"/>
+            </g>
+            <g class="stack s3" fill="url(#g-disc)" stroke="#24651a" stroke-width="1.2">
+              <ellipse cx="156" cy="190" rx="14" ry="5.5"/><ellipse cx="156" cy="180" rx="14" ry="5.5"/><ellipse cx="156" cy="170" rx="14" ry="5.5"/>
+              <ellipse cx="156" cy="160" rx="14" ry="5.5"/><ellipse cx="156" cy="150" rx="14" ry="5.5"/>
+            </g>
+            <path d="M76 104C90 82 108 74 128 73" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>
+            <ellipse cx="70" cy="128" rx="5" ry="12" fill="#fff" opacity=".22"/>
+          </g>
+
+          <g class="leaf">
+            <path d="M176 236C160 190 190 132 262 104C270 172 236 224 176 236Z" fill="url(#g-leaf)" stroke="#cdf794" stroke-opacity=".55" stroke-width="1.5"/>
+            <path d="M178 232C200 190 222 150 258 110" fill="none" stroke="#e6ffc8" stroke-opacity=".85" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M189 212L177 205M200 192L184 180M212 172L198 154M226 152L214 133M240 132L232 117M189 212L204 216M200 192L220 194M212 172L234 170M226 152L246 146M240 132L254 124"
+                  fill="none" stroke="#d6f8ac" stroke-opacity=".55" stroke-width="1.4" stroke-linecap="round"/>
+          </g>
+
+          <g fill="#fff7c2">
+            <g transform="translate(268 30)"><path class="spark k1" d="M0 -8L2 -2L8 0L2 2L0 8L-2 2L-8 0L-2 -2Z"/></g>
+            <g transform="translate(64 76)"><path class="spark k2" d="M0 -6L1.5 -1.5L6 0L1.5 1.5L0 6L-1.5 1.5L-6 0L-1.5 -1.5Z"/></g>
+            <g transform="translate(284 168)"><path class="spark k3" d="M0 -7L1.8 -1.8L7 0L1.8 1.8L0 7L-1.8 1.8L-7 0L-1.8 -1.8Z"/></g>
+            <g transform="translate(38 196)"><path class="spark k4" d="M0 -5L1.3 -1.3L5 0L1.3 1.3L0 5L-1.3 1.3L-5 0L-1.3 -1.3Z"/></g>
+          </g>
+        </svg>
+
+        <h1>Loading <span>Photosynthesis</span> Module</h1>
+        <div class="bar" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill"></div></div>
+        <p class="status"><span class="tip">Warming up the sunlight…</span><span class="pct">0%</span></p>
       </div>
     </div>
+    <div class="warn"></div>
+
+    <script src="Build/WebGL.loader.js"></script>
     <script>
-      var canvas = document.querySelector("#unity-canvas");
+      (function () {
+        var canvas = document.getElementById("unity-canvas");
+        var loader = document.querySelector(".loader");
+        var fill = loader.querySelector(".fill"), bar = loader.querySelector(".bar");
+        var tip = loader.querySelector(".tip"), pct = loader.querySelector(".pct");
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        // the big blurred leaves behind the emblem, one midrib and its side veins
+        function leaf(cls) {
+          var veins = "";
+          for (var k = 1; k <= 8; k++) {
+            var t = k / 9, x = 30 + 540 * t, y = 352 - 304 * t, s = 1 - t * .55;
+            veins += "M" + x + " " + y + "q" + (-30 * s) + " " + (-70 * s) + " " + (-95 * s) + " " + (-120 * s)
+                   + "M" + x + " " + y + "q" + (40 * s) + " " + (50 * s) + " " + (110 * s) + " " + (70 * s);
+          }
+          var div = document.createElement("div");
+          div.className = "vein " + cls;
+          div.innerHTML = '<svg viewBox="0 0 600 400" width="100%" height="100%" aria-hidden="true">'
+            + '<path d="M20 360C60 160 260 30 580 40C540 250 330 390 20 360Z" fill="rgba(36,104,38,.28)" stroke="rgba(140,215,100,.3)" stroke-width="3"/>'
+            + '<path d="M30 352C210 250 380 150 570 48' + veins + '" fill="none" stroke="rgba(150,225,105,.34)" stroke-width="2.4" stroke-linecap="round"/></svg>';
+          loader.insertBefore(div, loader.firstChild);
         }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
+        leaf("a"); leaf("b");
+
+        // floating motes of light
+        var motes = loader.querySelector(".motes");
+        for (var i = 0; i < 30; i++) {
+          var m = document.createElement("i"), big = i % 6 === 0, size = big ? 18 + Math.random() * 22 : 3 + Math.random() * 8;
+          m.style.cssText = "left:" + (Math.random() * 100).toFixed(1) + "%;width:" + size.toFixed(1) + "px;height:" + size.toFixed(1) + "px;"
+            + "--dx:" + ((Math.random() - .5) * 12).toFixed(1) + "vw;--o:" + (big ? .35 : .9) + ";" + (big ? "filter:blur(4px);" : "")
+            + "animation-duration:" + (14 + Math.random() * 16).toFixed(1) + "s," + (1.6 + Math.random() * 2.4).toFixed(1) + "s;"
+            + "animation-delay:-" + (Math.random() * 30).toFixed(1) + "s,-" + (Math.random() * 3).toFixed(1) + "s";
+          motes.appendChild(m);
         }
-        updateBannerVisibility();
-      }
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/WebGL.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/WebGL.data.unityweb",
-        frameworkUrl: buildUrl + "/WebGL.framework.js.unityweb",
-        codeUrl: buildUrl + "/WebGL.wasm.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "Photosynthesis — The Hidden Food Factory",
-        productVersion: "0.1.0",
-        showBanner: unityShowBanner,
-        // errorHandler: function(err, url, line) {
-        //    alert("error " + err + " occurred at line " + line);
-        //    // Return 'true' if you handled this error and don't want Unity
-        //    // to process it further, 'false' otherwise.
-        //    return true;
-        // },
-      };
+        var tips = ["Warming up the sunlight…", "Opening the stomata…", "Stacking the thylakoids…", "Collecting carbon dioxide…",
+                    "Pumping water up the xylem…", "Polishing the chlorophyll…", "Waking up Dr. Curio…"], tipAt = 0;
+        var tipTimer = setInterval(function () {
+          tip.classList.add("swap");
+          setTimeout(function () { tipAt = (tipAt + 1) % tips.length; tip.textContent = tips[tipAt]; tip.classList.remove("swap"); }, 300);
+        }, 2600);
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+        function setProgress(p) {
+          p = Math.max(0, Math.min(1, p));
+          fill.style.width = (4 + 96 * p) + "%";
+          pct.textContent = Math.round(p * 100) + "%";
+          bar.setAttribute("aria-valuenow", Math.round(p * 100));
+        }
+        function done() { clearInterval(tipTimer); setProgress(1); loader.classList.add("out"); setTimeout(function () { loader.remove(); }, 1000); }
+        function fail(e) {
+          clearInterval(tipTimer); loader.classList.add("err");
+          tip.textContent = "The module could not load: " + (e && e.message ? e.message : e) + ". Please reload the page.";
+        }
+        function unityShowBanner(msg, type) {
+          var box = document.querySelector(".warn"), d = document.createElement("div");
+          d.textContent = msg; if (type === "error") d.className = "e";
+          box.appendChild(d); box.style.display = "block";
+          if (type !== "error") setTimeout(function () { d.remove(); if (!box.children.length) box.style.display = "none"; }, 5000);
+        }
 
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
+        // ?loader shows the loading screen alone, for design checks
+        if (/[?&]loader\b/.test(location.search)) {
+          var demo = 0; setInterval(function () { demo = demo >= 1.05 ? 0 : demo + .004; setProgress(demo); }, 60);
+          return;
+        }
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+        var config = {
+          arguments: [],
+          dataUrl: "Build/WebGL.data.unityweb",
+          frameworkUrl: "Build/WebGL.framework.js.unityweb",
+          codeUrl: "Build/WebGL.wasm.unityweb",
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: "DefaultCompany",
+          productName: "Photosynthesis — The Hidden Food Factory",
+          productVersion: "0.1.0",
+          showBanner: unityShowBanner
+        };
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
+        // GitHub Pages copy: Tools/WebGL/pages_site.py fills this line in, because GitHub refuses files over 100 MB and the
+        // data file is served in parts that are joined here before Unity starts
+        var dataParts = ["Build/WebGL.data.unityweb.part1", "Build/WebGL.data.unityweb.part2", "Build/WebGL.data.unityweb.part3", "Build/WebGL.data.unityweb.part4", "Build/WebGL.data.unityweb.part5"], dataBytes = 213863144;
+        function joinParts(onProgress) {
+          var received = 0;
+          return Promise.all(dataParts.map(function (url) {
+            return fetch(url).then(function (r) {
+              if (!r.ok) throw new Error("could not download " + url + " (HTTP " + r.status + ")");
+              var reader = r.body.getReader(), chunks = [];
+              function pump() {
+                return reader.read().then(function (s) {
+                  if (s.done) return new Blob(chunks);
+                  chunks.push(s.value); received += s.value.length; onProgress(Math.min(1, received / dataBytes));
+                  return pump();
+                });
+              }
+              return pump();
+            });
+          })).then(function (blobs) { return URL.createObjectURL(new Blob(blobs)); });
+        }
 
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
-      } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-        canvas.style.width = "960px";
-        canvas.style.height = "600px";
-      }
-
-      document.querySelector("#unity-loading-bar").style.display = "block";
-      // GitHub Pages refuses files over 100 MB: the data file is served in parts and joined here before Unity starts.
-      var dataParts = ["Build/WebGL.data.unityweb.part1", "Build/WebGL.data.unityweb.part2", "Build/WebGL.data.unityweb.part3", "Build/WebGL.data.unityweb.part4", "Build/WebGL.data.unityweb.part5"], dataBytes = 213863144;
-      function loadDataParts(onProgress) {
-        var received = 0;
-        return Promise.all(dataParts.map(function (url) {
-          return fetch(url).then(function (r) {
-            if (!r.ok) throw new Error("Could not download " + url + " (HTTP " + r.status + ")");
-            var reader = r.body.getReader(), chunks = [];
-            function pump() {
-              return reader.read().then(function (s) {
-                if (s.done) return new Blob(chunks);
-                chunks.push(s.value); received += s.value.length; onProgress(Math.min(1, received / dataBytes));
-                return pump();
-              });
-            }
-            return pump();
-          });
-        })).then(function (blobs) { return URL.createObjectURL(new Blob(blobs)); });
-      }
-
-
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        loadDataParts((p) => { document.querySelector("#unity-progress-bar-full").style.width = 90 * p + "%"; }).then((url) => {
-          config.dataUrl = url;
-          config.cacheControl = (u) => u.startsWith("blob:") ? "no-store" : "must-revalidate";   // the joined data is not cached by URL
-          return createUnityInstance(canvas, config, (progress) => {
-            document.querySelector("#unity-progress-bar-full").style.width = 90 + 10 * progress + "%";
-          });
-        }).then((unityInstance) => {
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
-      document.body.appendChild(script);
-
+        var base = dataParts ? .9 : 0;
+        var ready = dataParts
+          ? joinParts(function (p) { setProgress(base * p); }).then(function (url) {
+              config.dataUrl = url;
+              config.cacheControl = function (u) { return u.indexOf("blob:") === 0 ? "no-store" : "must-revalidate"; };
+            })
+          : Promise.resolve();
+        ready.then(function () {
+          if (typeof createUnityInstance !== "function") throw new Error("the game loader is missing");
+          return createUnityInstance(canvas, config, function (p) { setProgress(base + (1 - base) * p); });
+        }).then(done).catch(fail);
+      })();
     </script>
   </body>
 </html>
