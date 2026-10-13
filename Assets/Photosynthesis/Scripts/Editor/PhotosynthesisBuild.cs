@@ -46,7 +46,8 @@ namespace Photosynthesis.EditorTools
         public static void BuildPlayerRelease() => Build("Builds/WinRelease/Photosynthesis.exe", BuildOptions.None);
 
         /// Browser build → Builds/WebGL. Gzip with the decompression fallback, so any static host serves it (no server headers needed);
-        /// 4 GB memory ceiling; the page stretches the canvas to the window, since the HUD is laid out for 1600×900 and up.
+        /// 4 GB memory ceiling. The page comes from Assets/WebGLTemplates/Photosynthesis: the canvas fills the window, since the HUD is
+        /// laid out for 1600×900 and up, behind an animated chloroplast loading screen. Tools/WebGL/pages_site.py makes the GitHub Pages copy.
         /// Batch (start on the target, saves a second import): -buildTarget WebGL -executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildWebGL
         [MenuItem("Photosynthesis/Build WebGL", priority = 22)]
         public static void BuildWebGL()
@@ -54,19 +55,8 @@ namespace Photosynthesis.EditorTools
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
             PlayerSettings.WebGL.decompressionFallback = true;
             PlayerSettings.WebGL.maximumMemorySize = 4096;
+            PlayerSettings.WebGL.template = "PROJECT:Photosynthesis";
             Build("Builds/WebGL", BuildOptions.None, BuildTarget.WebGL);
-        }
-
-        /// The Default template draws a fixed 960×600 canvas on desktop; this makes it fill the browser window instead.
-        static void FillWindow(string dir)
-        {
-            var page = Path.Combine(dir, "index.html");
-            var html = File.Exists(page) ? File.ReadAllText(page) : "";
-            if (!html.Contains("</head>")) { Debug.LogWarning("[Photosynthesis] WebGL page not found or unexpected: canvas left at its template size"); return; }
-            const string css = "<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06120E}" +
-                "#unity-container.unity-desktop{position:fixed;left:0;top:0;width:100%;height:100%;transform:none}" +
-                "#unity-canvas{width:100%!important;height:100%!important;display:block}#unity-footer{display:none}</style>";
-            File.WriteAllText(page, html.Replace("</head>", css + "</head>"));
         }
 
         static void Build(string path, BuildOptions options, BuildTarget target = BuildTarget.StandaloneWindows64)
@@ -79,7 +69,6 @@ namespace Photosynthesis.EditorTools
                 target = target,
                 options = options
             });
-            if (target == BuildTarget.WebGL && report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded) FillWindow(path);
             Debug.Log($"[Photosynthesis] Player build ({target}, {options}) -> {path}: {report.summary.result}, {report.summary.totalErrors} errors, {report.summary.totalSize / (1024 * 1024)} MB");
             if (!Application.isBatchMode && report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new System.InvalidOperationException("Photosynthesis build failed: " + report.summary.result);
