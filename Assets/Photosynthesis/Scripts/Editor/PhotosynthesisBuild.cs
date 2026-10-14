@@ -47,7 +47,7 @@ namespace Photosynthesis.EditorTools
 
         /// Browser build → Builds/WebGL. Gzip with the decompression fallback, so any static host serves it (no server headers needed);
         /// 4 GB memory ceiling. The page comes from Assets/WebGLTemplates/Photosynthesis: the canvas fills the window, since the HUD is
-        /// laid out for 1600×900 and up, behind an animated chloroplast loading screen. Tools/WebGL/pages_site.py makes the GitHub Pages copy.
+        /// laid out for 1600×900 and up, behind the photosynthesis loading artwork. Tools/WebGL/pages_site.py makes the GitHub Pages copy.
         /// Batch (start on the target, saves a second import): -buildTarget WebGL -executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildWebGL
         [MenuItem("Photosynthesis/Build WebGL", priority = 22)]
         public static void BuildWebGL()

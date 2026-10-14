@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, shrink-to-fit=yes">
     <title>{{{ PRODUCT_NAME }}}</title>
     <meta name="description" content="Dr. Curio's interactive investigation: follow carbon dioxide, water and sunlight into a leaf and catch it making food.">
     <meta name="theme-color" content="#04140a">
@@ -11,77 +11,61 @@
       html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #04140a; }
       body > canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #04140a; outline: none; }
 
-      /* ---------- loading screen ---------- */
-      .loader { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow: hidden;
-        background: radial-gradient(ellipse at 50% 42%, #11391b 0%, #0a2513 38%, #04140a 76%, #020a05 100%);
-        font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif; color: #e9f5e6;
-        transition: opacity .9s ease, visibility .9s; }
+      /* The artwork and bar share one 1672 x 941 coordinate system. */
+      .loader { position: fixed; inset: 0; z-index: 10; overflow: hidden; background: #010e07;
+        font-family: "Segoe UI", system-ui, sans-serif; color: #e9f5e6;
+        transition: opacity .75s ease, visibility .75s; }
       .loader.out { opacity: 0; visibility: hidden; pointer-events: none; }
-      .loader .vein { position: absolute; width: 80vmax; height: 54vmax; opacity: .6; filter: blur(1.6px);
-        animation: drift 24s ease-in-out infinite alternate; }
-      .loader .vein.a { left: -30vmax; top: -24vmax; --r: 24deg; }
-      .loader .vein.b { right: -32vmax; bottom: -26vmax; --r: 204deg; animation-duration: 28s; }
-      .loader .motes { position: absolute; inset: 0; pointer-events: none; }
-      .loader .motes i { position: absolute; bottom: -8vh; border-radius: 50%;
-        background: radial-gradient(circle, rgba(220, 255, 150, .95) 0%, rgba(175, 240, 95, .5) 35%, rgba(120, 220, 70, 0) 70%);
-        animation-name: rise, twinkle; animation-timing-function: linear, ease-in-out;
-        animation-iteration-count: infinite, infinite; animation-direction: normal, alternate; }
-      .loader .stage { position: relative; display: flex; flex-direction: column; align-items: center;
-        gap: clamp(12px, 2.2vh, 22px); padding: 24px; text-align: center; }
-      .loader .emblem { width: min(330px, 64vw); height: auto; overflow: visible; filter: drop-shadow(0 0 24px rgba(150, 235, 90, .22)); }
-      .loader h1 { margin: 4px 0 0; font-weight: 300; font-size: clamp(17px, 2.3vw, 27px); letter-spacing: .14em;
-        color: #e9f5e6; text-shadow: 0 0 18px rgba(150, 235, 90, .25); }
-      .loader h1 span { color: #a7ec70; font-weight: 400; }
-      .loader .bar { position: relative; width: min(400px, 74vw); height: 20px; border-radius: 999px; overflow: hidden;
-        background: rgba(8, 34, 16, .85); border: 1px solid rgba(167, 236, 112, .28); box-shadow: inset 0 1px 6px rgba(0, 0, 0, .5); }
-      .loader .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 4%; border-radius: inherit; overflow: hidden;
-        background: linear-gradient(90deg, #26a338, #66cf47 55%, #c9f78a); box-shadow: 0 0 14px rgba(140, 230, 90, .6);
-        transition: width .45s ease; }
+      .loader .art { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        width: max(100vw, 177.683315vh); aspect-ratio: 1672 / 941;
+        /* Cap cropping on portrait and ultrawide screens to keep the title and bar visible. */
+        max-width: min(240vw, 200vh); }
+      .loader .background { display: block; width: 100%; height: auto; }
+      .loader .motes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+      .loader .motes i { position: absolute; bottom: -5%; border-radius: 50%; opacity: 0;
+        background: radial-gradient(circle, #e5ffb3 0%, #beef7870 24%, #a4e55800 70%);
+        animation: rise var(--duration) linear var(--delay) infinite; }
+      .loader .motes i.bubble { border: 1px solid #d8f99b20;
+        background: radial-gradient(circle at 32% 26%, #f2ffd45c, #b9ed6f12 24%, #94d25004 55%, #bbeb751f 74%, transparent 76%);
+        box-shadow: inset 0 0 8px #c9fa6c16, 0 0 12px #a4e55812; }
+      /* Opaque track hides the baked-in fill, including when real progress is zero. */
+      .loader .bar { position: absolute; left: 34.629187%; top: 73.645058%; width: 30.502392%; height: 3.719447%;
+        box-sizing: border-box; border: 1px solid #719c3e; border-radius: 999px; overflow: hidden;
+        background: linear-gradient(#061e0a, #0c3011);
+        box-shadow: inset 0 2px 6px #0009, 0 0 3px 1px #08290a, 0 0 16px #75d32620; }
+      .loader .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: inherit; overflow: hidden;
+        background: linear-gradient(180deg, #f2ffc26b, transparent 42%, #3e960826), linear-gradient(90deg, #64d800, #aeed32 62%, #f5ff85);
+        box-shadow: inset 0 1px 2px #ffffc7, inset 0 -2px 3px #45840075, 0 0 14px #b7f94c80;
+        transition: width .45s ease-out; }
       .loader .fill::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-        background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%);
-        animation: shine 2.2s ease-in-out infinite; }
-      .loader .status { margin: 0; min-height: 1.4em; font-size: 13px; letter-spacing: .04em; color: rgba(222, 242, 214, .74); }
-      .loader .tip { display: inline-block; transition: opacity .3s, transform .3s; }
-      .loader .tip.swap { opacity: 0; transform: translateY(4px); }
-      .loader .pct { margin-left: .6em; color: #a7ec70; font-variant-numeric: tabular-nums; }
-      .loader .note { margin: -6px 0 0; min-height: 1.3em; font-size: 12px; letter-spacing: .04em; color: rgba(222, 242, 214, .52);
-        font-variant-numeric: tabular-nums; }
-      .loader .play { margin-top: 2px; padding: 10px 26px; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600;
-        letter-spacing: .06em; color: #06240f; background: linear-gradient(90deg, #66cf47, #c9f78a); box-shadow: 0 0 18px rgba(140, 230, 90, .45); }
-      .loader .play:hover, .loader .play:focus-visible { outline: none; filter: brightness(1.08);
-        box-shadow: 0 0 0 3px rgba(201, 247, 138, .5), 0 0 22px rgba(140, 230, 90, .6); }
+        background: linear-gradient(105deg, transparent 35%, #ffffff38 50%, transparent 65%);
+        animation: shine 4.8s ease-in-out infinite; }
+      .loader .details { position: absolute; top: 79%; left: 50%; transform: translateX(-50%);
+        width: min(620px, 92vw); text-align: center; font-size: 13px; line-height: 1.5; }
+      .loader .status { margin: 0; color: #cee3bd; }
+      .loader .pct { margin-left: .6em; color: #bef187; font-variant-numeric: tabular-nums; }
+      .loader .note { margin: 4px 0 0; color: #cee3bd; font-size: 12px; font-variant-numeric: tabular-nums; }
+      .loader .note:empty { display: none; }
+      .loader .play { display: inline-block; margin-top: 12px; padding: 10px 26px; border-radius: 999px;
+        text-decoration: none; font-size: 14px; font-weight: 600; color: #06240f;
+        background: linear-gradient(90deg, #90e549, #e1fc9a); box-shadow: 0 0 18px #8ce65a40; }
+      .loader .play:hover, .loader .play:focus-visible { outline: 2px solid #e1fc9a; outline-offset: 4px; }
       .loader .play[hidden] { display: none; }
       .loader.err .tip { color: #ffb8a6; }
       .loader.err .fill { background: linear-gradient(90deg, #8a3a2a, #c8664a); }
-
-      .emblem .halo { animation: halo 3.2s ease-in-out infinite alternate; transform-origin: 160px 150px; }
-      .emblem .sun { animation: pulse 2.6s ease-in-out infinite alternate; transform-origin: 208px 74px; }
-      .emblem .rays { animation: swing 5s ease-in-out infinite alternate; transform-origin: 208px 74px; }
-      .emblem .rays line { animation: glint 1.8s ease-in-out infinite alternate; }
-      .emblem .rays line:nth-child(2n) { animation-delay: -.9s; }
-      .emblem .plast { animation: breathe 3.6s ease-in-out infinite alternate; transform-origin: 124px 150px; }
-      .emblem .stack { animation: bob 2.4s ease-in-out infinite alternate; }
-      .emblem .stack.s2 { animation-delay: -.8s; }
-      .emblem .stack.s3 { animation-delay: -1.6s; }
-      .emblem .leaf { animation: sway 4.2s ease-in-out infinite alternate; transform-origin: 176px 236px; }
-      .emblem .spark { animation: spark 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-      .emblem .spark.k2 { animation-delay: -.7s; }
-      .emblem .spark.k3 { animation-delay: -1.4s; }
-      .emblem .spark.k4 { animation-delay: -2s; }
-
-      @keyframes drift { from { transform: rotate(var(--r)) translate(0, 0); } to { transform: rotate(calc(var(--r) + 3deg)) translate(1.6vmax, 1.1vmax); } }
-      @keyframes rise { from { transform: translate(0, 0); } to { transform: translate(var(--dx, 3vw), -118vh); } }
-      @keyframes twinkle { from { opacity: .2; } to { opacity: var(--o, 1); } }
-      @keyframes halo { from { opacity: .55; transform: scale(.96); } to { opacity: 1; transform: scale(1.04); } }
-      @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.07); } }
-      @keyframes swing { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
-      @keyframes glint { from { opacity: .75; } to { opacity: 1; } }
-      @keyframes breathe { from { transform: scale(1); } to { transform: scale(1.025); } }
-      @keyframes bob { from { transform: translateY(-1.6px); } to { transform: translateY(1.6px); } }
-      @keyframes sway { from { transform: rotate(-3.5deg); } to { transform: rotate(3deg); } }
-      @keyframes spark { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
-      @keyframes shine { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(160%); } }
-      @media (prefers-reduced-motion: reduce) { .loader *, .loader *::after { animation: none !important; } }
+      .loader.err *, .loader.err *::after { animation-play-state: paused; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+        clip-path: inset(50%); white-space: nowrap; border: 0; }
+      @keyframes rise {
+        0% { transform: translate(0, 0); opacity: 0; }
+        15%, 75% { opacity: var(--o); }
+        100% { transform: translate(var(--dx), -85vh); opacity: 0; }
+      }
+      @keyframes shine { 0%, 25% { transform: translateX(-100%); } 75%, 100% { transform: translateX(100%); } }
+      @media (prefers-reduced-motion: reduce) {
+        .loader, .loader *, .loader *::after { animation: none !important; transition: none !important; }
+        .loader .motes { display: none; }
+      }
 
       .warn { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 20; display: none;
         font: 13px "Segoe UI", system-ui, sans-serif; max-width: 90vw; }
@@ -93,89 +77,16 @@
     <canvas id="unity-canvas" tabindex="-1"></canvas>
 
     <div class="loader">
-      <div class="motes"></div>
-      <div class="stage">
-        <svg class="emblem" viewBox="0 0 320 260" aria-hidden="true">
-          <defs>
-            <radialGradient id="g-halo" cx="50%" cy="55%" r="50%">
-              <stop offset="0" stop-color="#9be36a" stop-opacity=".36"/><stop offset=".55" stop-color="#5cc23a" stop-opacity=".1"/><stop offset="1" stop-color="#5cc23a" stop-opacity="0"/>
-            </radialGradient>
-            <radialGradient id="g-sunglow">
-              <stop offset="0" stop-color="#ffe680" stop-opacity=".8"/><stop offset=".5" stop-color="#ffc93c" stop-opacity=".25"/><stop offset="1" stop-color="#ffc93c" stop-opacity="0"/>
-            </radialGradient>
-            <radialGradient id="g-sun" cx="40%" cy="38%" r="70%">
-              <stop offset="0" stop-color="#fffbe2"/><stop offset=".45" stop-color="#ffe372"/><stop offset=".85" stop-color="#ffc233"/><stop offset="1" stop-color="#f5a524"/>
-            </radialGradient>
-            <linearGradient id="g-memb" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#dcffa8"/><stop offset=".45" stop-color="#78d34b"/><stop offset="1" stop-color="#2f8a26"/>
-            </linearGradient>
-            <radialGradient id="g-stroma" cx="45%" cy="40%" r="70%">
-              <stop offset="0" stop-color="#4fb534"/><stop offset="1" stop-color="#1d5a17"/>
-            </radialGradient>
-            <linearGradient id="g-disc" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#c6fa90"/><stop offset=".55" stop-color="#6fd247"/><stop offset="1" stop-color="#379629"/>
-            </linearGradient>
-            <linearGradient id="g-leaf" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0" stop-color="#26862c"/><stop offset=".6" stop-color="#5cc23a"/><stop offset="1" stop-color="#abec74"/>
-            </linearGradient>
-          </defs>
-
-          <ellipse class="halo" cx="160" cy="150" rx="150" ry="112" fill="url(#g-halo)"/>
-
-          <circle cx="208" cy="74" r="64" fill="url(#g-sunglow)"/>
-          <g class="rays" stroke="#ffd23f" stroke-width="7" stroke-linecap="round">
-            <line x1="167" y1="58" x2="152" y2="52"/>
-            <line x1="183" y1="38" x2="174" y2="25"/>
-            <line x1="208" y1="30" x2="208" y2="14"/>
-            <line x1="233" y1="38" x2="242" y2="25"/>
-            <line x1="249" y1="58" x2="264" y2="52"/>
-          </g>
-          <g class="sun">
-            <circle cx="208" cy="74" r="31" fill="url(#g-sun)"/>
-            <ellipse cx="198" cy="62" rx="11" ry="7" fill="#fff" opacity=".55"/>
-          </g>
-
-          <g class="plast">
-            <path d="M124 64C172 62 202 104 198 160C194 214 152 240 116 232C72 222 46 182 50 136C54 92 84 66 124 64Z"
-                  fill="url(#g-memb)" stroke="#d8ffa0" stroke-opacity=".75" stroke-width="2"/>
-            <path d="M124 80C164 79 188 114 184 160C181 204 148 224 118 218C82 210 62 178 65 140C68 104 92 82 124 80Z" fill="url(#g-stroma)"/>
-            <path d="M80 160H92M110 152H142M160 158H174" stroke="#9fe06a" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round"/>
-            <g class="stack s1" fill="url(#g-disc)" stroke="#24651a" stroke-width="1.2">
-              <ellipse cx="96" cy="184" rx="15" ry="6"/><ellipse cx="96" cy="173" rx="15" ry="6"/><ellipse cx="96" cy="162" rx="15" ry="6"/>
-              <ellipse cx="96" cy="151" rx="15" ry="6"/><ellipse cx="96" cy="140" rx="15" ry="6"/>
-            </g>
-            <g class="stack s2" fill="url(#g-disc)" stroke="#24651a" stroke-width="1.2">
-              <ellipse cx="126" cy="178" rx="16" ry="6.5"/><ellipse cx="126" cy="166" rx="16" ry="6.5"/><ellipse cx="126" cy="154" rx="16" ry="6.5"/>
-              <ellipse cx="126" cy="142" rx="16" ry="6.5"/><ellipse cx="126" cy="130" rx="16" ry="6.5"/><ellipse cx="126" cy="118" rx="16" ry="6.5"/>
-            </g>
-            <g class="stack s3" fill="url(#g-disc)" stroke="#24651a" stroke-width="1.2">
-              <ellipse cx="156" cy="190" rx="14" ry="5.5"/><ellipse cx="156" cy="180" rx="14" ry="5.5"/><ellipse cx="156" cy="170" rx="14" ry="5.5"/>
-              <ellipse cx="156" cy="160" rx="14" ry="5.5"/><ellipse cx="156" cy="150" rx="14" ry="5.5"/>
-            </g>
-            <path d="M76 104C90 82 108 74 128 73" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>
-            <ellipse cx="70" cy="128" rx="5" ry="12" fill="#fff" opacity=".22"/>
-          </g>
-
-          <g class="leaf">
-            <path d="M176 236C160 190 190 132 262 104C270 172 236 224 176 236Z" fill="url(#g-leaf)" stroke="#cdf794" stroke-opacity=".55" stroke-width="1.5"/>
-            <path d="M178 232C200 190 222 150 258 110" fill="none" stroke="#e6ffc8" stroke-opacity=".85" stroke-width="2.4" stroke-linecap="round"/>
-            <path d="M189 212L177 205M200 192L184 180M212 172L198 154M226 152L214 133M240 132L232 117M189 212L204 216M200 192L220 194M212 172L234 170M226 152L246 146M240 132L254 124"
-                  fill="none" stroke="#d6f8ac" stroke-opacity=".55" stroke-width="1.4" stroke-linecap="round"/>
-          </g>
-
-          <g fill="#fff7c2">
-            <g transform="translate(268 30)"><path class="spark k1" d="M0 -8L2 -2L8 0L2 2L0 8L-2 2L-8 0L-2 -2Z"/></g>
-            <g transform="translate(64 76)"><path class="spark k2" d="M0 -6L1.5 -1.5L6 0L1.5 1.5L0 6L-1.5 1.5L-6 0L-1.5 -1.5Z"/></g>
-            <g transform="translate(284 168)"><path class="spark k3" d="M0 -7L1.8 -1.8L7 0L1.8 1.8L0 7L-1.8 1.8L-7 0L-1.8 -1.8Z"/></g>
-            <g transform="translate(38 196)"><path class="spark k4" d="M0 -5L1.3 -1.3L5 0L1.3 1.3L0 5L-1.3 1.3L-5 0L-1.3 -1.3Z"/></g>
-          </g>
-        </svg>
-
-        <h1>Loading <span>Photosynthesis</span> Module</h1>
-        <div class="bar" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill"></div></div>
-        <p class="status"><span class="tip">Warming up the sunlight…</span><span class="pct">0%</span></p>
-        <p class="note"></p>
-        <a class="play" href="./" hidden>▶ Play the module</a>
+      <h1 class="sr-only">Loading Photosynthesis Module</h1>
+      <div class="art">
+        <img class="background" src="loading-background.png" width="1672" height="941" alt="" fetchpriority="high">
+        <div class="motes" aria-hidden="true"></div>
+        <div class="bar" role="progressbar" aria-label="Loading Photosynthesis Module" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="fill"></div></div>
+        <div class="details">
+          <p class="status"><span class="tip">Loading resources…</span><span class="pct">0%</span></p>
+          <p class="note"></p>
+          <a class="play" href="./" hidden>Play the module</a>
+        </div>
       </div>
     </div>
     <div class="warn"></div>
@@ -188,50 +99,36 @@
         var fill = loader.querySelector(".fill"), bar = loader.querySelector(".bar");
         var tip = loader.querySelector(".tip"), pct = loader.querySelector(".pct"), note = loader.querySelector(".note");
 
-        // the big blurred leaves behind the emblem, one midrib and its side veins
-        function leaf(cls) {
-          var veins = "";
-          for (var k = 1; k <= 8; k++) {
-            var t = k / 9, x = 30 + 540 * t, y = 352 - 304 * t, s = 1 - t * .55;
-            veins += "M" + x + " " + y + "q" + (-30 * s) + " " + (-70 * s) + " " + (-95 * s) + " " + (-120 * s)
-                   + "M" + x + " " + y + "q" + (40 * s) + " " + (50 * s) + " " + (110 * s) + " " + (70 * s);
-          }
-          var div = document.createElement("div");
-          div.className = "vein " + cls;
-          div.innerHTML = '<svg viewBox="0 0 600 400" width="100%" height="100%" aria-hidden="true">'
-            + '<path d="M20 360C60 160 260 30 580 40C540 250 330 390 20 360Z" fill="rgba(36,104,38,.28)" stroke="rgba(140,215,100,.3)" stroke-width="3"/>'
-            + '<path d="M30 352C210 250 380 150 570 48' + veins + '" fill="none" stroke="rgba(150,225,105,.34)" stroke-width="2.4" stroke-linecap="round"/></svg>';
-          loader.insertBefore(div, loader.firstChild);
-        }
-        leaf("a"); leaf("b");
-
-        // floating motes of light
+        // A few translucent orbs and dust motes drift beside the central artwork.
         var motes = loader.querySelector(".motes");
-        for (var i = 0; i < 30; i++) {
-          var m = document.createElement("i"), big = i % 6 === 0, size = big ? 18 + Math.random() * 22 : 3 + Math.random() * 8;
-          m.style.cssText = "left:" + (Math.random() * 100).toFixed(1) + "%;width:" + size.toFixed(1) + "px;height:" + size.toFixed(1) + "px;"
-            + "--dx:" + ((Math.random() - .5) * 12).toFixed(1) + "vw;--o:" + (big ? .35 : .9) + ";" + (big ? "filter:blur(4px);" : "")
-            + "animation-duration:" + (14 + Math.random() * 16).toFixed(1) + "s," + (1.6 + Math.random() * 2.4).toFixed(1) + "s;"
-            + "animation-delay:-" + (Math.random() * 30).toFixed(1) + "s,-" + (Math.random() * 3).toFixed(1) + "s";
+        for (var i = 0; i < 16; i++) {
+          var m = document.createElement("i"), big = i % 5 === 0, size = big ? 18 + Math.random() * 16 : 3 + Math.random() * 4;
+          m.className = big ? "bubble" : "";
+          m.style.cssText = "left:" + ((i % 2 ? 73 : 8) + Math.random() * 18).toFixed(1) + "%;width:" + size.toFixed(1) + "px;height:" + size.toFixed(1) + "px;"
+            + "--dx:" + ((Math.random() - .5) * 4).toFixed(1) + "vw;--o:" + (big ? .32 : .45) + ";"
+            + "--duration:" + (24 + Math.random() * 16).toFixed(1) + "s;--delay:-" + (Math.random() * 40).toFixed(1) + "s";
           motes.appendChild(m);
         }
 
-        var tips = ["Warming up the sunlight…", "Opening the stomata…", "Stacking the thylakoids…", "Collecting carbon dioxide…",
-                    "Pumping water up the xylem…", "Polishing the chlorophyll…", "Waking up Dr. Curio…"], tipAt = 0;
-        var tipTimer = setInterval(function () {
-          tip.classList.add("swap");
-          setTimeout(function () { tipAt = (tipAt + 1) % tips.length; tip.textContent = tips[tipAt]; tip.classList.remove("swap"); }, 300);
-        }, 2600);
-
+        var progress = 0, completed = false;
         function setProgress(p) {
-          p = Math.max(0, Math.min(1, p));
-          fill.style.width = (4 + 96 * p) + "%";
-          pct.textContent = Math.round(p * 100) + "%";
-          bar.setAttribute("aria-valuenow", Math.round(p * 100));
+          if (!Number.isFinite(p)) return;
+          // Unity's progress callback can reach 1 before its startup promise resolves.
+          progress = Math.max(progress, Math.min(completed ? 1 : .99, Math.max(0, p)));
+          fill.style.width = (100 * progress) + "%";
+          pct.textContent = Math.floor(progress * 100) + "%";
+          bar.setAttribute("aria-valuenow", Math.floor(progress * 100));
         }
-        function done() { clearInterval(tipTimer); setProgress(1); loader.classList.add("out"); setTimeout(function () { loader.remove(); }, 1000); }
+        function done() {
+          completed = true; setProgress(1); tip.textContent = "Ready"; note.textContent = "";
+          // Let the .45s fill settle, hold at full, then reveal the running module.
+          setTimeout(function () {
+            loader.classList.add("out");
+            setTimeout(function () { loader.remove(); canvas.focus(); }, 800);
+          }, 700);
+        }
         function fail(e) {
-          clearInterval(tipTimer); loader.classList.add("err"); note.textContent = "";
+          loader.classList.add("err"); note.textContent = "";
           tip.setAttribute("role", "alert");
           tip.textContent = "The module could not load: " + (e && e.message ? e.message : e) + ". Please reload the page.";
         }
@@ -247,8 +144,8 @@
           note.textContent = "Preview of the loading screen only: the module does not load on this page.";
           loader.querySelector(".play").hidden = false;
           var demo = 0, demoTimer = setInterval(function () {
-            demo = Math.min(1, demo + .006); setProgress(demo);
-            if (demo >= 1) { clearInterval(demoTimer); clearInterval(tipTimer); tip.textContent = "Ready!"; }
+            demo = Math.min(1, demo + .006); completed = demo >= 1; setProgress(demo);
+            if (demo >= 1) { clearInterval(demoTimer); tip.textContent = "Ready!"; }
           }, 60);
           return;
         }

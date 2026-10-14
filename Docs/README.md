@@ -19,8 +19,9 @@ Browser player: **Photosynthesis ▸ Build WebGL** → `Builds/WebGL/` (release,
 textures import once: `-batchmode -buildTarget WebGL -executeMethod Photosynthesis.EditorTools.PhotosynthesisBuild.BuildWebGL -quit`; then
 reopen once with `-batchmode -buildTarget StandaloneWindows64 -quit` so the editor is back on Windows. The build uses gzip with the
 decompression fallback (any static host works, no server headers needed) and the page fills the browser window. The page comes from
-`Assets/WebGLTemplates/Photosynthesis`, with an animated chloroplast loading screen; add `?loader` to the address to see the loading
-screen on its own. It must be served over
+`Assets/WebGLTemplates/Photosynthesis`: the supplied loading artwork (`loading-background.png`) with a live progress bar drawn over
+it. Add `?loader` to the address to see the loading screen on its own; `node Tools/WebGL/test_loader.mjs` checks the page logic.
+It must be served over
 HTTP, not opened as a file: upload the folder (itch.io, GitHub Pages, a school server) or run `python -m http.server 8000` inside it and
 open http://localhost:8000. GitHub refuses files over 100 MB, so `python Tools/WebGL/pages_site.py` copies the build to
 `Builds/WebGL-pages/` with the data file in parts, which the page joins. Commit that folder to `gh-pages` to update the site. The optional Curio service adds WebRTC voice and contextual AI replies. Offline lesson answers and the
